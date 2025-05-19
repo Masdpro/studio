@@ -7,10 +7,11 @@ import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ListPlus, Settings, Truck as TrackIcon } from 'lucide-react'; // Renamed Truck to TrackIcon to avoid conflict
+import { ListPlus, Settings, Truck as TrackIcon, Wallet as WalletIcon, ClipboardList } from 'lucide-react';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order } from '@/lib/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Placeholder vendor data, in a real app this would come from auth/DB
 const sampleVendor = {
@@ -73,46 +74,71 @@ export default function VendorDashboardPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
-      <VendorWalletWidget />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Settings className="h-6 w-6 text-primary" />
-            Manage Your Profile
-          </CardTitle>
-          <CardDescription>Keep your business information up to date.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <VendorProfileForm vendor={sampleVendor} />
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <ListPlus className="h-6 w-6 text-primary" />
-            Product Management
-          </CardTitle>
-          <CardDescription>Add, edit, or remove your products.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Manage all your product listings from one place.</p>
-          <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            <Link href="/vendor/dashboard/products">
-              Go to Product Management
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <h1 className="text-3xl font-bold text-primary mb-6">Vendor Dashboard</h1>
+      <Tabs defaultValue="wallet" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+          <TabsTrigger value="wallet" className="flex items-center gap-2">
+            <WalletIcon className="h-5 w-5" /> Wallet
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <Settings className="h-5 w-5" /> Profile
+          </TabsTrigger>
+          <TabsTrigger value="products" className="flex items-center gap-2">
+            <ListPlus className="h-5 w-5" /> Products
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5" /> Orders
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Order Tracking Section for Vendor */}
-      <OrderTrackingView
-        orders={vendorOrders}
-        title="Track Your Orders"
-        description="Monitor the status of orders placed with your business."
-        userRole="vendor"
-      />
+        <TabsContent value="wallet">
+          <VendorWalletWidget />
+        </TabsContent>
+
+        <TabsContent value="profile">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Settings className="h-6 w-6 text-primary" />
+                Manage Your Profile
+              </CardTitle>
+              <CardDescription>Keep your business information up to date.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VendorProfileForm vendor={sampleVendor} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="products">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <ListPlus className="h-6 w-6 text-primary" />
+                Product Management
+              </CardTitle>
+              <CardDescription>Add, edit, or remove your products.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4">Manage all your product listings from one place.</p>
+              <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Link href="/vendor/dashboard/products">
+                  Go to Product Management Page
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="orders">
+          <OrderTrackingView
+            orders={vendorOrders}
+            title="Track Your Orders"
+            description="Monitor the status of orders placed with your business."
+            userRole="vendor"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
