@@ -24,7 +24,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader className="p-0">
         <div className="aspect-video relative w-full">
           <Image
@@ -32,16 +32,16 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             layout="fill"
             objectFit="cover"
-            data-ai-hint="product item"
+            data-ai-hint={product.aiHint || "food item"}
           />
         </div>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex-grow">
         <CardTitle className="text-xl font-semibold mb-1">{product.name}</CardTitle>
-        <CardDescription className="text-muted-foreground text-sm mb-2 h-10 overflow-hidden">
+        <CardDescription className="text-muted-foreground text-sm mb-2 min-h-[2.5rem] line-clamp-2">
           {product.description}
         </CardDescription>
-        <p className="text-lg font-bold text-primary">${product.price.toFixed(2)}</p>
+        <p className="text-lg font-bold text-primary mt-auto">${product.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart}>

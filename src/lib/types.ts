@@ -15,6 +15,7 @@ export type Product = {
   price: number;
   imageUrl: string;
   category?: string;
+  aiHint?: string; // For more specific image hints
 };
 
 export type CartItem = {
@@ -40,3 +41,4 @@ export type TimeWindow = {
   startTime: string; // ISO datetime string
   endTime: string; // ISO datetime string
 };
+
