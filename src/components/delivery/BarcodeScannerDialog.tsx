@@ -31,36 +31,51 @@ export function BarcodeScannerDialog({
   onScanSuccess,
 }: BarcodeScannerDialogProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null); // Use ref to manage stream across renders and effects
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isCameraInitializing, setIsCameraInitializing] = useState(false);
-  const [isScanning, setIsScanning] = useState(false); // For simulate scan button
+  const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-
     const getCameraPermission = async () => {
       if (!open) return;
 
       setIsCameraInitializing(true);
-      setHasCameraPermission(null); // Reset while checking
+      setHasCameraPermission(null);
+      let newStream: MediaStream | null = null;
+
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        setHasCameraPermission(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        // Attempt 1: Environment (rear) camera
+        console.log('Attempting to access rear (environment) camera...');
+        newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        console.log('Rear camera accessed.');
+      } catch (rearError) {
+        console.warn('Rear camera access failed:', rearError);
+        try {
+          // Attempt 2: Any available camera (fallback, likely front)
+          console.log('Attempting to access any available camera (fallback)...');
+          newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          console.log('Fallback camera accessed.');
+        } catch (anyError) {
+          console.error('Error accessing any camera:', anyError);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Could not access any camera. Please enable camera permissions in your browser settings.',
+          });
+          setIsCameraInitializing(false);
+          return; 
         }
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings.',
-        });
-      } finally {
-        setIsCameraInitializing(false);
       }
+
+      streamRef.current = newStream; // Store the stream in the ref
+      setHasCameraPermission(true);
+      if (videoRef.current && newStream) {
+        videoRef.current.srcObject = newStream;
+      }
+      setIsCameraInitializing(false);
     };
 
     if (open) {
@@ -68,13 +83,14 @@ export function BarcodeScannerDialog({
     }
 
     return () => { // Cleanup
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
-       setHasCameraPermission(null); // Reset permission status on close
+      setHasCameraPermission(null);
     };
   }, [open, toast]);
 
@@ -94,7 +110,7 @@ export function BarcodeScannerDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      if (isScanning) return; // Prevent closing while "scan" is in progress
+      if (isScanning) return; 
       onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[525px]">
@@ -169,3 +185,4 @@ export function BarcodeScannerDialog({
     </Dialog>
   );
 }
+
