@@ -18,13 +18,13 @@ const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof 
     case 'Pending':
       return 'secondary';
     case 'Processing':
-      return 'default'; // Using default as a general "in progress"
+      return 'default'; 
     case 'ReadyForPickup':
-      return 'outline'; // Or choose another if default is used for processing
+      return 'outline'; 
     case 'Out for Delivery':
-      return 'default'; // Could also be 'secondary' with different color if theme supports
+      return 'default'; 
     case 'Delivered':
-      return 'default'; // Success variant if available, or green text
+      return 'default'; 
     case 'Cancelled':
       return 'destructive';
     default:
@@ -67,6 +67,8 @@ const getStatusColorClass = (status: Order['status']): string => {
 export function OrderListItem({ order, userRole }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp'); // e.g., Aug 17, 2023, 10:30:00 AM
+
+  const shouldShowViewDetailsButton = order.items.length > 1 || (userRole === 'vendor' && order.status === 'Processing');
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
@@ -116,7 +118,7 @@ export function OrderListItem({ order, userRole }: OrderListItemProps) {
               Agent: {order.deliveryAgentId}
             </div>
           )}
-          {order.items.length > 1 && (
+          {shouldShowViewDetailsButton && (
             <Button 
               variant="outline" 
               size="sm" 
