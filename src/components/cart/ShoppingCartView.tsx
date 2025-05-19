@@ -21,8 +21,6 @@ export function ShoppingCartView() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load cart items from localStorage or state management on client side
-    // For now, using sample data
     setCartItems(sampleCartItems);
     setIsClient(true);
   }, []);
@@ -31,7 +29,7 @@ export function ShoppingCartView() {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
         item.productId === productId ? { ...item, quantity } : item
-      ).filter(item => item.quantity > 0) // Remove if quantity is 0
+      ).filter(item => item.quantity > 0) 
     );
   };
 
@@ -47,6 +45,26 @@ export function ShoppingCartView() {
   const taxRate = 0.08; // 8% tax
   const taxes = subtotal * taxRate;
   const total = subtotal + taxes;
+
+  const handleProceedToCheckout = () => {
+    if (cartItems.length === 0) {
+      toast({
+        title: 'Empty Cart',
+        description: 'Please add items to your cart before proceeding.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Mock payment processing
+    toast({
+      title: 'Order Placed!',
+      description: `Your order for $${total.toFixed(2)} has been successfully placed. Payment will be processed from your wallet.`,
+    });
+    // In a real app, you would then clear the cart, deduct from buyer wallet, credit seller, etc.
+    // For this example, we'll keep the cart items for demo purposes.
+    // setCartItems([]); 
+  };
 
   if (!isClient) {
     return (
@@ -104,7 +122,11 @@ export function ShoppingCartView() {
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
-          <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4">
+          <Button 
+            size="lg" 
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4"
+            onClick={handleProceedToCheckout}
+          >
             Proceed to Checkout
           </Button>
         </CardFooter>

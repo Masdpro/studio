@@ -42,3 +42,9 @@ export type TimeWindow = {
   endTime: string; // ISO datetime string
 };
 
+export type Wallet = {
+  id: string;
+  userId: string; // Could be buyer or seller ID
+  balance: number;
+  currency: string; // e.g., 'USD'
+};

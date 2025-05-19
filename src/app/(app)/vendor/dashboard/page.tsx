@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ListPlus, Settings } from 'lucide-react';
+import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 
 // Placeholder vendor data, in a real app this would come from auth/DB
 const sampleVendor = {
@@ -15,8 +16,10 @@ const sampleVendor = {
 
 export default function VendorDashboardPage() {
   return (
-    <div className="container mx-auto py-8">
-      <Card className="mb-8">
+    <div className="container mx-auto py-8 space-y-8">
+      <VendorWalletWidget />
+      
+      <Card>
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
             <Settings className="h-6 w-6 text-primary" />
