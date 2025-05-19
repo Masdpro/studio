@@ -4,7 +4,8 @@
 import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface OrderListItemProps {
@@ -108,12 +109,25 @@ export function OrderListItem({ order, userRole }: OrderListItemProps) {
           <DollarSign className="h-5 w-5 text-primary mr-1" />
           <span className="font-semibold text-md">Total: ${order.totalAmount.toFixed(2)}</span>
         </div>
-        {order.deliveryAgentId && (
-          <div className="flex items-center text-xs text-muted-foreground">
-            <Truck className="h-4 w-4 mr-1" />
-            Agent: {order.deliveryAgentId}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {order.deliveryAgentId && (
+            <div className="flex items-center text-xs text-muted-foreground">
+              <Truck className="h-4 w-4 mr-1" />
+              Agent: {order.deliveryAgentId}
+            </div>
+          )}
+          {order.items.length > 1 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => console.log('View order details for:', order.id, order)}
+              aria-label="View order details"
+            >
+              <Eye className="h-4 w-4 mr-1 sm:mr-0 md:mr-1" />
+              <span className="hidden sm:inline md:inline">View Details</span>
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );
