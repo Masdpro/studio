@@ -5,12 +5,13 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Barcode as BarcodeIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import { BarcodeDisplay } from './BarcodeDisplay';
 
 interface OrderListItemProps {
   order: Order;
-  userRole: 'customer' | 'vendor' | 'delivery_agent'; // Added delivery_agent
+  userRole: 'customer' | 'vendor' | 'delivery_agent';
   onAcceptDelivery?: (orderId: string) => void;
   onScanForPickup?: (orderId: string) => void;
   onScanForDelivery?: (orderId: string) => void;
@@ -46,7 +47,7 @@ const getStatusIcon = (status: Order['status']) => {
     case 'ReadyForPickup':
       return <ShoppingBag className="h-4 w-4 mr-1.5" />;
     case 'AcceptedByAgent':
-      return <User className="h-4 w-4 mr-1.5" />; // Or a specific "agent accepted" icon
+      return <User className="h-4 w-4 mr-1.5" />;
     case 'PickedUpByAgent':
       return <PackageCheck className="h-4 w-4 mr-1.5 text-blue-600" />;
     case 'Out for Delivery':
@@ -83,8 +84,11 @@ export function OrderListItem({
   onScanForDelivery
 }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
-  const displayDate = format(new Date(order.createdAt), 'PPpp'); // e.g., Aug 17, 2023, 10:30:00 AM
+  const displayDate = format(new Date(order.createdAt), 'PPpp');
 
+  const showVendorPickupBarcode = userRole === 'vendor' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
+  const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
+  
   const isVendorProcessing = userRole === 'vendor' && order.status === 'Processing';
   const shouldShowViewDetailsButton = order.items.length > 1 || isVendorProcessing;
 
@@ -123,6 +127,9 @@ export function OrderListItem({
                 Agent: {order.deliveryAgentId}
               </div>
             )}
+            {showCustomerDeliveryBarcode && (
+              <BarcodeDisplay orderId={order.id} label="Barcode for Delivery Confirmation" />
+            )}
           </>
         )}
 
@@ -138,6 +145,9 @@ export function OrderListItem({
                 <Truck className="h-3 w-3" />
                 Assigned Agent: {order.deliveryAgentId}
               </div>
+            )}
+            {showVendorPickupBarcode && (
+              <BarcodeDisplay orderId={order.id} label="Barcode for Agent Pickup" />
             )}
           </>
         )}
