@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, ShoppingCart, UserPlus, Truck, Route, Settings, Store } from 'lucide-react';
+import { Home, ShoppingCart, UserPlus, Truck, Route, Settings, Store, Bike } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -24,8 +24,13 @@ const vendorItems = [
   { href: '/vendor/dashboard/products', label: 'Manage Products', icon: Settings, tooltip: "Add/Edit Products" },
 ];
 
-const deliveryItems = [
-  { href: '/delivery/optimize-route', label: 'Optimize Route', icon: Route, tooltip: "Delivery Route Optimizer" },
+const commonDeliveryItems = [
+  { href: '/delivery/optimize-route', label: 'Optimize Route AI', icon: Route, tooltip: "Delivery Route Optimizer" },
+];
+
+const deliveryAgentItems = [
+  { href: '/auth/register/delivery-agent', label: 'Agent Registration', icon: Bike, tooltip: "Register as Delivery Agent"},
+  { href: '/delivery-agent/dashboard', label: 'Agent Dashboard', icon: Truck, tooltip: "Delivery Agent Dashboard"},
 ];
 
 
@@ -66,8 +71,18 @@ export function AppSidebar() {
           </SidebarGroup>
            <SidebarSeparator />
           <SidebarGroup>
-             <SidebarGroupLabel>Delivery</SidebarGroupLabel>
-            {deliveryItems.map((item) => (
+             <SidebarGroupLabel>Delivery Services</SidebarGroupLabel>
+            {commonDeliveryItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton asChild tooltip={item.tooltip}>
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+            {deliveryAgentItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild tooltip={item.tooltip}>
                   <Link href={item.href}>

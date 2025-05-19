@@ -29,11 +29,16 @@ export type CartItem = {
 export type Order = {
   id: string;
   customerId: string;
+  vendorId: string; // To know where to pick up from
   items: CartItem[];
   totalAmount: number;
-  status: 'Pending' | 'Processing' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
-  deliveryAddress: string;
+  status: 'Pending' | 'Processing' | 'ReadyForPickup' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  pickupAddress: string; // Vendor's address
+  deliveryAddress: string; // Customer's address
+  deliveryFee: number; // Payment for the delivery agent
+  estimatedDistance?: string; // e.g., "5 km"
   createdAt: Date;
+  deliveryAgentId?: string; // Who took the delivery
 };
 
 export type TimeWindow = {
@@ -44,7 +49,18 @@ export type TimeWindow = {
 
 export type Wallet = {
   id: string;
-  userId: string; // Could be buyer or seller ID
+  userId: string; // Could be buyer, seller, or delivery agent ID
   balance: number;
   currency: string; // e.g., 'USD'
+};
+
+export type DeliveryAgent = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  vehicleDetails?: string; // e.g., "Motorcycle - Plate XYZ123"
+  walletId?: string;
+  profileManaged?: boolean;
 };
