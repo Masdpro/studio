@@ -1,7 +1,7 @@
 // src/components/reviews/ReviewDialog.tsx
 'use client';
 
-import React from 'react'; // Added this line
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
+  DialogClose,
+  DialogFooter // Added DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { LeaveReviewForm } from './LeaveReviewForm';
