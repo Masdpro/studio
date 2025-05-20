@@ -5,9 +5,11 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Barcode as BarcodeIcon } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
+import { ReviewDialog } from '@/components/reviews/ReviewDialog'; // Added
+import React, { useState } from 'react'; // Added
 
 interface OrderListItemProps {
   order: Order;
@@ -86,11 +88,15 @@ export function OrderListItem({
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
 
+  const [reviewSubmitted, setReviewSubmitted] = useState(false); // Local state for review button
+
   const showVendorPickupBarcode = userRole === 'vendor' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   
   const isVendorProcessing = userRole === 'vendor' && order.status === 'Processing';
   const shouldShowViewDetailsButton = order.items.length > 1 || isVendorProcessing;
+
+  const canLeaveReview = userRole === 'customer' && order.status === 'Delivered';
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
@@ -210,6 +216,14 @@ export function OrderListItem({
               <Eye className="h-4 w-4 mr-1 sm:mr-0 md:mr-1" />
               <span className="hidden sm:inline md:inline">View Details</span>
             </Button>
+          )}
+
+          {canLeaveReview && (
+            <ReviewDialog 
+              order={order} 
+              onReviewSubmitted={() => setReviewSubmitted(true)}
+              isReviewSubmitted={reviewSubmitted}
+            />
           )}
         </div>
       </CardFooter>

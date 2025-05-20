@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import type { Order, DeliveryAgent } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike } from 'lucide-react';
+import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now
 import { OrderListItem } from '@/components/orders/OrderListItem';
@@ -93,7 +93,7 @@ export default function DeliveryAgentDashboardPage() {
         if (order.id === orderId) {
           if (purpose === 'pickup') {
             toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });
-            return { ...order, status: 'PickedUpByAgent' }; // Or 'Out for Delivery'
+            return { ...order, status: 'PickedUpByAgent' }; 
           } else if (purpose === 'delivery') {
             toast({ title: 'Delivery Confirmed', description: `Order ${orderId} delivered to customer.` });
             return { ...order, status: 'Delivered' };
@@ -102,7 +102,6 @@ export default function DeliveryAgentDashboardPage() {
         return order;
       })
     );
-    // Optionally move 'Delivered' orders to a "completed" list or filter them out from active
   };
 
   if (!agent) {
@@ -119,21 +118,39 @@ export default function DeliveryAgentDashboardPage() {
         Delivery Agent Dashboard
       </h1>
 
+      <div className="grid md:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <UserCircle className="h-6 w-6 text-primary" />
+              Your Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p><strong>Name:</strong> {agent.name}</p>
+            <p><strong>Vehicle:</strong> {agent.vehicleDetails || 'Not specified'}</p>
+            <Button variant="outline" size="sm" className="mt-2">Edit Profile (Soon)</Button>
+          </CardContent>
+        </Card>
+        
+        <VendorWalletWidget /> 
+      </div>
+      
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <UserCircle className="h-6 w-6 text-primary" />
-            Your Profile
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Star className="h-6 w-6 text-primary" />
+            Customer Reviews
           </CardTitle>
+          <CardDescription>See feedback from customers on your deliveries.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p><strong>Name:</strong> {agent.name}</p>
-          <p><strong>Vehicle:</strong> {agent.vehicleDetails || 'Not specified'}</p>
-          <Button variant="outline" size="sm" className="mt-2">Edit Profile (Soon)</Button>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Review display functionality is coming soon. Your ratings and comments will appear here.
+          </p>
         </CardContent>
       </Card>
-      
-      <VendorWalletWidget /> 
+
 
       {/* Active Deliveries Section */}
       <Card>

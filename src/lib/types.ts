@@ -46,7 +46,7 @@ export type Order = {
   deliveryFee: number; // Payment for the delivery agent
   estimatedDistance?: string; // e.g., "5 km"
   createdAt: Date;
-  deliveryAgentId?: string; // Who took the delivery
+  deliveryAgentId?: string; // Who took the delivery - should be present if agent involved and order delivered
 };
 
 export type TimeWindow = {
@@ -71,4 +71,15 @@ export type DeliveryAgent = {
   vehicleDetails?: string; // e.g., "Motorcycle - Plate XYZ123"
   walletId?: string;
   profileManaged?: boolean;
+};
+
+export type Review = {
+  id: string;
+  orderId: string;
+  reviewerId: string; // Customer's ID
+  revieweeType: 'vendor' | 'delivery_agent';
+  revieweeId: string; // Vendor's ID or DeliveryAgent's ID
+  rating: 'positive' | 'negative';
+  comment?: string;
+  createdAt: Date;
 };

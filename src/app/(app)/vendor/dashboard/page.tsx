@@ -7,7 +7,7 @@ import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ListPlus, Settings, Truck as TrackIcon, Wallet as WalletIcon, ClipboardList } from 'lucide-react';
+import { ListPlus, Settings, Truck as TrackIcon, Wallet as WalletIcon, ClipboardList, Star } from 'lucide-react';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order } from '@/lib/types';
@@ -76,7 +76,7 @@ export default function VendorDashboardPage() {
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold text-primary mb-6">Vendor Dashboard</h1>
       <Tabs defaultValue="wallet" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
@@ -88,6 +88,9 @@ export default function VendorDashboardPage() {
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5" /> Orders
+          </TabsTrigger>
+           <TabsTrigger value="reviews" className="flex items-center gap-2">
+            <Star className="h-5 w-5" /> Reviews
           </TabsTrigger>
         </TabsList>
 
@@ -137,6 +140,23 @@ export default function VendorDashboardPage() {
             description="Monitor the status of orders placed with your business."
             userRole="vendor"
           />
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Star className="h-6 w-6 text-primary" />
+                Customer Reviews
+              </CardTitle>
+              <CardDescription>See what customers are saying about your service.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Review display functionality is coming soon. You will be able to see your aggregated ratings and individual comments here.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
