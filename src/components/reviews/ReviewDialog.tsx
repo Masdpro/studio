@@ -1,6 +1,7 @@
 // src/components/reviews/ReviewDialog.tsx
 'use client';
 
+import React from 'react'; // Added this line
 import {
   Dialog,
   DialogContent,
