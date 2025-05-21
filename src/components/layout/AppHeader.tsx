@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, UserCircle, Package } from 'lucide-react';
@@ -27,9 +28,9 @@ export function AppHeader() {
           </Link>
         </Button>
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/auth/register/vendor"> {/* Or vendor dashboard if logged in */}
+          <Link href="/profile"> {/* Changed from /auth/register/vendor to /profile */}
             <UserCircle className="h-5 w-5" />
-            <span className="sr-only">Vendor Account</span>
+            <span className="sr-only">Customer Profile</span>
           </Link>
         </Button>
       </div>
