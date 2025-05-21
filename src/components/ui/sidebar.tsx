@@ -14,7 +14,8 @@ import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
-  SheetTitle, // Ensure SheetTitle is imported
+  SheetHeader, // Added SheetHeader
+  SheetTitle,
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -191,25 +192,22 @@ const Sidebar = React.forwardRef<
     }
 
     if (isMobile) {
-      const mobileSheetTitleId = React.useId(); // Unique ID for aria-labelledby
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="flex w-[--sidebar-width] flex-col bg-sidebar p-0 text-sidebar-foreground" // Ensure p-0 if title is sr-only
+            className="flex w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground p-0" 
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
               } as React.CSSProperties
             }
             side={side}
-            aria-labelledby={mobileSheetTitleId} // Link SheetContent to SheetTitle
           >
-            {/* Visually hidden title for accessibility, as required by Radix Dialog (which Sheet uses) */}
-            <SheetTitle id={mobileSheetTitleId} className="sr-only">
-              Admin
-            </SheetTitle>
+            <SheetHeader>
+              <SheetTitle>Admin</SheetTitle>
+            </SheetHeader>
             {children}
           </SheetContent>
         </Sheet>
