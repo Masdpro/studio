@@ -7,7 +7,7 @@ import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ListPlus, Settings, Truck as TrackIcon, Wallet as WalletIcon, ClipboardList, Star } from 'lucide-react';
+import { Settings, Wallet as WalletIcon, ClipboardList, Star } from 'lucide-react';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
@@ -80,15 +80,12 @@ export default function VendorDashboardPage() {
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold text-primary mb-6">Vendor Dashboard</h1>
       <Tabs defaultValue="wallet" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6"> {/* Updated grid-cols */}
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <Settings className="h-5 w-5" /> Profile
-          </TabsTrigger>
-          <TabsTrigger value="products" className="flex items-center gap-2">
-            <ListPlus className="h-5 w-5" /> Products
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5" /> Orders
@@ -113,26 +110,6 @@ export default function VendorDashboardPage() {
             </CardHeader>
             <CardContent>
               <VendorProfileForm vendor={sampleVendor} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="products">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <ListPlus className="h-6 w-6 text-primary" />
-                Product Management
-              </CardTitle>
-              <CardDescription>Add, edit, or remove your products.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">Manage all your product listings from one place.</p>
-              <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Link href="/vendor/dashboard/products">
-                  Go to Product Management Page
-                </Link>
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
