@@ -1,7 +1,7 @@
 
 'use client';
 
-import Image from 'next/image';
+// import Image from 'next/image'; // Temporarily commented out
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,17 +27,17 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
 
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <CardHeader className="p-0 flex justify-center items-center"> {/* Centering for fixed size image */}
-        {/* Diagnostic change: Using fixed width/height */}
-        <div className="w-[300px] h-[200px] relative overflow-hidden"> {/* Fixed size container */}
-          <Image
+      <CardHeader className="p-0 flex justify-center items-center">
+        <div className="w-[300px] h-[200px] relative overflow-hidden bg-muted"> {/* Added bg-muted for visibility if image fails */}
+          {/* Standard HTML img tag for diagnostics */}
+          <img
             src={product.imageUrl || "https://placehold.co/600x400.png"}
             alt={product.name}
             width={300}
             height={200}
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
             data-ai-hint={product.aiHint || "food item"}
-            priority={product.id === '1' || product.id === '2' || product.id === '3'} // Prioritize loading for first few images
+            // The priority prop is for next/image, remove if not using
           />
         </div>
       </CardHeader>
