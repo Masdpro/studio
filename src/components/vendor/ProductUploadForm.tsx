@@ -4,6 +4,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import React, { useState, useRef } from 'react'; // Added React, useState, useRef
+import Image from 'next/image'; // Added Image
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -17,13 +19,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Trash2 } from 'lucide-react'; // Added Trash2
 
 const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().url({ message: 'Please upload a file or enter a valid image URL.' }).optional().or(z.literal('')),
   category: z.string().optional(),
   aiHint: z.string().optional().refine(value => !value || value.split(' ').length <= 2, {
     message: "AI hint can have at most two words."
@@ -50,9 +52,11 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     },
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+
   function onSubmit(data: ProductFormValues) {
     console.log('New product data:', data);
-    // Placeholder for actual product creation logic
     if (onProductAdd) {
       onProductAdd(data);
     }
@@ -61,7 +65,37 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
       description: `${data.name} has been successfully added.`,
     });
     form.reset();
+    setSelectedFileName(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        fieldOnChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // If no file is selected (e.g., user cancels dialog),
+      // we don't want to clear an existing URL if one was pasted.
+      // Only clear filename.
+      setSelectedFileName(null);
+    }
+  };
+
+  const handleClearImage = (fieldOnChange: (value: string) => void) => {
+    fieldOnChange('');
+    setSelectedFileName(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
 
   return (
     <Form {...form}>
@@ -105,22 +139,76 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             </FormItem>
           )}
         />
+        
         <FormField
           control={form.control}
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL (Optional)</FormLabel>
+              <FormLabel>Product Image</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image.png" {...field} />
+                <div className="space-y-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={(e) => handleFileChange(e, field.onChange)}
+                  />
+                  {selectedFileName && (
+                    <p className="text-sm text-muted-foreground">
+                      Selected file: {selectedFileName}
+                    </p>
+                  )}
+                  <div className="relative flex items-center">
+                     <span className="absolute left-3 text-muted-foreground text-sm">URL:</span>
+                     <Input
+                        type="url"
+                        placeholder="Or paste image URL"
+                        className="pl-12" // Add padding for "URL:" text
+                        value={field.value?.startsWith('http') ? field.value : ''}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          setSelectedFileName(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                        disabled={!!(field.value && field.value.startsWith('data:'))}
+                      />
+                  </div>
+
+                </div>
               </FormControl>
+              {field.value && (
+                <div className="mt-4 relative w-32 h-32 border rounded-md overflow-hidden">
+                  <Image
+                    src={field.value}
+                    alt="Product Preview"
+                    layout="fill"
+                    objectFit="cover"
+                    data-ai-hint="product item"
+                  />
+                </div>
+              )}
+              {field.value && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleClearImage(field.onChange)}
+                    className="text-destructive hover:bg-destructive/10 mt-1"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Clear Image
+                  </Button>
+              )}
               <FormDescription>
-                Provide a URL for the product image. Use placeholder if none.
+                Upload an image file or paste a direct URL for the product image.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
          <FormField
           control={form.control}
           name="category"
