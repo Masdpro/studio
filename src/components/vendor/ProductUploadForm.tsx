@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +25,9 @@ const productSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }).optional().or(z.literal('')),
   category: z.string().optional(),
+  aiHint: z.string().optional().refine(value => !value || value.split(' ').length <= 2, {
+    message: "AI hint can have at most two words."
+  }),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -42,6 +46,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
       price: 0,
       imageUrl: '',
       category: '',
+      aiHint: '',
     },
   });
 
@@ -125,6 +130,22 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
               <FormControl>
                 <Input placeholder="E.g., Pizza, Burgers, Salads" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="aiHint"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>AI Hint (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="E.g., 'food pizza' (max 2 words)" {...field} />
+              </FormControl>
+              <FormDescription>
+                One or two keywords for AI image generation or search (e.g., "pizza margherita").
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

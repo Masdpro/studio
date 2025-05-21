@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -10,8 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 
 // Sample initial products for a vendor
 const initialProducts: Product[] = [
-  { id: 'p1', vendorId: 'v123', name: 'Gourmet Burger', description: 'A delicious gourmet burger with special sauce.', price: 15.99, imageUrl: 'https://placehold.co/200x200.png', category: 'Burgers' },
-  { id: 'p2', vendorId: 'v123', name: 'Artisan Pizza', description: 'Hand-tossed pizza with fresh ingredients.', price: 18.50, imageUrl: 'https://placehold.co/200x200.png', category: 'Pizza' },
+  { id: 'p1', vendorId: 'v123', name: 'Gourmet Burger', description: 'A delicious gourmet burger with special sauce.', price: 15.99, imageUrl: 'https://placehold.co/200x200.png', category: 'Burgers', aiHint: 'burger gourmet' },
+  { id: 'p2', vendorId: 'v123', name: 'Artisan Pizza', description: 'Hand-tossed pizza with fresh ingredients.', price: 18.50, imageUrl: 'https://placehold.co/200x200.png', category: 'Pizza', aiHint: 'pizza artisan' },
 ];
 
 export default function VendorProductManagementPage() {
@@ -23,7 +24,8 @@ export default function VendorProductManagementPage() {
       ...newProductData,
       id: `p${Date.now()}`, // Simple unique ID
       vendorId: 'v123', // Placeholder vendor ID
-      imageUrl: newProductData.imageUrl || 'https://placehold.co/200x200.png'
+      imageUrl: newProductData.imageUrl || 'https://placehold.co/200x200.png',
+      aiHint: newProductData.aiHint || undefined,
     };
     setProducts((prevProducts) => [newProduct, ...prevProducts]);
   };
@@ -48,9 +50,9 @@ export default function VendorProductManagementPage() {
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackagePlus className="h-6 w-6 text-primary" />
-              Add New Product
+              Add to Inventory / List Product
             </CardTitle>
-            <CardDescription>Fill in the details to list a new product.</CardDescription>
+            <CardDescription>Add products from your inventory to display them on Dailybuy.</CardDescription>
           </CardHeader>
           <CardContent>
             <ProductUploadForm onProductAdd={handleProductAdd} />
@@ -63,9 +65,9 @@ export default function VendorProductManagementPage() {
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackageSearch className="h-6 w-6 text-primary" />
-              Your Products
+              Your Listed Products
             </CardTitle>
-            <CardDescription>View and manage your existing products.</CardDescription>
+            <CardDescription>View and manage your products listed on Dailybuy.</CardDescription>
           </CardHeader>
           <CardContent>
             {products.length === 0 ? (
