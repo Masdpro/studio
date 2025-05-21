@@ -29,7 +29,7 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader className="p-0">
-        <div className="aspect-video relative w-full">
+        <div className="aspect-video relative w-full overflow-hidden"> {/* Added overflow-hidden here */}
           <Image
             src={product.imageUrl || "https://placehold.co/600x400.png"}
             alt={product.name}
