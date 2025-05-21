@@ -14,8 +14,8 @@ import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
-  SheetHeader, // Added import
-  SheetTitle,  // Added import
+  SheetHeader, 
+  SheetTitle,  
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -205,7 +205,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="flex flex-col w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="flex flex-col w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -214,9 +214,8 @@ const Sidebar = React.forwardRef<
             side={side}
             aria-labelledby={mobileSheetTitleId}
           >
-            <SheetHeader className="sr-only">
-              <SheetTitle id={mobileSheetTitleId}>Admin</SheetTitle>
-            </SheetHeader>
+            {/* Visually hidden title for accessibility, linked by aria-labelledby */}
+            <SheetTitle id={mobileSheetTitleId} className="sr-only">Admin</SheetTitle>
             {/* The children (SidebarHeader, SidebarContent, SidebarFooter from AppSidebar) 
                 will be rendered here. SidebarContent handles its own scrolling. */}
             {children}
