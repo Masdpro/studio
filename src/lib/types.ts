@@ -9,6 +9,9 @@ export type Vendor = {
   country: string;
   profileManaged?: boolean; // To track if profile is filled
   externalStoreUrl?: string; // New field for external store link
+  locationTag?: string; // For filtering by location
+  latitude?: number; // For geolocation
+  longitude?: number; // For geolocation
 };
 
 export type Product = {
@@ -28,13 +31,14 @@ export type CartItem = {
   price: number;
   quantity: number;
   imageUrl?: string;
+  aiHint?: string;
 };
 
 export type Order = {
   id: string;
   customerId: string;
   vendorId: string; // To know where to pick up from
-  items: CartItem[];
+  items: CartItem[]; // Changed from Product[] to CartItem[]
   totalAmount: number;
   status:
     | 'Pending'
@@ -89,3 +93,5 @@ export type Review = {
   comment?: string;
   createdAt: Date;
 };
+
+    

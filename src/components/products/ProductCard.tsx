@@ -58,3 +58,5 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
     </Card>
   );
 }
+
+    

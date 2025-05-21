@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -34,11 +35,11 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
     <div className="flex items-center gap-4 p-4 border-b">
       <div className="relative w-20 h-20 rounded-md overflow-hidden shrink-0">
         <Image
-          src={item.imageUrl || "https://placehold.co/100x100.png"}
+          src={item.imageUrl || "https://placehold.co/600x400.png"}
           alt={item.name}
           layout="fill"
           objectFit="cover"
-          data-ai-hint="food item"
+          data-ai-hint={item.aiHint || "food item"}
         />
       </div>
       <div className="flex-grow">
@@ -67,3 +68,5 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
     </div>
   );
 }
+
+    

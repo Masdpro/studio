@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,8 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 
 // Sample cart data
 const sampleCartItems: CartItemType[] = [
-  { productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/100x100.png' },
-  { productId: '3', name: 'Chicken Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/100x100.png' },
+  { productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' },
+  { productId: '3', name: 'Chicken Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' },
 ];
 
 export function ShoppingCartView() {
@@ -21,7 +22,7 @@ export function ShoppingCartView() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setCartItems(sampleCartItems);
+    setCartItems(sampleCartItems.map(item => ({ ...item, imageUrl: item.imageUrl || 'https://placehold.co/600x400.png', aiHint: item.aiHint || 'food item' })));
     setIsClient(true);
   }, []);
 
@@ -134,3 +135,5 @@ export function ShoppingCartView() {
     </Card>
   );
 }
+
+    

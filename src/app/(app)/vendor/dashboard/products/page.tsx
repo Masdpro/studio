@@ -11,8 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 
 // Sample initial products for a vendor
 const initialProducts: Product[] = [
-  { id: 'p1', vendorId: 'v123', name: 'Gourmet Burger', description: 'A delicious gourmet burger with special sauce.', price: 15.99, imageUrl: 'https://placehold.co/200x200.png', category: 'Burgers', aiHint: 'burger gourmet' },
-  { id: 'p2', vendorId: 'v123', name: 'Artisan Pizza', description: 'Hand-tossed pizza with fresh ingredients.', price: 18.50, imageUrl: 'https://placehold.co/200x200.png', category: 'Pizza', aiHint: 'pizza artisan' },
+  { id: 'p1', vendorId: 'v123', name: 'Gourmet Burger', description: 'A delicious gourmet burger with special sauce.', price: 15.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger gourmet' },
+  { id: 'p2', vendorId: 'v123', name: 'Artisan Pizza', description: 'Hand-tossed pizza with fresh ingredients.', price: 18.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza artisan' },
 ];
 
 export default function VendorProductManagementPage() {
@@ -24,8 +24,8 @@ export default function VendorProductManagementPage() {
       ...newProductData,
       id: `p${Date.now()}`, // Simple unique ID
       vendorId: 'v123', // Placeholder vendor ID
-      imageUrl: newProductData.imageUrl || 'https://placehold.co/200x200.png',
-      aiHint: newProductData.aiHint || undefined,
+      imageUrl: newProductData.imageUrl || 'https://placehold.co/600x400.png',
+      aiHint: newProductData.aiHint || 'food item',
     };
     setProducts((prevProducts) => [newProduct, ...prevProducts]);
   };
@@ -90,3 +90,5 @@ export default function VendorProductManagementPage() {
     </div>
   );
 }
+
+    
