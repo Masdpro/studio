@@ -184,8 +184,9 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                   <Image
                     src={field.value}
                     alt="Product Preview"
-                    layout="fill"
-                    objectFit="cover"
+                    fill={true}
+                    style={{ objectFit: 'cover' }}
+                    sizes="128px"
                     data-ai-hint="product item"
                   />
                 </div>

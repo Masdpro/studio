@@ -37,8 +37,9 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
         <Image
           src={item.imageUrl || "https://placehold.co/600x400.png"}
           alt={item.name}
-          layout="fill"
-          objectFit="cover"
+          fill={true}
+          style={{ objectFit: 'cover' }}
+          sizes="80px"
           data-ai-hint={item.aiHint || "food item"}
         />
       </div>
@@ -68,5 +69,3 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
     </div>
   );
 }
-
-    

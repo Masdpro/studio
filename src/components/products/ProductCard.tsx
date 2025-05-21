@@ -33,8 +33,9 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
           <Image
             src={product.imageUrl || "https://placehold.co/600x400.png"}
             alt={product.name}
-            layout="fill"
-            objectFit="cover"
+            fill={true}
+            style={{ objectFit: 'cover' }}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             data-ai-hint={product.aiHint || "food item"}
           />
         </div>
@@ -58,5 +59,3 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
     </Card>
   );
 }
-
-    

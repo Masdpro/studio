@@ -18,8 +18,9 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
         <Image
           src={product.imageUrl || "https://placehold.co/600x400.png"}
           alt={product.name}
-          layout="fill"
-          objectFit="cover"
+          fill={true}
+          style={{ objectFit: 'cover' }}
+          sizes="(max-width: 768px) 96px, 128px"
           data-ai-hint={product.aiHint || "food item"}
         />
       </div>
@@ -46,5 +47,3 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
     </Card>
   );
 }
-
-    
