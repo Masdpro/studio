@@ -124,27 +124,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Vendor and Location Dropdown Filters */}
+        {/* Location and Vendor Dropdown Filters */}
         <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-              <Store className="h-6 w-6 mr-3 text-primary" />
-              Filter by Vendor
-            </h3>
-            <Select onValueChange={setSelectedVendor} value={selectedVendor}>
-              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
-                <SelectValue placeholder="Select a vendor" />
-              </SelectTrigger>
-              <SelectContent>
-                {vendorsForFilter.map(vendor => (
-                  <SelectItem key={vendor.id} value={vendor.id}>
-                    {vendor.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div>
             <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
               <MapPin className="h-6 w-6 mr-3 text-primary" />
@@ -158,6 +139,25 @@ export default function HomePage() {
                 {locationsForFilter.map(location => (
                   <SelectItem key={location} value={location}>
                     {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+              <Store className="h-6 w-6 mr-3 text-primary" />
+              Filter by Vendor
+            </h3>
+            <Select onValueChange={setSelectedVendor} value={selectedVendor}>
+              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
+                <SelectValue placeholder="Select a vendor" />
+              </SelectTrigger>
+              <SelectContent>
+                {vendorsForFilter.map(vendor => (
+                  <SelectItem key={vendor.id} value={vendor.id}>
+                    {vendor.name}
                   </SelectItem>
                 ))}
               </SelectContent>
