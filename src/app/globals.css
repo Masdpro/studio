@@ -98,9 +98,7 @@ body {
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  /* Removed the global '*' rule that applied border-border to all elements */
   body {
     @apply bg-background text-foreground;
   }
