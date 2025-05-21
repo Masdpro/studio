@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,7 +23,9 @@ const vendorRegistrationSchema = z.object({
   businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
   contactEmail: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  address: z.string().min(5, { message: 'Address must be at least 5 characters.' }),
+  streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
+  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
+  country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
 });
 
 type VendorRegistrationFormValues = z.infer<typeof vendorRegistrationSchema>;
@@ -35,7 +38,9 @@ export function VendorRegistrationForm() {
       businessName: '',
       contactEmail: '',
       phone: '',
-      address: '',
+      streetAddress: '',
+      city: '',
+      country: '',
     },
   });
 
@@ -102,12 +107,38 @@ export function VendorRegistrationForm() {
             />
             <FormField
               control={form.control}
-              name="address"
+              name="streetAddress"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Business Address</FormLabel>
+                  <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Main St, City, Country" {...field} />
+                    <Input placeholder="123 Main St" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your City" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your Country" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

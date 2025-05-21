@@ -1,3 +1,4 @@
+
 // src/components/auth/DeliveryAgentRegistrationForm.tsx
 'use client';
 
@@ -24,7 +25,9 @@ const deliveryAgentRegistrationSchema = z.object({
   name: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  address: z.string().min(5, { message: 'Address must be at least 5 characters.' }),
+  streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
+  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
+  country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
   vehicleDetails: z.string().optional(),
 });
 
@@ -38,7 +41,9 @@ export function DeliveryAgentRegistrationForm() {
       name: '',
       email: '',
       phone: '',
-      address: '',
+      streetAddress: '',
+      city: '',
+      country: '',
       vehicleDetails: '',
     },
   });
@@ -106,12 +111,38 @@ export function DeliveryAgentRegistrationForm() {
             />
             <FormField
               control={form.control}
-              name="address"
+              name="streetAddress"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Address</FormLabel>
+                  <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Rider St, City, Country" {...field} />
+                    <Input placeholder="123 Rider St" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your City" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your Country" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

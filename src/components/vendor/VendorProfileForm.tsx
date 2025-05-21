@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +22,9 @@ const vendorProfileSchema = z.object({
   businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
   contactEmail: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  address: z.string().min(5, { message: 'Address must be at least 5 characters.' }),
+  streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
+  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
+  country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
   bio: z.string().optional(),
 });
 
@@ -39,7 +42,9 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
       businessName: vendor?.businessName || '',
       contactEmail: vendor?.contactEmail || '',
       phone: vendor?.phone || '',
-      address: vendor?.address || '',
+      streetAddress: vendor?.streetAddress || '',
+      city: vendor?.city || '',
+      country: vendor?.country || '',
       bio: '', // Assuming bio is not part of initial Vendor type for simplicity
     },
   });
@@ -97,12 +102,38 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
         />
         <FormField
           control={form.control}
-          name="address"
+          name="streetAddress"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Business Address</FormLabel>
+              <FormLabel>Street Address</FormLabel>
               <FormControl>
-                <Input placeholder="123 Main St, City, Country" {...field} />
+                <Input placeholder="123 Main St" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="city"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>City</FormLabel>
+              <FormControl>
+                <Input placeholder="Your City" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Country</FormLabel>
+              <FormControl>
+                <Input placeholder="Your Country" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

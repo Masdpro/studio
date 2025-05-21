@@ -1,9 +1,12 @@
+
 export type Vendor = {
   id: string;
   businessName: string;
   contactEmail: string;
   phone: string;
-  address: string;
+  streetAddress: string;
+  city: string;
+  country: string;
   profileManaged?: boolean; // To track if profile is filled
 };
 
@@ -41,8 +44,8 @@ export type Order = {
     | 'Out for Delivery' // After pickup, or synonymous with PickedUpByAgent
     | 'Delivered' // Agent scanned at customer, or after customer confirms
     | 'Cancelled';
-  pickupAddress: string; // Vendor's address
-  deliveryAddress: string; // Customer's address
+  pickupAddress: string; // Vendor's address (remains a string for simplicity in order context)
+  deliveryAddress: string; // Customer's address (remains a string)
   deliveryFee: number; // Payment for the delivery agent
   estimatedDistance?: string; // e.g., "5 km"
   createdAt: Date;
@@ -67,7 +70,9 @@ export type DeliveryAgent = {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  streetAddress: string;
+  city: string;
+  country: string;
   vehicleDetails?: string; // e.g., "Motorcycle - Plate XYZ123"
   walletId?: string;
   profileManaged?: boolean;

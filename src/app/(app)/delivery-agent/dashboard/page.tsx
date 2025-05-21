@@ -19,7 +19,9 @@ const sampleAgent: DeliveryAgent = {
   name: 'Alex Rider',
   email: 'alex.rider@example.com',
   phone: '555-0001',
-  address: '77 Delivery Lane, Transporter City',
+  streetAddress: '77 Delivery Lane',
+  city: 'Transporter City',
+  country: 'Agentland',
   vehicleDetails: 'Scooter - Red Vespa, Plate: RIDE01',
   profileManaged: true,
 };
@@ -32,8 +34,8 @@ const initialAvailableDeliveries: Order[] = [
     items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1 }],
     totalAmount: 12.99,
     status: 'ReadyForPickup',
-    pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City',
-    deliveryAddress: 'John Doe, 456 Customer Ave, Suburbia',
+    pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City, Foodland',
+    deliveryAddress: 'John Doe, 456 Customer Ave, Suburbia, USA',
     deliveryFee: 5.00,
     estimatedDistance: '3 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), 
@@ -45,8 +47,8 @@ const initialAvailableDeliveries: Order[] = [
     items: [{ productId: '3', name: 'Ultimate Chicken Burger', price: 9.50, quantity: 2 }],
     totalAmount: 19.00,
     status: 'ReadyForPickup',
-    pickupAddress: 'Burger Joint, 789 Grill Rd, Flavor Town',
-    deliveryAddress: 'Jane Smith, 101 Shopper St, Metroville',
+    pickupAddress: 'Burger Joint, 789 Grill Rd, Flavor Town, Foodland',
+    deliveryAddress: 'Jane Smith, 101 Shopper St, Metroville, USA',
     deliveryFee: 7.50,
     estimatedDistance: '8 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 2), 
@@ -107,6 +109,8 @@ export default function DeliveryAgentDashboardPage() {
   if (!agent) {
     return <p>Loading agent dashboard...</p>;
   }
+  
+  const agentFullAddress = `${agent.streetAddress}, ${agent.city}, ${agent.country}`;
 
   const deliveriesToDisplay = activeDeliveries.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
   const completedDeliveries = activeDeliveries.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
@@ -128,6 +132,9 @@ export default function DeliveryAgentDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <p><strong>Name:</strong> {agent.name}</p>
+            <p><strong>Email:</strong> {agent.email}</p>
+            <p><strong>Phone:</strong> {agent.phone}</p>
+            <p><strong>Address:</strong> {agentFullAddress}</p>
             <p><strong>Vehicle:</strong> {agent.vehicleDetails || 'Not specified'}</p>
             <Button variant="outline" size="sm" className="mt-2">Edit Profile (Soon)</Button>
           </CardContent>

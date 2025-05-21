@@ -15,8 +15,8 @@ const sampleCustomerOrders: Order[] = [
     items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1 }],
     totalAmount: 12.99,
     status: 'Delivered',
-    pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City',
-    deliveryAddress: 'My Home, 456 Customer Ave, Suburbia',
+    pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City, Foodland',
+    deliveryAddress: 'My Home, 456 Customer Ave, Suburbia, USA',
     deliveryFee: 5.00,
     createdAt: new Date(Date.now() - 3600 * 1000 * 48), // 2 days ago
     deliveryAgentId: 'da001',
@@ -31,8 +31,8 @@ const sampleCustomerOrders: Order[] = [
     ],
     totalAmount: 24.00,
     status: 'Out for Delivery',
-    pickupAddress: 'Burger Joint, 789 Grill Rd, Flavor Town',
-    deliveryAddress: 'My Office, 789 Business Park, Metroville',
+    pickupAddress: 'Burger Joint, 789 Grill Rd, Flavor Town, Foodland',
+    deliveryAddress: 'My Office, 789 Business Park, Metroville, USA',
     deliveryFee: 7.50,
     createdAt: new Date(Date.now() - 3600 * 1000 * 3), // 3 hours ago
     deliveryAgentId: 'da002',
@@ -44,8 +44,8 @@ const sampleCustomerOrders: Order[] = [
     items: [{ productId: '5', name: 'Classic Caesar Salad', price: 7.99, quantity: 1 }],
     totalAmount: 7.99,
     status: 'Processing',
-    pickupAddress: 'Healthy Greens, 101 Salad St, Fresh City',
-    deliveryAddress: 'My Apartment, Bld C, Unit 10, Suburbia',
+    pickupAddress: 'Healthy Greens, 101 Salad St, Fresh City, Foodland',
+    deliveryAddress: 'My Apartment, Bld C, Unit 10, Suburbia, USA',
     deliveryFee: 3.00,
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
   },
