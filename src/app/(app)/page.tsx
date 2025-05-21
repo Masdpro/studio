@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ProductCard } from '@/components/products/ProductCard';
 import type { Product } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Store, MapPin } from 'lucide-react';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -14,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from '@/hooks/use-toast';
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
@@ -31,22 +33,37 @@ const sampleProducts: Product[] = [
   { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter' },
 ];
 
-// Mock vendor data with location tags
-const sampleVendors: { id: string; name: string; locationTag: string }[] = [
-  { id: 'v1', name: 'Pizza Place', locationTag: 'Downtown' },
-  { id: 'v2', name: 'Burger Bonanza', locationTag: 'Suburbia' },
-  { id: 'v3', name: 'Salad Supreme', locationTag: 'Downtown' },
-  { id: 'v4', name: 'Drinks & Co.', locationTag: 'Uptown' },
-  { id: 'v5', name: 'Dessert Dreams', locationTag: 'Suburbia' },
-  { id: 'v6', name: 'Sushi Central', locationTag: 'Uptown' },
+interface Vendor {
+  id: string;
+  name: string;
+  locationTag: string;
+  latitude: number;
+  longitude: number;
+}
+
+// Mock vendor data with location tags and coordinates
+const sampleVendors: Vendor[] = [
+  { id: 'v1', name: 'Pizza Place', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
+  { id: 'v2', name: 'Burger Bonanza', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000 }, // Near LA
+  { id: 'v3', name: 'Salad Supreme', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400 }, // Near LA
+  { id: 'v4', name: 'Drinks & Co.', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712 },  // New York
+  { id: 'v5', name: 'Dessert Dreams', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500 }, // Near LA
+  { id: 'v6', name: 'Sushi Central', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700 },  // Near NY
 ];
 
+const USER_CURRENT_LOCATION_VALUE = "user_current_location";
+const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendor, setSelectedVendor] = useState<string>('All');
   const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
+
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
@@ -58,39 +75,103 @@ export default function HomePage() {
   const vendorsForFilter = useMemo(() => {
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
-    return [{ id: 'All', name: 'All Vendors', locationTag: 'Any' }, ...availableVendors];
+    return [{ id: 'All', name: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0 }, ...availableVendors];
   }, []);
 
   const locationsForFilter = useMemo(() => {
     const uniqueLocations = Array.from(
       new Set(sampleVendors.map(v => v.locationTag))
     ).filter(Boolean).sort();
-    return ['All Locations', ...uniqueLocations];
+    return ['All Locations', USER_CURRENT_LOCATION_VALUE, ...uniqueLocations];
   }, []);
 
+  const handleFetchUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive" });
+      return;
+    }
+    setIsLocating(true);
+    setLocationError(null);
+    setUserCoords(null); // Clear previous coords
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserCoords({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setIsLocating(false);
+        toast({ title: "Location Found!", description: "Filtering by your current location."});
+      },
+      (error) => {
+        let message = "Could not retrieve your location.";
+        if (error.code === error.PERMISSION_DENIED) {
+          message = "Location permission denied. Please enable it in your browser settings.";
+        }
+        setLocationError(message);
+        setIsLocating(false);
+        toast({ title: "Location Error", description: message, variant: "destructive" });
+        setSelectedLocation('All Locations'); // Revert if error
+      }
+    );
+  }, [toast]);
+
+  const handleLocationChange = (value: string) => {
+    setSelectedLocation(value);
+    if (value === USER_CURRENT_LOCATION_VALUE) {
+      handleFetchUserLocation();
+    } else {
+      // If a specific tag is chosen, clear userCoords and locationError
+      // so that future "My Current Location" selections trigger a fresh fetch.
+      setUserCoords(null);
+      setLocationError(null);
+      setIsLocating(false);
+    }
+  };
 
   const filteredProducts = useMemo(() => {
+    let vendorsToFilterBy = sampleVendors;
+
+    if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
+      vendorsToFilterBy = sampleVendors.filter(vendor => 
+        Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
+        Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
+      );
+    } else if (selectedLocation !== 'All Locations' && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
+      vendorsToFilterBy = sampleVendors.filter(vendor => vendor.locationTag === selectedLocation);
+    }
+
+    const vendorIdsFromLocationFilter = new Set(vendorsToFilterBy.map(v => v.id));
+
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       const matchesVendor = selectedVendor === 'All' || product.vendorId === selectedVendor;
       
-      const vendorOfProduct = sampleVendors.find(v => v.id === product.vendorId);
-      const matchesLocation = selectedLocation === 'All Locations' || (vendorOfProduct && vendorOfProduct.locationTag === selectedLocation);
+      let matchesLocationCriteria = false;
+      if (selectedLocation === 'All Locations') {
+        matchesLocationCriteria = true;
+      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+        // If "My Current Location" is selected, we rely on the pre-filtered vendorIdsFromLocationFilter
+        matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
+      } else {
+        // For specific location tags
+        matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
+      }
       
       const matchesSearch = 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch && matchesVendor && matchesLocation;
+        
+      return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
-  }, [searchTerm, selectedCategory, selectedVendor, selectedLocation]);
+  }, [searchTerm, selectedCategory, selectedVendor, selectedLocation, userCoords]);
 
   return (
     <div className="container mx-auto">
       <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Delicious Foods</h1>
 
-      {/* Search and Filter Section */}
       <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
-        {/* Search Input */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <Input
@@ -102,7 +183,6 @@ export default function HomePage() {
           />
         </div>
         
-        {/* Category Filters */}
         <div>
           <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
             <Filter className="h-6 w-6 mr-3 text-primary" />
@@ -123,25 +203,36 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Location and Vendor Dropdown Filters */}
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
               <MapPin className="h-6 w-6 mr-3 text-primary" />
               Filter by Location
             </h3>
-            <Select onValueChange={setSelectedLocation} value={selectedLocation}>
+            <Select onValueChange={handleLocationChange} value={selectedLocation}>
               <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
                 <SelectValue placeholder="Select a location" />
               </SelectTrigger>
               <SelectContent>
                 {locationsForFilter.map(location => (
                   <SelectItem key={location} value={location}>
-                    {location}
+                    {location === USER_CURRENT_LOCATION_VALUE ? (
+                      <span className="flex items-center gap-2">
+                        <LocateFixed className="h-4 w-4" /> My Current Location
+                      </span>
+                    ) : location}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {isLocating && <p className="text-sm text-muted-foreground mt-2">Fetching your location...</p>}
+            {locationError && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Location Error</AlertTitle>
+                <AlertDescription>{locationError}</AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div>
@@ -165,7 +256,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Product Grid */}
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredProducts.map((product) => {
@@ -175,14 +265,28 @@ export default function HomePage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <p className="text-2xl font-semibold text-foreground mb-2">No Products Found</p>
-          <p className="text-lg text-muted-foreground">
-            Try adjusting your search or filter criteria.
-          </p>
+         <div className="text-center py-16">
+          {isLocating ? (
+            <>
+              <LocateFixed className="h-16 w-16 text-muted-foreground mx-auto mb-4 animate-pulse" />
+              <p className="text-2xl font-semibold text-foreground mb-2">Finding nearby products...</p>
+              <p className="text-lg text-muted-foreground">
+                Please wait while we fetch your location.
+              </p>
+            </>
+          ) : (
+            <>
+              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-2xl font-semibold text-foreground mb-2">No Products Found</p>
+              <p className="text-lg text-muted-foreground">
+                Try adjusting your search or filter criteria. If filtering by current location, ensure location permissions are enabled and try again.
+              </p>
+            </>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+    
