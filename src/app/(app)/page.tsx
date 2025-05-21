@@ -6,7 +6,14 @@ import { ProductCard } from '@/components/products/ProductCard';
 import type { Product } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Store, MapPin } from 'lucide-react'; // Added MapPin icon
+import { Search, Filter, Store, MapPin } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
@@ -38,8 +45,8 @@ const sampleVendors: { id: string; name: string; locationTag: string }[] = [
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedVendor, setSelectedVendor] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
+  const [selectedVendor, setSelectedVendor] = useState<string>('All'); // 'All' will be the value for "All Vendors"
+  const [selectedLocation, setSelectedLocation] = useState<string>('All Locations'); // 'All Locations' for "All Locations"
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
@@ -51,6 +58,7 @@ export default function HomePage() {
   const vendorsForFilter = useMemo(() => {
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
+    // The 'All' vendor object should have 'All' as id to match the state
     return [{ id: 'All', name: 'All Vendors', locationTag: 'Any' }, ...availableVendors];
   }, []);
 
@@ -116,45 +124,44 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Vendor Filters */}
-        <div>
-          <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-            <Store className="h-6 w-6 mr-3 text-primary" />
-            Filter by Vendor
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {vendorsForFilter.map(vendor => (
-              <Button
-                key={vendor.id}
-                variant={selectedVendor === vendor.id ? 'default' : 'outline'}
-                size="lg"
-                onClick={() => setSelectedVendor(vendor.id)}
-                className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              >
-                {vendor.name}
-              </Button>
-            ))}
+        {/* Vendor and Location Dropdown Filters */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+              <Store className="h-6 w-6 mr-3 text-primary" />
+              Filter by Vendor
+            </h3>
+            <Select onValueChange={setSelectedVendor} value={selectedVendor}>
+              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
+                <SelectValue placeholder="Select a vendor" />
+              </SelectTrigger>
+              <SelectContent>
+                {vendorsForFilter.map(vendor => (
+                  <SelectItem key={vendor.id} value={vendor.id}>
+                    {vendor.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        {/* Location Filters */}
-        <div>
-          <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-            <MapPin className="h-6 w-6 mr-3 text-primary" />
-            Filter by Location
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {locationsForFilter.map(location => (
-              <Button
-                key={location}
-                variant={selectedLocation === location ? 'default' : 'outline'}
-                size="lg"
-                onClick={() => setSelectedLocation(location)}
-                className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              >
-                {location}
-              </Button>
-            ))}
+          <div>
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+              <MapPin className="h-6 w-6 mr-3 text-primary" />
+              Filter by Location
+            </h3>
+            <Select onValueChange={setSelectedLocation} value={selectedLocation}>
+              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
+                <SelectValue placeholder="Select a location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locationsForFilter.map(location => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
