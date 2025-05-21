@@ -21,18 +21,18 @@ import { useToast } from '@/hooks/use-toast';
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
-  { id: '1', vendorId: 'v1', name: 'Margherita Pizza', description: 'Classic cheese and tomato pizza with a crispy crust.', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza margherita' },
-  { id: '2', vendorId: 'v1', name: 'Pepperoni Passion Pizza', description: 'Loaded with spicy pepperoni and mozzarella cheese.', price: 14.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza pepperoni' },
-  { id: '3', vendorId: 'v2', name: 'Ultimate Chicken Burger', description: 'Grilled chicken breast, bacon, cheese, lettuce, and tomato.', price: 9.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger chicken' },
-  { id: '4', vendorId: 'v2', name: 'Garden Veggie Burger', description: 'A delicious plant-based patty with fresh garden vegetables.', price: 8.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger veggie' },
-  { id: '5', vendorId: 'v3', name: 'Classic Caesar Salad', description: 'Crisp romaine, Parmesan, croutons, and creamy Caesar dressing.', price: 7.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Salads', aiHint: 'salad caesar' },
-  { id: '6', vendorId: 'v3', name: 'Mediterranean Greek Salad', description: 'Tomatoes, cucumbers, olives, feta, and a tangy vinaigrette.', price: 8.49, imageUrl: 'https://placehold.co/600x400.png', category: 'Salads', aiHint: 'salad greek' },
-  { id: '7', vendorId: 'v4', name: 'Sparkling Cola', description: 'Classic refreshing cola beverage, chilled to perfection.', price: 2.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Drinks', aiHint: 'drink soda' },
-  { id: '8', vendorId: 'v4', name: 'Fresh Orange Juice', description: '100% freshly squeezed orange juice, full of vitamins.', price: 3.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Drinks', aiHint: 'drink juice' },
-  { id: '9', vendorId: 'v5', name: 'Decadent Chocolate Cake', description: 'A rich and moist chocolate layer cake with fudge frosting.', price: 5.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert cake' },
-  { id: '10', vendorId: 'v5', name: 'Vanilla Bean Ice Cream', description: 'Creamy vanilla bean ice cream, perfect for a treat.', price: 3.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert icecream' },
-  { id: '11', vendorId: 'v1', name: 'Spaghetti Carbonara', description: 'Classic Italian pasta with eggs, cheese, pancetta, and pepper.', price: 13.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Pasta', aiHint: 'pasta carbonara' },
-  { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter' },
+  { id: '1', vendorId: 'v1', name: 'Margherita Pizza', description: 'Classic cheese and tomato pizza with a crispy crust.', price: 12.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Pizza', aiHint: 'pizza margherita' },
+  { id: '2', vendorId: 'v1', name: 'Pepperoni Passion Pizza', description: 'Loaded with spicy pepperoni and mozzarella cheese.', price: 14.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Pizza', aiHint: 'pizza pepperoni' },
+  { id: '3', vendorId: 'v2', name: 'Ultimate Chicken Burger', description: 'Grilled chicken breast, bacon, cheese, lettuce, and tomato.', price: 9.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Burgers', aiHint: 'burger chicken' },
+  { id: '4', vendorId: 'v2', name: 'Garden Veggie Burger', description: 'A delicious plant-based patty with fresh garden vegetables.', price: 8.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Burgers', aiHint: 'burger veggie' },
+  { id: '5', vendorId: 'v3', name: 'Classic Caesar Salad', description: 'Crisp romaine, Parmesan, croutons, and creamy Caesar dressing.', price: 7.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Salads', aiHint: 'salad caesar' },
+  { id: '6', vendorId: 'v3', name: 'Mediterranean Greek Salad', description: 'Tomatoes, cucumbers, olives, feta, and a tangy vinaigrette.', price: 8.49, imageUrl: 'https://placehold.co/300x200.png', category: 'Salads', aiHint: 'salad greek' },
+  { id: '7', vendorId: 'v4', name: 'Sparkling Cola', description: 'Classic refreshing cola beverage, chilled to perfection.', price: 2.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Drinks', aiHint: 'drink soda' },
+  { id: '8', vendorId: 'v4', name: 'Fresh Orange Juice', description: '100% freshly squeezed orange juice, full of vitamins.', price: 3.00, imageUrl: 'https://placehold.co/300x200.png', category: 'Drinks', aiHint: 'drink juice' },
+  { id: '9', vendorId: 'v5', name: 'Decadent Chocolate Cake', description: 'A rich and moist chocolate layer cake with fudge frosting.', price: 5.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Desserts', aiHint: 'dessert cake' },
+  { id: '10', vendorId: 'v5', name: 'Vanilla Bean Ice Cream', description: 'Creamy vanilla bean ice cream, perfect for a treat.', price: 3.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Desserts', aiHint: 'dessert icecream' },
+  { id: '11', vendorId: 'v1', name: 'Spaghetti Carbonara', description: 'Classic Italian pasta with eggs, cheese, pancetta, and pepper.', price: 13.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Pasta', aiHint: 'pasta carbonara' },
+  { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Sushi', aiHint: 'sushi platter' },
 ];
 
 // Mock vendor data with location tags, coordinates, and external store URLs
@@ -51,7 +51,7 @@ const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedVendorId, setSelectedVendorId] = useState<string>('All'); // Changed to selectedVendorId
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
   const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -69,7 +69,6 @@ export default function HomePage() {
   const vendorsForFilter = useMemo(() => {
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
-    // Use a placeholder for "All Vendors" that matches Vendor structure partially
     return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
   }, []);
 
@@ -88,7 +87,7 @@ export default function HomePage() {
     }
     setIsLocating(true);
     setLocationError(null);
-    setUserCoords(null); 
+    setUserCoords(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -107,7 +106,7 @@ export default function HomePage() {
         setLocationError(message);
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
-        setSelectedLocation('All Locations'); 
+        setSelectedLocation('All Locations');
       }
     );
   }, [toast]);
@@ -122,7 +121,7 @@ export default function HomePage() {
       setIsLocating(false);
     }
   };
-  
+
   const selectedVendorDetails = useMemo(() => {
     return sampleVendors.find(v => v.id === selectedVendorId);
   }, [selectedVendorId]);
@@ -132,7 +131,7 @@ export default function HomePage() {
     let vendorsToFilterBy = sampleVendors;
 
     if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
-      vendorsToFilterBy = sampleVendors.filter(vendor => 
+      vendorsToFilterBy = sampleVendors.filter(vendor =>
         vendor.latitude && vendor.longitude && // Ensure vendor has coordinates
         Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
         Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
@@ -146,7 +145,7 @@ export default function HomePage() {
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
-      
+
       let matchesLocationCriteria = false;
       if (selectedLocation === 'All Locations') {
         matchesLocationCriteria = true;
@@ -155,11 +154,11 @@ export default function HomePage() {
       } else { // Regular location tag filter
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
-      
-      const matchesSearch = 
+
+      const matchesSearch =
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-        
+
       return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
   }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords]);
@@ -169,10 +168,10 @@ export default function HomePage() {
       <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Delicious Foods</h1>
 
       <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
-        
+
         <div className="grid md:grid-cols-2 gap-6 items-start">
           <div>
-            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+            <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
               <MapPin className="h-6 w-6 mr-3 text-primary" />
               Filter by Location
             </h3>
@@ -201,22 +200,12 @@ export default function HomePage() {
               </Alert>
             )}
           </div>
-          
+
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold flex items-center text-foreground">
-                <Store className="h-6 w-6 mr-3 text-primary" />
-                Filter by Vendor
-              </h3>
-              {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/vendor/${selectedVendorId}/store`}>
-                    Visit {selectedVendorDetails.businessName}'s Site
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
-            </div>
+            <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
+              <Store className="h-6 w-6 mr-3 text-primary" />
+              Filter by Vendor
+            </h3>
             <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
               <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
                 <SelectValue placeholder="Select a vendor" />
@@ -229,6 +218,14 @@ export default function HomePage() {
                 ))}
               </SelectContent>
             </Select>
+            {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+              <Button variant="outline" size="sm" asChild className="mt-2">
+                <Link href={`/vendor/${selectedVendorId}/store`}>
+                  Visit {selectedVendorDetails.businessName}'s Site
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
