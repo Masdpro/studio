@@ -1,7 +1,7 @@
 
 'use client';
 
-// import Image from 'next/image'; // Standard HTML img tag for diagnostics
+import Image from 'next/image';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,20 +27,17 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
 
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      {/* Simplified image container, removed CardHeader wrapper */}
-      <div className="w-[300px] h-[200px] bg-muted overflow-hidden">
-        <img
+      <CardHeader className="p-0 relative aspect-video w-full overflow-hidden">
+        <Image
           src={product.imageUrl || "https://placehold.co/600x400.png"}
           alt={product.name}
-          style={{
-            display: 'block', // Explicit display
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
+          fill
+          style={{ objectFit: 'cover' }}
+          className="group-hover:scale-105 transition-transform duration-300"
           data-ai-hint={product.aiHint || "food item"}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
-      </div>
+      </CardHeader>
       <CardContent className="p-4 flex-grow">
         <CardTitle className="text-xl font-semibold mb-1">{product.name}</CardTitle>
         <CardDescription className="text-muted-foreground text-sm mb-2 min-h-[2.5rem] line-clamp-2">

@@ -26,7 +26,7 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
   };
 
   const decrementQuantity = () => {
-    if (item.quantity > 0) { 
+    if (item.quantity > 0) {
       onQuantityChange(item.productId, item.quantity - 1);
     }
   };
@@ -37,9 +37,10 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
         <Image
           src={item.imageUrl || "https://placehold.co/600x400.png"}
           alt={item.name}
-          width={80}
-          height={80}
+          fill
+          style={{ objectFit: 'cover' }}
           data-ai-hint={item.aiHint || "food item"}
+          sizes="80px"
         />
       </div>
       <div className="flex-grow">

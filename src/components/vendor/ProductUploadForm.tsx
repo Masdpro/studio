@@ -136,7 +136,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="imageUrl"
@@ -161,7 +161,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                      <Input
                         type="url"
                         placeholder="Or paste image URL"
-                        className="pl-12" 
+                        className="pl-12"
                         value={field.value?.startsWith('http') ? field.value : ''}
                         onChange={(e) => {
                           field.onChange(e.target.value);
@@ -181,9 +181,10 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                   <Image
                     src={field.value}
                     alt="Product Preview"
-                    width={128}
-                    height={128}
-                    data-ai-hint="product item"
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    data-ai-hint={field.value.startsWith('data:') ? "product preview" : (form.getValues('aiHint') || "product item")}
+                    sizes="128px"
                   />
                 </div>
               )}
