@@ -76,7 +76,7 @@ export default function HomePage() {
   const locationsForFilter = useMemo(() => {
     const uniqueLocations = Array.from(
       new Set(sampleVendors.map(v => v.locationTag))
-    ).filter(Boolean).sort();
+    ).filter(Boolean).sort() as string[];
     return ['All Locations', USER_CURRENT_LOCATION_VALUE, ...uniqueLocations];
   }, []);
 
@@ -133,6 +133,7 @@ export default function HomePage() {
 
     if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
       vendorsToFilterBy = sampleVendors.filter(vendor => 
+        vendor.latitude && vendor.longitude && // Ensure vendor has coordinates
         Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
         Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
       );
@@ -149,9 +150,9 @@ export default function HomePage() {
       let matchesLocationCriteria = false;
       if (selectedLocation === 'All Locations') {
         matchesLocationCriteria = true;
-      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) { // Check userCoords here
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
-      } else {
+      } else { // Regular location tag filter
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
       
@@ -202,53 +203,53 @@ export default function HomePage() {
           </div>
           
           <div>
-            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-              <Filter className="h-6 w-6 mr-3 text-primary" />
-              Filter by Category
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {categories.map(category => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? 'default' : 'outline'}
-                  size="lg"
-                  onClick={() => setSelectedCategory(category)}
-                  className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                >
-                  {category}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold flex items-center text-foreground">
+                <Store className="h-6 w-6 mr-3 text-primary" />
+                Filter by Vendor
+              </h3>
+              {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/vendor/${selectedVendorId}/store`}>
+                    Visit {selectedVendorDetails.businessName}'s Site
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
-              ))}
+              )}
             </div>
+            <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
+              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
+                <SelectValue placeholder="Select a vendor" />
+              </SelectTrigger>
+              <SelectContent>
+                {vendorsForFilter.map(vendor => (
+                  <SelectItem key={vendor.id} value={vendor.id}>
+                    {vendor.businessName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold flex items-center text-foreground">
-              <Store className="h-6 w-6 mr-3 text-primary" />
-              Filter by Vendor
-            </h3>
-            {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/vendor/${selectedVendorId}/store`}>
-                  Visit {selectedVendorDetails.businessName}'s Site
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </Link>
+          <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+            <Filter className="h-6 w-6 mr-3 text-primary" />
+            Filter by Category
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {categories.map(category => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                size="lg"
+                onClick={() => setSelectedCategory(category)}
+                className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                {category}
               </Button>
-            )}
+            ))}
           </div>
-          <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
-            <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
-              <SelectValue placeholder="Select a vendor" />
-            </SelectTrigger>
-            <SelectContent>
-              {vendorsForFilter.map(vendor => (
-                <SelectItem key={vendor.id} value={vendor.id}>
-                  {vendor.businessName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="relative">
@@ -296,5 +297,4 @@ export default function HomePage() {
     </div>
   );
 }
-
     
