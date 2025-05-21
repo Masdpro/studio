@@ -14,8 +14,8 @@ import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
-  SheetHeader, 
-  SheetTitle,  
+  // SheetHeader, // No longer needed just for a hidden title
+  // SheetTitle,  // No longer needed just for a hidden title
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -182,7 +182,7 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
-    const mobileSheetTitleId = React.useId()
+    // const mobileSheetTitleId = React.useId(); // No longer needed for this approach
 
     if (collapsible === "none") {
       return (
@@ -212,10 +212,8 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
-            aria-labelledby={mobileSheetTitleId}
+            aria-label="Admin" // Provide direct aria-label for accessibility
           >
-            {/* Visually hidden title for accessibility, linked by aria-labelledby */}
-            <SheetTitle id={mobileSheetTitleId} className="sr-only">Admin</SheetTitle>
             {/* The children (SidebarHeader, SidebarContent, SidebarFooter from AppSidebar) 
                 will be rendered here. SidebarContent handles its own scrolling. */}
             {children}
