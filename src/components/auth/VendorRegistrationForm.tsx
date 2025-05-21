@@ -26,6 +26,7 @@ const vendorRegistrationSchema = z.object({
   streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
   country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
+  externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type VendorRegistrationFormValues = z.infer<typeof vendorRegistrationSchema>;
@@ -41,6 +42,7 @@ export function VendorRegistrationForm() {
       streetAddress: '',
       city: '',
       country: '',
+      externalStoreUrl: '',
     },
   });
 
@@ -61,7 +63,7 @@ export function VendorRegistrationForm() {
           <UserPlus className="h-6 w-6 text-primary" />
           Vendor Registration
         </CardTitle>
-        <CardDescription>Join Swiftbuy as a vendor and start selling your products.</CardDescription>
+        <CardDescription>Join Dailybuy as a vendor and start selling your products.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -140,6 +142,22 @@ export function VendorRegistrationForm() {
                   <FormControl>
                     <Input placeholder="Your Country" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="externalStoreUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>External Store URL (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="url" placeholder="https://yourstore.com" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Link to your existing online store, if you have one.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

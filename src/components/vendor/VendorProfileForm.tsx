@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,6 +27,7 @@ const vendorProfileSchema = z.object({
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
   country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
   bio: z.string().optional(),
+  externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type VendorProfileFormValues = z.infer<typeof vendorProfileSchema>;
@@ -46,6 +48,7 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
       city: vendor?.city || '',
       country: vendor?.country || '',
       bio: '', // Assuming bio is not part of initial Vendor type for simplicity
+      externalStoreUrl: vendor?.externalStoreUrl || '',
     },
   });
 
@@ -148,6 +151,22 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
               <FormControl>
                 <Textarea placeholder="Tell us a little about your business" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="externalStoreUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>External Store URL (Optional)</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://yourstore.com" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormDescription>
+                Link to your existing online store. This will be displayed to customers.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

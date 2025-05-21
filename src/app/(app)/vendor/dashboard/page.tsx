@@ -22,6 +22,7 @@ const sampleVendor: Vendor = {
   streetAddress: '123 Food Lane',
   city: 'Culinary City',
   country: 'Foodland',
+  externalStoreUrl: 'https://example.com/awesomeeats'
 };
 
 const fullVendorAddress = `${sampleVendor.streetAddress}, ${sampleVendor.city}, ${sampleVendor.country}`;
@@ -80,7 +81,7 @@ export default function VendorDashboardPage() {
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold text-primary mb-6">Vendor Dashboard</h1>
       <Tabs defaultValue="wallet" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6"> {/* Updated grid-cols */}
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
@@ -140,6 +141,23 @@ export default function VendorDashboardPage() {
           </Card>
         </TabsContent>
       </Tabs>
+       <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Your External Storefront</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sampleVendor.externalStoreUrl ? (
+            <p>
+              Customers can visit your external storefront at:{' '}
+              <Link href={`/vendor/${sampleVendor.id}/store`} className="text-primary underline hover:text-primary/80">
+                View Your Store Page on Dailybuy
+              </Link>
+            </p>
+          ) : (
+            <p>You have not set an external store URL in your profile. Add one to allow customers to visit your site via Dailybuy.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -8,6 +8,7 @@ export type Vendor = {
   city: string;
   country: string;
   profileManaged?: boolean; // To track if profile is filled
+  externalStoreUrl?: string; // New field for external store link
 };
 
 export type Product = {

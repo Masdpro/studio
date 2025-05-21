@@ -2,11 +2,13 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import Link from 'next/link'; // Import Link
 import { ProductCard } from '@/components/products/ProductCard';
 import type { Product } from '@/lib/types';
+import type { Vendor } from '@/lib/types'; // Import Vendor type
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle } from 'lucide-react';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -33,22 +35,14 @@ const sampleProducts: Product[] = [
   { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter' },
 ];
 
-interface Vendor {
-  id: string;
-  name: string;
-  locationTag: string;
-  latitude: number;
-  longitude: number;
-}
-
-// Mock vendor data with location tags and coordinates
+// Mock vendor data with location tags, coordinates, and external store URLs
 const sampleVendors: Vendor[] = [
-  { id: 'v1', name: 'Pizza Place', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
-  { id: 'v2', name: 'Burger Bonanza', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000 }, // Near LA
-  { id: 'v3', name: 'Salad Supreme', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400 }, // Near LA
-  { id: 'v4', name: 'Drinks & Co.', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712 },  // New York
-  { id: 'v5', name: 'Dessert Dreams', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500 }, // Near LA
-  { id: 'v6', name: 'Sushi Central', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700 },  // Near NY
+  { id: 'v1', businessName: 'Pizza Place', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/pizzapalace' },
+  { id: 'v2', businessName: 'Burger Bonanza', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/burgerbonanza' },
+  { id: 'v3', businessName: 'Salad Supreme', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400 }, // No external URL
+  { id: 'v4', businessName: 'Drinks & Co.', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/drinksco' },
+  { id: 'v5', businessName: 'Dessert Dreams', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500 },
+  { id: 'v6', businessName: 'Sushi Central', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/sushicentral' },
 ];
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
@@ -57,7 +51,7 @@ const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedVendor, setSelectedVendor] = useState<string>('All');
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('All'); // Changed to selectedVendorId
   const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -75,7 +69,8 @@ export default function HomePage() {
   const vendorsForFilter = useMemo(() => {
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
-    return [{ id: 'All', name: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0 }, ...availableVendors];
+    // Use a placeholder for "All Vendors" that matches Vendor structure partially
+    return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
   }, []);
 
   const locationsForFilter = useMemo(() => {
@@ -93,7 +88,7 @@ export default function HomePage() {
     }
     setIsLocating(true);
     setLocationError(null);
-    setUserCoords(null); // Clear previous coords
+    setUserCoords(null); 
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -112,7 +107,7 @@ export default function HomePage() {
         setLocationError(message);
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
-        setSelectedLocation('All Locations'); // Revert if error
+        setSelectedLocation('All Locations'); 
       }
     );
   }, [toast]);
@@ -122,13 +117,16 @@ export default function HomePage() {
     if (value === USER_CURRENT_LOCATION_VALUE) {
       handleFetchUserLocation();
     } else {
-      // If a specific tag is chosen, clear userCoords and locationError
-      // so that future "My Current Location" selections trigger a fresh fetch.
       setUserCoords(null);
       setLocationError(null);
       setIsLocating(false);
     }
   };
+  
+  const selectedVendorDetails = useMemo(() => {
+    return sampleVendors.find(v => v.id === selectedVendorId);
+  }, [selectedVendorId]);
+
 
   const filteredProducts = useMemo(() => {
     let vendorsToFilterBy = sampleVendors;
@@ -146,16 +144,14 @@ export default function HomePage() {
 
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-      const matchesVendor = selectedVendor === 'All' || product.vendorId === selectedVendor;
+      const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
       
       let matchesLocationCriteria = false;
       if (selectedLocation === 'All Locations') {
         matchesLocationCriteria = true;
       } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
-        // If "My Current Location" is selected, we rely on the pre-filtered vendorIdsFromLocationFilter
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       } else {
-        // For specific location tags
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
       
@@ -165,7 +161,7 @@ export default function HomePage() {
         
       return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
-  }, [searchTerm, selectedCategory, selectedVendor, selectedLocation, userCoords]);
+  }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords]);
 
   return (
     <div className="container mx-auto">
@@ -203,7 +199,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 items-start">
           <div>
             <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
               <MapPin className="h-6 w-6 mr-3 text-primary" />
@@ -236,18 +232,28 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-              <Store className="h-6 w-6 mr-3 text-primary" />
-              Filter by Vendor
-            </h3>
-            <Select onValueChange={setSelectedVendor} value={selectedVendor}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold flex items-center text-foreground">
+                <Store className="h-6 w-6 mr-3 text-primary" />
+                Filter by Vendor
+              </h3>
+              {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/vendor/${selectedVendorId}/store`}>
+                    Visit {selectedVendorDetails.businessName}'s Site
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+            <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
               <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
                 <SelectValue placeholder="Select a vendor" />
               </SelectTrigger>
               <SelectContent>
                 {vendorsForFilter.map(vendor => (
                   <SelectItem key={vendor.id} value={vendor.id}>
-                    {vendor.name}
+                    {vendor.businessName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -260,7 +266,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredProducts.map((product) => {
             const vendor = sampleVendors.find(v => v.id === product.vendorId);
-            const vendorName = vendor ? vendor.name : 'Unknown Vendor';
+            const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
             return <ProductCard key={product.id} product={product} vendorName={vendorName} />;
           })}
         </div>
@@ -288,5 +294,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
