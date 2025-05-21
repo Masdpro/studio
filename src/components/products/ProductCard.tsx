@@ -5,20 +5,19 @@ import Image from 'next/image';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge'; // Import Badge
-import { ShoppingCart, Store } from 'lucide-react'; // Import Store icon
+import { Badge } from '@/components/ui/badge';
+import { ShoppingCart, Store } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
-  vendorName: string; // Add vendorName prop
+  vendorName: string;
 }
 
 export function ProductCard({ product, vendorName }: ProductCardProps) {
   const { toast } = useToast();
 
   const handleAddToCart = () => {
-    // Placeholder for add to cart logic
     console.log(`Added ${product.name} to cart`);
     toast({
       title: "Added to cart!",
@@ -28,15 +27,17 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
 
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <CardHeader className="p-0">
-        <div className="aspect-video relative w-full overflow-hidden"> {/* Added overflow-hidden here */}
+      <CardHeader className="p-0 flex justify-center items-center"> {/* Centering for fixed size image */}
+        {/* Diagnostic change: Using fixed width/height */}
+        <div className="w-[300px] h-[200px] relative overflow-hidden"> {/* Fixed size container */}
           <Image
             src={product.imageUrl || "https://placehold.co/600x400.png"}
             alt={product.name}
-            fill={true}
+            width={300}
+            height={200}
             style={{ objectFit: 'cover' }}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             data-ai-hint={product.aiHint || "food item"}
+            priority={product.id === '1' || product.id === '2' || product.id === '3'} // Prioritize loading for first few images
           />
         </div>
       </CardHeader>
