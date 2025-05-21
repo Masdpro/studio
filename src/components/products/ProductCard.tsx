@@ -1,17 +1,20 @@
+
 'use client';
 
 import Image from 'next/image';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ShoppingCart } from 'lucide-react';
+import { Badge } from '@/components/ui/badge'; // Import Badge
+import { ShoppingCart, Store } from 'lucide-react'; // Import Store icon
 import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
+  vendorName: string; // Add vendorName prop
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, vendorName }: ProductCardProps) {
   const { toast } = useToast();
 
   const handleAddToCart = () => {
@@ -41,6 +44,10 @@ export function ProductCard({ product }: ProductCardProps) {
         <CardDescription className="text-muted-foreground text-sm mb-2 min-h-[2.5rem] line-clamp-2">
           {product.description}
         </CardDescription>
+        <Badge variant="secondary" className="mb-2 inline-flex items-center">
+          <Store className="h-3 w-3 mr-1.5" />
+          {vendorName}
+        </Badge>
         <p className="text-lg font-bold text-primary mt-auto">${product.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">

@@ -45,8 +45,8 @@ const sampleVendors: { id: string; name: string; locationTag: string }[] = [
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedVendor, setSelectedVendor] = useState<string>('All'); // 'All' will be the value for "All Vendors"
-  const [selectedLocation, setSelectedLocation] = useState<string>('All Locations'); // 'All Locations' for "All Locations"
+  const [selectedVendor, setSelectedVendor] = useState<string>('All');
+  const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
@@ -58,7 +58,6 @@ export default function HomePage() {
   const vendorsForFilter = useMemo(() => {
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
-    // The 'All' vendor object should have 'All' as id to match the state
     return [{ id: 'All', name: 'All Vendors', locationTag: 'Any' }, ...availableVendors];
   }, []);
 
@@ -169,9 +168,11 @@ export default function HomePage() {
       {/* Product Grid */}
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filteredProducts.map((product) => {
+            const vendor = sampleVendors.find(v => v.id === product.vendorId);
+            const vendorName = vendor ? vendor.name : 'Unknown Vendor';
+            return <ProductCard key={product.id} product={product} vendorName={vendorName} />;
+          })}
         </div>
       ) : (
         <div className="text-center py-16">
