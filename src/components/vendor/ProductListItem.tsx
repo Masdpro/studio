@@ -18,8 +18,8 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
         <Image
           src={product.imageUrl || "https://placehold.co/600x400.png"}
           alt={product.name}
-          fill={true}
-          style={{ objectFit: 'cover' }}
+          width={128} // Using the larger dimension (md:w-32 -> 128px)
+          height={128} // Using the larger dimension (md:h-32 -> 128px)
           sizes="(max-width: 768px) 96px, 128px"
           data-ai-hint={product.aiHint || "food item"}
         />

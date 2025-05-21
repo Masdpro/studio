@@ -4,8 +4,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import React, { useState, useRef } from 'react'; // Added React, useState, useRef
-import Image from 'next/image'; // Added Image
+import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Trash2 } from 'lucide-react'; // Added Trash2
+import { UploadCloud, Trash2 } from 'lucide-react';
 
 const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
@@ -81,9 +81,6 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
       };
       reader.readAsDataURL(file);
     } else {
-      // If no file is selected (e.g., user cancels dialog),
-      // we don't want to clear an existing URL if one was pasted.
-      // Only clear filename.
       setSelectedFileName(null);
     }
   };
@@ -164,7 +161,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                      <Input
                         type="url"
                         placeholder="Or paste image URL"
-                        className="pl-12" // Add padding for "URL:" text
+                        className="pl-12" 
                         value={field.value?.startsWith('http') ? field.value : ''}
                         onChange={(e) => {
                           field.onChange(e.target.value);
@@ -184,9 +181,8 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                   <Image
                     src={field.value}
                     alt="Product Preview"
-                    fill={true}
-                    style={{ objectFit: 'cover' }}
-                    sizes="128px"
+                    width={128}
+                    height={128}
                     data-ai-hint="product item"
                   />
                 </div>

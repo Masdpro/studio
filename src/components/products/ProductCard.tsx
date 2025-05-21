@@ -1,7 +1,7 @@
 
 'use client';
 
-// import Image from 'next/image'; // Temporarily commented out
+// import Image from 'next/image'; // Standard HTML img tag for diagnostics
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,20 +27,20 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
 
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <CardHeader className="p-0 flex justify-center items-center">
-        <div className="w-[300px] h-[200px] relative overflow-hidden bg-muted"> {/* Added bg-muted for visibility if image fails */}
-          {/* Standard HTML img tag for diagnostics */}
-          <img
-            src={product.imageUrl || "https://placehold.co/600x400.png"}
-            alt={product.name}
-            width={300}
-            height={200}
-            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-            data-ai-hint={product.aiHint || "food item"}
-            // The priority prop is for next/image, remove if not using
-          />
-        </div>
-      </CardHeader>
+      {/* Simplified image container, removed CardHeader wrapper */}
+      <div className="w-[300px] h-[200px] bg-muted overflow-hidden">
+        <img
+          src={product.imageUrl || "https://placehold.co/600x400.png"}
+          alt={product.name}
+          style={{
+            display: 'block', // Explicit display
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+          data-ai-hint={product.aiHint || "food item"}
+        />
+      </div>
       <CardContent className="p-4 flex-grow">
         <CardTitle className="text-xl font-semibold mb-1">{product.name}</CardTitle>
         <CardDescription className="text-muted-foreground text-sm mb-2 min-h-[2.5rem] line-clamp-2">
