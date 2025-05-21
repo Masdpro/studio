@@ -4,14 +4,14 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { Menu } from "lucide-react" // Changed from PanelLeft to Menu
+import { Menu as MenuIcon } from "lucide-react" // Renamed to avoid conflict
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetContent } from "@/components/ui/sheet" // Removed SheetHeader, SheetTitle from here
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -206,10 +206,8 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
+            aria-label="Main menu" 
           >
-            <SheetHeader className="p-4 border-b border-sidebar-border">
-              <SheetTitle>Menu</SheetTitle>
-            </SheetHeader>
             {/* The children (SidebarHeader, SidebarContent, SidebarFooter from AppSidebar) 
                 will be rendered here. SidebarContent handles its own scrolling. */}
             {children}
@@ -284,7 +282,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <Menu /> {/* Changed from PanelLeft to Menu */}
+      <MenuIcon /> {/* Changed from PanelLeft to MenuIcon */}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
