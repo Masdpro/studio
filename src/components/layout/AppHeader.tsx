@@ -1,7 +1,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, UserCircle, Package } from 'lucide-react';
+import { ShoppingCart, UserCircle, ShoppingBag } from 'lucide-react'; // Changed Package to ShoppingBag
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 
@@ -12,9 +12,9 @@ export function AppHeader() {
         <SidebarTrigger />
       </div>
       <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-        <Package className="h-6 w-6 text-primary" />
-        <span className="sr-only">Swiftbuy</span>
-        <h1 className="text-xl font-bold text-primary">Swiftbuy</h1>
+        <ShoppingBag className="h-6 w-6 text-primary" /> {/* Changed Package to ShoppingBag */}
+        <span className="sr-only">Dailybuy</span>
+        <h1 className="text-xl font-bold text-primary">Dailybuy</h1> {/* Changed Swiftbuy to Dailybuy */}
       </Link>
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
@@ -28,7 +28,7 @@ export function AppHeader() {
           </Link>
         </Button>
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/profile"> {/* Changed from /auth/register/vendor to /profile */}
+          <Link href="/profile">
             <UserCircle className="h-5 w-5" />
             <span className="sr-only">Customer Profile</span>
           </Link>

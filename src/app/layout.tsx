@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Swiftbuy',
+  title: 'Dailybuy',
   description: 'Your on-demand delivery solution.',
 };
 
