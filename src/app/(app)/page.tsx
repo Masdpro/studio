@@ -168,37 +168,7 @@ export default function HomePage() {
       <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Delicious Foods</h1>
 
       <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-          <Input
-            type="search"
-            placeholder="Search by name or description..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary"
-          />
-        </div>
         
-        <div>
-          <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-            <Filter className="h-6 w-6 mr-3 text-primary" />
-            Filter by Category
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {categories.map(category => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="lg"
-                onClick={() => setSelectedCategory(category)}
-                className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </div>
-
         <div className="grid md:grid-cols-2 gap-6 items-start">
           <div>
             <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
@@ -230,36 +200,68 @@ export default function HomePage() {
               </Alert>
             )}
           </div>
-
+          
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold flex items-center text-foreground">
-                <Store className="h-6 w-6 mr-3 text-primary" />
-                Filter by Vendor
-              </h3>
-              {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/vendor/${selectedVendorId}/store`}>
-                    Visit {selectedVendorDetails.businessName}'s Site
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Link>
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+              <Filter className="h-6 w-6 mr-3 text-primary" />
+              Filter by Category
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  size="lg"
+                  onClick={() => setSelectedCategory(category)}
+                  className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                >
+                  {category}
                 </Button>
-              )}
+              ))}
             </div>
-            <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
-              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
-                <SelectValue placeholder="Select a vendor" />
-              </SelectTrigger>
-              <SelectContent>
-                {vendorsForFilter.map(vendor => (
-                  <SelectItem key={vendor.id} value={vendor.id}>
-                    {vendor.businessName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold flex items-center text-foreground">
+              <Store className="h-6 w-6 mr-3 text-primary" />
+              Filter by Vendor
+            </h3>
+            {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/vendor/${selectedVendorId}/store`}>
+                  Visit {selectedVendorDetails.businessName}'s Site
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
+          <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
+            <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
+              <SelectValue placeholder="Select a vendor" />
+            </SelectTrigger>
+            <SelectContent>
+              {vendorsForFilter.map(vendor => (
+                <SelectItem key={vendor.id} value={vendor.id}>
+                  {vendor.businessName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+          <Input
+            type="search"
+            placeholder="Search by name or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-12 w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary"
+          />
+        </div>
+
       </div>
 
       {filteredProducts.length > 0 ? (
