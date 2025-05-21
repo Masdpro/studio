@@ -11,7 +11,12 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet" 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader, // Added import
+  SheetTitle,  // Added import
+} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -177,6 +182,7 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const mobileSheetTitleId = React.useId()
 
     if (collapsible === "none") {
       return (
@@ -206,8 +212,11 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
-            aria-label="Admin" 
+            aria-labelledby={mobileSheetTitleId}
           >
+            <SheetHeader className="sr-only">
+              <SheetTitle id={mobileSheetTitleId}>Admin</SheetTitle>
+            </SheetHeader>
             {/* The children (SidebarHeader, SidebarContent, SidebarFooter from AppSidebar) 
                 will be rendered here. SidebarContent handles its own scrolling. */}
             {children}
@@ -282,7 +291,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <MenuIcon /> 
+      <MenuIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -765,4 +774,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
