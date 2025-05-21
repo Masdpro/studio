@@ -6,7 +6,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import type { Product } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Store } from 'lucide-react'; // Added Store icon
+import { Search, Filter, Store, MapPin } from 'lucide-react'; // Added MapPin icon
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
@@ -21,24 +21,25 @@ const sampleProducts: Product[] = [
   { id: '9', vendorId: 'v5', name: 'Decadent Chocolate Cake', description: 'A rich and moist chocolate layer cake with fudge frosting.', price: 5.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert cake' },
   { id: '10', vendorId: 'v5', name: 'Vanilla Bean Ice Cream', description: 'Creamy vanilla bean ice cream, perfect for a treat.', price: 3.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert icecream' },
   { id: '11', vendorId: 'v1', name: 'Spaghetti Carbonara', description: 'Classic Italian pasta with eggs, cheese, pancetta, and pepper.', price: 13.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Pasta', aiHint: 'pasta carbonara' },
-  { id: '12', vendorId: 'v2', name: 'Sushi Platter (from Burger Bonanza? No, a different vendor!)', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter', vendorId: 'v6' }, // Assigning to a new vendor
+  { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter' },
 ];
 
-// Mock vendor data for filter display
-const sampleVendors: { id: string; name: string }[] = [
-  { id: 'v1', name: 'Pizza Place' },
-  { id: 'v2', name: 'Burger Bonanza' },
-  { id: 'v3', name: 'Salad Supreme' },
-  { id: 'v4', name: 'Drinks & Co.' },
-  { id: 'v5', name: 'Dessert Dreams' },
-  { id: 'v6', name: 'Sushi Central' }, // Added new vendor for Sushi
+// Mock vendor data with location tags
+const sampleVendors: { id: string; name: string; locationTag: string }[] = [
+  { id: 'v1', name: 'Pizza Place', locationTag: 'Downtown' },
+  { id: 'v2', name: 'Burger Bonanza', locationTag: 'Suburbia' },
+  { id: 'v3', name: 'Salad Supreme', locationTag: 'Downtown' },
+  { id: 'v4', name: 'Drinks & Co.', locationTag: 'Uptown' },
+  { id: 'v5', name: 'Dessert Dreams', locationTag: 'Suburbia' },
+  { id: 'v6', name: 'Sushi Central', locationTag: 'Uptown' },
 ];
 
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedVendor, setSelectedVendor] = useState<string>('All'); // 'All' or vendorId
+  const [selectedVendor, setSelectedVendor] = useState<string>('All');
+  const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
@@ -48,11 +49,16 @@ export default function HomePage() {
   }, []);
 
   const vendorsForFilter = useMemo(() => {
-    // Get unique vendor IDs from products that are actually in sampleProducts
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
-    // Filter sampleVendors to only include those present in sampleProducts
     const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
-    return [{ id: 'All', name: 'All Vendors' }, ...availableVendors];
+    return [{ id: 'All', name: 'All Vendors', locationTag: 'Any' }, ...availableVendors];
+  }, []);
+
+  const locationsForFilter = useMemo(() => {
+    const uniqueLocations = Array.from(
+      new Set(sampleVendors.map(v => v.locationTag))
+    ).filter(Boolean).sort();
+    return ['All Locations', ...uniqueLocations];
   }, []);
 
 
@@ -60,12 +66,16 @@ export default function HomePage() {
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       const matchesVendor = selectedVendor === 'All' || product.vendorId === selectedVendor;
+      
+      const vendorOfProduct = sampleVendors.find(v => v.id === product.vendorId);
+      const matchesLocation = selectedLocation === 'All Locations' || (vendorOfProduct && vendorOfProduct.locationTag === selectedLocation);
+      
       const matchesSearch = 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch && matchesVendor;
+      return matchesCategory && matchesSearch && matchesVendor && matchesLocation;
     });
-  }, [searchTerm, selectedCategory, selectedVendor]);
+  }, [searchTerm, selectedCategory, selectedVendor, selectedLocation]);
 
   return (
     <div className="container mx-auto">
@@ -126,6 +136,27 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+
+        {/* Location Filters */}
+        <div>
+          <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
+            <MapPin className="h-6 w-6 mr-3 text-primary" />
+            Filter by Location
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {locationsForFilter.map(location => (
+              <Button
+                key={location}
+                variant={selectedLocation === location ? 'default' : 'outline'}
+                size="lg"
+                onClick={() => setSelectedLocation(location)}
+                className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                {location}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Product Grid */}
@@ -147,4 +178,3 @@ export default function HomePage() {
     </div>
   );
 }
-
