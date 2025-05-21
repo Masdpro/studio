@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet" // Removed SheetHeader, SheetTitle from here
+import { Sheet, SheetContent } from "@/components/ui/sheet" 
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -206,7 +206,7 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
-            aria-label="Main menu" 
+            aria-label="Admin" 
           >
             {/* The children (SidebarHeader, SidebarContent, SidebarFooter from AppSidebar) 
                 will be rendered here. SidebarContent handles its own scrolling. */}
@@ -282,7 +282,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <MenuIcon /> {/* Changed from PanelLeft to MenuIcon */}
+      <MenuIcon /> 
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
