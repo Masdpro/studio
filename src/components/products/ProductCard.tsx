@@ -21,9 +21,9 @@ interface ProductCardProps {
   onViewVendorProfile?: (vendorId: string) => void;
 }
 
-export function ProductCard({ 
-  product, 
-  vendorName, 
+export function ProductCard({
+  product,
+  vendorName,
   vendorLocation,
   vendorStreetAddress,
   vendorCity,
@@ -61,7 +61,7 @@ export function ProductCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           data-ai-hint={product.aiHint || "product item"}
           className="w-full h-full object-cover"
-          priority={true} // Added priority prop
+          // priority={true} // Temporarily removed for diagnostics
         />
       </div>
       <CardContent className="p-4 flex-grow">
@@ -71,8 +71,8 @@ export function ProductCard({
         </CardDescription>
         <div className="flex flex-wrap gap-1 mb-2 items-center">
           {onViewVendorProfile ? (
-             <Badge 
-                variant="secondary" 
+             <Badge
+                variant="secondary"
                 className="inline-flex items-center cursor-pointer hover:bg-secondary/80 transition-colors"
                 onClick={handleVendorNameClick}
                 role="button"
@@ -120,4 +120,3 @@ export function ProductCard({
     </Card>
   );
 }
-    
