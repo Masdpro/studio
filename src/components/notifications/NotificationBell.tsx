@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast'; // Added useToast
 
-const mockNotifications: AppNotification[] = [
+const generateMockNotifications = (): AppNotification[] => [
   { id: '1', userId: 'user1', message: 'Your order #ORD123 has been placed.', createdAt: new Date(Date.now() - 1000 * 60 * 5), read: false, link: '/orders', iconName: 'ShoppingBag', category: 'Order' },
   { id: '2', userId: 'user1', message: 'Vendor "Pizza Place" has confirmed your order.', createdAt: new Date(Date.now() - 1000 * 60 * 30), read: false, link: '/orders', iconName: 'PackageCheck', category: 'Order' },
   { id: '3', userId: 'user1', message: 'Delivery agent Alex is on the way with your order!', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), read: true, link: '/orders', iconName: 'Truck', category: 'Order' },
@@ -30,7 +30,7 @@ export function NotificationBell() {
   const { toast } = useToast(); // Initialize toast
 
   useEffect(() => {
-    setNotifications(mockNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    setNotifications(generateMockNotifications().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     setIsClient(true);
   }, []);
 
@@ -134,7 +134,7 @@ export function NotificationBell() {
             </PopoverClose>
           </div>
         </div>
-        <ScrollArea className="h-[250px] sm:h-[350px]"> {/* Adjusted height for new button */}
+        <ScrollArea className="h-[250px] sm:h-[350px]">
           {notifications.length === 0 ? (
             <p className="p-4 text-sm text-center text-muted-foreground">No new notifications.</p>
           ) : (

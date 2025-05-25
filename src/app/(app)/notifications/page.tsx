@@ -7,11 +7,11 @@ import type { AppNotification } from '@/lib/types';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BellRing, CheckCheck, Trash2, ArrowLeft } from 'lucide-react';
+import { BellRing, CheckCheck, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 // Re-using mockNotifications from NotificationBell for consistency
-const mockNotificationsPageData: AppNotification[] = [
+const generateMockNotificationsPageData = (): AppNotification[] => [
   { id: '1', userId: 'user1', message: 'Your order #ORD123 has been placed.', createdAt: new Date(Date.now() - 1000 * 60 * 5), read: false, link: '/orders', iconName: 'ShoppingBag', category: 'Order' },
   { id: '2', userId: 'user1', message: 'Vendor "Pizza Place" has confirmed your order.', createdAt: new Date(Date.now() - 1000 * 60 * 30), read: false, link: '/orders', iconName: 'PackageCheck', category: 'Order' },
   { id: '3', userId: 'user1', message: 'Delivery agent Alex is on the way with your order!', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), read: true, link: '/orders', iconName: 'Truck', category: 'Order' },
@@ -24,10 +24,12 @@ const mockNotificationsPageData: AppNotification[] = [
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Simulate fetching all notifications
-    setNotifications(mockNotificationsPageData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    setNotifications(generateMockNotificationsPageData().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    setIsLoading(false);
   }, []);
 
   const handleMarkAsRead = (id: string) => {
@@ -49,6 +51,15 @@ export default function NotificationsPage() {
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <p className="mt-4 text-lg text-muted-foreground">Loading notifications...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8">

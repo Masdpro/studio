@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import type { Order, DeliveryAgent } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Star } from 'lucide-react';
+import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Star, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now
 import { OrderListItem } from '@/components/orders/OrderListItem';
@@ -26,12 +26,12 @@ const sampleAgent: DeliveryAgent = {
   profileManaged: true,
 };
 
-const initialAvailableDeliveries: Order[] = [
+const generateInitialAvailableDeliveries = (): Order[] => [
   {
     id: 'order001',
     customerId: 'cust123',
     vendorId: 'v1',
-    items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1 }],
+    items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' }],
     totalAmount: 12.99,
     status: 'ReadyForPickup',
     pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City, Foodland',
@@ -44,7 +44,7 @@ const initialAvailableDeliveries: Order[] = [
     id: 'order002',
     customerId: 'cust456',
     vendorId: 'v2',
-    items: [{ productId: '3', name: 'Ultimate Chicken Burger', price: 9.50, quantity: 2 }],
+    items: [{ productId: '3', name: 'Ultimate Chicken Burger', price: 9.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' }],
     totalAmount: 19.00,
     status: 'ReadyForPickup',
     pickupAddress: 'Burger Joint, 789 Grill Rd, Flavor Town, Foodland',
@@ -57,8 +57,9 @@ const initialAvailableDeliveries: Order[] = [
 
 export default function DeliveryAgentDashboardPage() {
   const [agent, setAgent] = useState<DeliveryAgent | null>(null);
-  const [availableDeliveries, setAvailableDeliveries] = useState<Order[]>(initialAvailableDeliveries);
+  const [availableDeliveries, setAvailableDeliveries] = useState<Order[]>([]);
   const [activeDeliveries, setActiveDeliveries] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [currentScanOrderId, setCurrentScanOrderId] = useState<string | null>(null);
@@ -68,6 +69,8 @@ export default function DeliveryAgentDashboardPage() {
 
   useEffect(() => {
     setAgent(sampleAgent);
+    setAvailableDeliveries(generateInitialAvailableDeliveries());
+    setIsLoading(false);
   }, []);
 
   const handleAcceptDelivery = (orderId: string) => {
@@ -106,8 +109,13 @@ export default function DeliveryAgentDashboardPage() {
     );
   };
 
-  if (!agent) {
-    return <p>Loading agent dashboard...</p>;
+  if (isLoading || !agent) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <p className="mt-4 text-lg text-muted-foreground">Loading agent dashboard...</p>
+      </div>
+    );
   }
   
   const agentFullAddress = `${agent.streetAddress}, ${agent.city}, ${agent.country}`;

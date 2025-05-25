@@ -7,7 +7,7 @@ import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Settings, Wallet as WalletIcon, ClipboardList, Star } from 'lucide-react';
+import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2 } from 'lucide-react';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
@@ -30,12 +30,12 @@ const sampleVendor: Vendor = {
 const fullVendorAddress = `${sampleVendor.streetAddress}, ${sampleVendor.city}, ${sampleVendor.country}`;
 
 // Mock data for vendor orders
-const sampleVendorOrders: Order[] = [
+const generateSampleVendorOrders = (): Order[] => [
   {
     id: 'orderToVendor001',
     customerId: 'cust123',
     vendorId: 'v123', // Matches sampleVendor.id
-    items: [{ productId: 'p1', name: 'Gourmet Burger (from this vendor)', price: 15.99, quantity: 1 }],
+    items: [{ productId: 'p1', name: 'Gourmet Burger (from this vendor)', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger gourmet' }],
     totalAmount: 15.99,
     status: 'ReadyForPickup',
     pickupAddress: fullVendorAddress,
@@ -47,7 +47,7 @@ const sampleVendorOrders: Order[] = [
     id: 'orderToVendor002',
     customerId: 'cust789',
     vendorId: 'v123', // Matches sampleVendor.id
-    items: [{ productId: 'p2', name: 'Artisan Pizza (from this vendor)', price: 18.50, quantity: 2 }],
+    items: [{ productId: 'p2', name: 'Artisan Pizza (from this vendor)', price: 18.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza artisan' }],
     totalAmount: 37.00,
     status: 'Processing',
     pickupAddress: fullVendorAddress,
@@ -59,7 +59,7 @@ const sampleVendorOrders: Order[] = [
     id: 'orderToVendor003',
     customerId: 'cust456',
     vendorId: 'v123', // Matches sampleVendor.id
-    items: [{ productId: 'p1', name: 'Gourmet Burger (from this vendor)', price: 15.99, quantity: 1 }],
+    items: [{ productId: 'p1', name: 'Gourmet Burger (from this vendor)', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger gourmet' }],
     totalAmount: 15.99,
     status: 'Delivered',
     pickupAddress: fullVendorAddress,
@@ -73,11 +73,22 @@ const sampleVendorOrders: Order[] = [
 
 export default function VendorDashboardPage() {
   const [vendorOrders, setVendorOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // In a real app, fetch orders for this specific vendor
-    setVendorOrders(sampleVendorOrders);
+    setVendorOrders(generateSampleVendorOrders());
+    setIsLoading(false);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <p className="mt-4 text-lg text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 space-y-8">

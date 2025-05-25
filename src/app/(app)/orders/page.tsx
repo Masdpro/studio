@@ -5,14 +5,15 @@
 import { useState, useEffect } from 'react';
 import type { Order } from '@/lib/types';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
+import { Loader2 } from 'lucide-react';
 
 // Mock data for customer orders
-const sampleCustomerOrders: Order[] = [
+const generateSampleCustomerOrders = (): Order[] => [
   {
     id: 'custOrder001',
     customerId: 'currentUser', // Placeholder for actual current user ID
     vendorId: 'v1',
-    items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1 }],
+    items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' }],
     totalAmount: 12.99,
     status: 'Delivered',
     pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City, Foodland',
@@ -26,8 +27,8 @@ const sampleCustomerOrders: Order[] = [
     customerId: 'currentUser',
     vendorId: 'v2',
     items: [
-      { productId: '3', name: 'Ultimate Chicken Burger', price: 9.50, quantity: 2 },
-      { productId: '7', name: 'Sparkling Cola', price: 2.50, quantity: 2 },
+      { productId: '3', name: 'Ultimate Chicken Burger', price: 9.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' },
+      { productId: '7', name: 'Sparkling Cola', price: 2.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'cola drink' },
     ],
     totalAmount: 24.00,
     status: 'Out for Delivery',
@@ -41,7 +42,7 @@ const sampleCustomerOrders: Order[] = [
     id: 'custOrder003',
     customerId: 'currentUser',
     vendorId: 'v3',
-    items: [{ productId: '5', name: 'Classic Caesar Salad', price: 7.99, quantity: 1 }],
+    items: [{ productId: '5', name: 'Classic Caesar Salad', price: 7.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'salad caesar' }],
     totalAmount: 7.99,
     status: 'Processing',
     pickupAddress: 'Healthy Greens, 101 Salad St, Fresh City, Foodland',
@@ -53,11 +54,22 @@ const sampleCustomerOrders: Order[] = [
 
 export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // In a real app, fetch orders for the logged-in customer
-    setOrders(sampleCustomerOrders);
+    setOrders(generateSampleCustomerOrders());
+    setIsLoading(false);
   }, []);
+
+  if (isLoading) {
+     return (
+      <div className="container mx-auto py-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <p className="mt-4 text-lg text-muted-foreground">Loading your orders...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8">
