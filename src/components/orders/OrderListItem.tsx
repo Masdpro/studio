@@ -102,14 +102,14 @@ export function OrderListItem({
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
   
   const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup;
-  let vendorReadyButtonText = "Ready for Pickup"; // Default
-  let vendorReadyButtonIcon = <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />;
+  let vendorReadyButtonText = "Ready for Pickup"; 
+  let vendorReadyButtonIcon = <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />; 
   if (canVendorMarkReady) {
     if (order.deliveryPreference === 'delivery') {
       vendorReadyButtonText = "Post for Delivery";
       vendorReadyButtonIcon = <Send className="h-4 w-4 mr-1 sm:mr-2" />;
-    } else {
-      vendorReadyButtonText = "Ready for Customer Pickup";
+    } else { // This is the 'pickup' case
+      vendorReadyButtonText = "Ready for Pickup"; // Changed from "Ready for Customer Pickup"
       vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
     }
   }
@@ -299,6 +299,3 @@ export function OrderListItem({
     </Card>
   );
 }
-
-
-    
