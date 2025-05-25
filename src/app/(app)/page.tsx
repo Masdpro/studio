@@ -52,7 +52,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>(USER_CURRENT_LOCATION_VALUE); // Default to current location
+  const [selectedLocation, setSelectedLocation] = useState<string>(USER_CURRENT_LOCATION_VALUE);
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -64,12 +64,6 @@ export default function HomePage() {
       new Set(sampleProducts.map(p => p.category).filter(Boolean as any as (value: string | undefined) => value is string))
     ).sort();
     return ['All', ...uniqueCategories];
-  }, []);
-
-  const vendorsForFilter = useMemo(() => {
-    const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
-    const availableVendors = sampleVendors.filter(v => productVendorIds.includes(v.id));
-    return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
   }, []);
 
   const locationsForFilter = useMemo(() => {
@@ -87,8 +81,6 @@ export default function HomePage() {
     }
     setIsLocating(true);
     setLocationError(null);
-    // Don't clear userCoords here, let it persist until new data or error
-    // setUserCoords(null); 
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -107,14 +99,12 @@ export default function HomePage() {
         setLocationError(message);
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
-        // If error, and selectedLocation is current, switch to 'All Locations'
         if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
           setSelectedLocation('All Locations');
         }
       }
     );
-  }, [toast, selectedLocation]); // Added selectedLocation to dependencies
-
+  }, [toast, selectedLocation]);
 
   useEffect(() => {
     if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
@@ -122,17 +112,43 @@ export default function HomePage() {
     }
   }, [selectedLocation, handleFetchUserLocation]);
 
-
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
     if (value === USER_CURRENT_LOCATION_VALUE) {
       handleFetchUserLocation();
     } else {
-      setUserCoords(null); // Clear user coords if not filtering by current location
+      setUserCoords(null);
       setLocationError(null);
       setIsLocating(false);
     }
   };
+
+  const vendorsForFilter = useMemo(() => {
+    let vendorsFilteredByLocation = sampleVendors;
+
+    if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
+      vendorsFilteredByLocation = sampleVendors.filter(vendor =>
+        vendor.latitude && vendor.longitude &&
+        Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
+        Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
+      );
+    } else if (selectedLocation !== 'All Locations' && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
+      vendorsFilteredByLocation = sampleVendors.filter(vendor => vendor.locationTag === selectedLocation);
+    }
+
+    const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
+    const availableVendors = vendorsFilteredByLocation.filter(v => productVendorIds.includes(v.id));
+    
+    return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
+  }, [sampleProducts, selectedLocation, userCoords]);
+
+  useEffect(() => {
+    // If the selected vendor is no longer in the filtered list (due to location change), reset to "All Vendors"
+    if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
+      setSelectedVendorId('All');
+    }
+  }, [vendorsForFilter, selectedVendorId]);
+
 
   const selectedVendorDetails = useMemo(() => {
     return sampleVendors.find(v => v.id === selectedVendorId);
@@ -144,7 +160,7 @@ export default function HomePage() {
 
     if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
       vendorsToFilterBy = sampleVendors.filter(vendor =>
-        vendor.latitude && vendor.longitude && // Ensure vendor has coordinates
+        vendor.latitude && vendor.longitude &&
         Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
         Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
       );
@@ -161,8 +177,6 @@ export default function HomePage() {
       let matchesLocationCriteria = false;
       if (selectedLocation === 'All Locations') {
         matchesLocationCriteria = true;
-      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) { 
-        matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       } else { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
@@ -180,7 +194,6 @@ export default function HomePage() {
       <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Delicious Foods</h1>
 
       <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
-
         <div className="grid md:grid-cols-2 gap-6 items-start">
           <div>
             <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
@@ -231,12 +244,14 @@ export default function HomePage() {
               </SelectContent>
             </Select>
             {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-              <Button variant="outline" size="sm" asChild className="mt-2">
-                <Link href={`/vendor/${selectedVendorId}/store`}>
-                  Visit {selectedVendorDetails.businessName}'s Site
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+               <div className="mt-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/vendor/${selectedVendorId}/store`}>
+                    Visit {selectedVendorDetails.businessName}'s Site
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -271,7 +286,6 @@ export default function HomePage() {
             className="pl-12 w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary"
           />
         </div>
-
       </div>
 
       {filteredProducts.length > 0 ? (
@@ -306,6 +320,4 @@ export default function HomePage() {
     </div>
   );
 }
-    
-
     
