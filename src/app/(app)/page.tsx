@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { ProductCard } from '@/components/products/ProductCard';
 import type { Product } from '@/lib/types';
@@ -66,10 +66,16 @@ export default function HomePage() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const selectedLocationRef = useRef(selectedLocation);
+
+  useEffect(() => {
+    selectedLocationRef.current = selectedLocation;
+  }, [selectedLocation]);
+
   // Hydrate state from sessionStorage on component mount
   useEffect(() => {
     const storedSearchTerm = sessionStorage.getItem(SESSION_STORAGE_KEYS.searchTerm);
-    if (storedSearchTerm !== null) setSearchTerm(storedSearchTerm); // Check for null to allow empty string
+    if (storedSearchTerm !== null) setSearchTerm(storedSearchTerm);
 
     const storedSelectedCategory = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedCategory);
     if (storedSelectedCategory) setSelectedCategory(storedSelectedCategory);
@@ -80,8 +86,15 @@ export default function HomePage() {
     const storedSelectedLocation = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedLocation);
     if (storedSelectedLocation) {
       setSelectedLocation(storedSelectedLocation);
+      if (storedSelectedLocation !== USER_CURRENT_LOCATION_VALUE) {
+        // If a specific location is restored, clear any user coords/locating state
+        setUserCoords(null);
+        setLocationError(null);
+        setIsLocating(false);
+      }
     }
     // If nothing is stored for selectedLocation, it defaults to USER_CURRENT_LOCATION_VALUE from useState
+    // and the other useEffect will trigger handleFetchUserLocation
   }, []);
 
   // Save state to sessionStorage whenever it changes
@@ -120,7 +133,7 @@ export default function HomePage() {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser.");
       toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive" });
-      setIsLocating(false); // Ensure locating is false if API not supported
+      setIsLocating(false);
       return;
     }
     setIsLocating(true);
@@ -143,12 +156,13 @@ export default function HomePage() {
         setLocationError(message);
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
-        if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+        // Use the ref here to check the LATEST selectedLocation
+        if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
           setSelectedLocation('All Locations'); // Fallback if location fetch fails
         }
       }
     );
-  }, [toast, selectedLocation]); // Removed setSelectedLocation from deps as it might cause loop, it's set inside
+  }, [toast]); // Dependencies: toast, (and stable setters: setUserCoords, setLocationError, setIsLocating, setSelectedLocation)
 
   useEffect(() => {
     if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
@@ -164,7 +178,7 @@ export default function HomePage() {
     } else {
       setUserCoords(null); // Clear user coords if a specific location tag is chosen
       setLocationError(null);
-      setIsLocating(false); // Ensure locating is false
+      setIsLocating(false); 
     }
   };
 
@@ -188,7 +202,6 @@ export default function HomePage() {
   }, [selectedLocation, userCoords]);
 
   useEffect(() => {
-    // If the current selectedVendorId is no longer in the valid list of vendors for the current location, reset to 'All'
     if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
       setSelectedVendorId('All');
     }
@@ -218,14 +231,10 @@ export default function HomePage() {
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       
-      // Vendor match: either 'All' vendors are selected, or product's vendor matches selected vendor
       const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
 
-      // Location match:
-      // 1. If 'All Locations' is selected, all vendors match.
-      // 2. Otherwise, the product's vendor must be in the set of vendors filtered by location.
       let matchesLocationCriteria = false;
-      if (selectedLocation === 'All Locations' || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) { // If current location is selected but no coords yet (and not actively error/locating), treat as all locations to avoid empty list
+      if (selectedLocation === 'All Locations' || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) { 
         matchesLocationCriteria = true;
       } else { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
@@ -296,7 +305,7 @@ export default function HomePage() {
                 ))}
               </SelectContent>
             </Select>
-            {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+             {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
                <div className="mt-2">
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/vendor/${selectedVendorId}/store`}>
