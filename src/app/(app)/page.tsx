@@ -141,7 +141,7 @@ export default function HomePage() {
     const availableVendors = vendorsFilteredByLocation.filter(v => productVendorIds.includes(v.id));
     
     return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
-  }, [sampleProducts, selectedLocation, userCoords]);
+  }, [selectedLocation, userCoords]);
 
   useEffect(() => {
     // If the selected vendor is no longer in the filtered list (due to location change), reset to "All Vendors"
@@ -295,7 +295,21 @@ export default function HomePage() {
             const vendor = sampleVendors.find(v => v.id === product.vendorId);
             const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
             const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
-            return <ProductCard key={product.id} product={product} vendorName={vendorName} vendorLocation={vendorLocation} />;
+            const vendorStreetAddress = vendor?.streetAddress || '';
+            const vendorCity = vendor?.city || '';
+            const vendorCountry = vendor?.country || '';
+
+            return (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                vendorName={vendorName} 
+                vendorLocation={vendorLocation}
+                vendorStreetAddress={vendorStreetAddress}
+                vendorCity={vendorCity}
+                vendorCountry={vendorCountry}
+              />
+            );
           })}
         </div>
       ) : (
