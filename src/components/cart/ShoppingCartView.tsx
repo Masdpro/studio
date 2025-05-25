@@ -16,6 +16,8 @@ const sampleCartItems: CartItemType[] = [
   { productId: '3', name: 'Chicken Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' },
   { productId: 'p1', name: 'Laptop Pro 15"', description: 'High-performance laptop for professionals.', price: 1299.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'laptop professional' },
   { productId: 'p2', name: 'Men\'s Casual Shirt', description: 'Comfortable cotton shirt for everyday wear.', price: 39.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'shirt casual' },
+  { productId: '7', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'coffee beans' },
+  { id: '8', vendorId: 'v4', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, quantity: 3, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'bread artisan' },
 
 ];
 
@@ -25,7 +27,7 @@ export function ShoppingCartView() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setCartItems(sampleCartItems.map(item => ({ ...item, imageUrl: item.imageUrl || 'https://placehold.co/600x400.png', aiHint: item.aiHint || 'food item' })));
+    setCartItems(sampleCartItems.map(item => ({ ...item, imageUrl: item.imageUrl || 'https://placehold.co/600x400.png', aiHint: item.aiHint || 'product item' })));
     setIsClient(true);
   }, []);
 
@@ -88,19 +90,6 @@ export function ShoppingCartView() {
 
   return (
     <Card className="w-full flex-1 flex flex-col shadow-xl overflow-hidden">
-      {/* CardHeader is part of the SheetHeader now, so we can omit it here if desired, 
-          or keep it for consistency if ShoppingCartView is used elsewhere.
-          For this sheet context, it's probably redundant if SheetHeader is present.
-          Let's assume the SheetHeader in AppHeader is sufficient.
-      */}
-      {/* 
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <ShoppingBag className="h-6 w-6 text-primary" />
-          Your Shopping Cart
-        </CardTitle>
-      </CardHeader> 
-      */}
       <CardContent className="flex-grow overflow-y-auto p-4 md:p-6">
         {cartItems.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">Your cart is empty.</p>
@@ -118,24 +107,24 @@ export function ShoppingCartView() {
         )}
       </CardContent>
       {cartItems.length > 0 && (
-        <CardFooter className="flex flex-col items-stretch gap-4 p-6 border-t">
+        <CardFooter className="flex flex-col items-stretch gap-2 p-4 border-t"> {/* Reduced padding and gap */}
           <Separator />
-          <div className="flex justify-between">
+          <div className="flex justify-between text-sm"> {/* Made text smaller */}
             <span className="text-muted-foreground">Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between text-sm"> {/* Made text smaller */}
             <span className="text-muted-foreground">Taxes ({(taxRate * 100).toFixed(0)}%)</span>
             <span>${taxes.toFixed(2)}</span>
           </div>
           <Separator />
-          <div className="flex justify-between font-bold text-xl">
+          <div className="flex justify-between font-bold text-lg mt-1"> {/* Reduced top margin slightly */}
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
           <Button 
             size="lg" 
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-4"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-2" /* Reduced top margin */
             onClick={handleProceedToCheckout}
           >
             Proceed to Checkout
