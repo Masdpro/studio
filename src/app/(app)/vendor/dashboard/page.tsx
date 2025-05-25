@@ -2,7 +2,7 @@
 // src/app/(app)/vendor/dashboard/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { masterSampleOrders, sampleVendors } from '@/lib/mockData';
+import { useToast } from '@/hooks/use-toast';
 
 // Use a specific vendor from mockData
 const MOCK_CURRENT_VENDOR_ID = 'vendor001'; // Good Eats Pizzeria
@@ -20,17 +21,32 @@ const currentVendor = sampleVendors.find(v => v.id === MOCK_CURRENT_VENDOR_ID) |
 
 
 export default function VendorDashboardPage() {
-  const [vendorOrders, setVendorOrders] = useState<Order[]>([]);
+  const [displayedVendorOrders, setDisplayedVendorOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // In a real app, fetch orders for this specific vendor
     const ordersForVendor = masterSampleOrders.filter(
       (order) => order.vendorId === currentVendor.id
     ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-    setVendorOrders(ordersForVendor);
+    setDisplayedVendorOrders(ordersForVendor);
     setIsLoading(false);
   }, []);
+
+  const handleAttendToOrder = useCallback((orderId: string) => {
+    setDisplayedVendorOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId && order.status === 'Pending'
+          ? { ...order, status: 'Processing' as Order['status'] }
+          : order
+      )
+    );
+    toast({
+      title: 'Order Status Updated',
+      description: `Order ${orderId} is now being processed.`,
+    });
+  }, [toast]);
 
   if (isLoading) {
     return (
@@ -84,10 +100,11 @@ export default function VendorDashboardPage() {
 
         <TabsContent value="orders">
           <OrderTrackingView
-            orders={vendorOrders}
+            orders={displayedVendorOrders}
             title="Track Your Orders"
             description="Monitor the status of orders placed with your business."
             userRole="vendor"
+            onAttendToOrder={handleAttendToOrder}
           />
         </TabsContent>
 
@@ -128,5 +145,3 @@ export default function VendorDashboardPage() {
     </div>
   );
 }
-
-    

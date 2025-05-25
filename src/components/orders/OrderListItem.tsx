@@ -5,7 +5,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -18,6 +18,7 @@ interface OrderListItemProps {
   onScanForPickup?: (orderId: string) => void;
   onScanForDelivery?: (orderId: string) => void;
   onCancelOrder?: (orderId: string) => void;
+  onAttendToOrder?: (orderId: string) => void; // New prop
 }
 
 const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -86,6 +87,7 @@ export function OrderListItem({
   onScanForPickup,
   onScanForDelivery,
   onCancelOrder,
+  onAttendToOrder, // New prop
 }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
@@ -96,7 +98,9 @@ export function OrderListItem({
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   
   const isVendorProcessing = userRole === 'vendor' && order.status === 'Processing';
+  const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
   const shouldShowViewDetailsButton = order.items.length > 1 || isVendorProcessing;
+
 
   const canLeaveReview = userRole === 'customer' && order.status === 'Delivered';
   const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
@@ -200,6 +204,18 @@ export function OrderListItem({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
+          {canVendorAttend && (
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => onAttendToOrder(order.id)}
+            >
+              <PlayCircle className="h-4 w-4 mr-1 sm:mr-2" />
+              Attend to Order
+            </Button>
+          )}
+
           {userRole === 'delivery_agent' && order.status === 'ReadyForPickup' && onAcceptDelivery && (
             <Button className="bg-primary hover:bg-primary/80" onClick={() => onAcceptDelivery(order.id)}>
               Accept Delivery
@@ -251,4 +267,3 @@ export function OrderListItem({
     </Card>
   );
 }
-

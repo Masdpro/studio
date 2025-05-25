@@ -11,10 +11,18 @@ interface OrderTrackingViewProps {
   title: string;
   description?: string;
   userRole: 'customer' | 'vendor';
-  onCancelOrder?: (orderId: string) => void; // Added for customer cancellations
+  onCancelOrder?: (orderId: string) => void;
+  onAttendToOrder?: (orderId: string) => void; // New prop
 }
 
-export function OrderTrackingView({ orders, title, description, userRole, onCancelOrder }: OrderTrackingViewProps) {
+export function OrderTrackingView({
+  orders,
+  title,
+  description,
+  userRole,
+  onCancelOrder,
+  onAttendToOrder, // New prop
+}: OrderTrackingViewProps) {
   if (!orders || orders.length === 0) {
     return (
       <Card>
@@ -49,10 +57,10 @@ export function OrderTrackingView({ orders, title, description, userRole, onCanc
             order={order} 
             userRole={userRole}
             onCancelOrder={userRole === 'customer' ? onCancelOrder : undefined}
+            onAttendToOrder={userRole === 'vendor' ? onAttendToOrder : undefined} // Pass down the prop
           />
         ))}
       </CardContent>
     </Card>
   );
 }
-
