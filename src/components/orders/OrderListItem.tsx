@@ -5,11 +5,11 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
-import { ReviewDialog } from '@/components/reviews/ReviewDialog'; // Added
-import React, { useState } from 'react'; // Added
+import { ReviewDialog } from '@/components/reviews/ReviewDialog';
+import React, { useState } from 'react';
 
 interface OrderListItemProps {
   order: Order;
@@ -88,7 +88,7 @@ export function OrderListItem({
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
 
-  const [reviewSubmitted, setReviewSubmitted] = useState(false); // Local state for review button
+  const [reviewSubmitted, setReviewSubmitted] = useState(false); 
 
   const showVendorPickupBarcode = userRole === 'vendor' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
@@ -97,6 +97,7 @@ export function OrderListItem({
   const shouldShowViewDetailsButton = order.items.length > 1 || isVendorProcessing;
 
   const canLeaveReview = userRole === 'customer' && order.status === 'Delivered';
+  const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
@@ -172,6 +173,12 @@ export function OrderListItem({
               <div>
                 <p className="font-semibold">Deliver To (Customer):</p>
                 <p className="text-sm">{order.deliveryAddress}</p>
+                {canViewCustomerPhone && (
+                  <div className="mt-1 flex items-center gap-1 text-xs text-primary">
+                    <PhoneCall className="h-3 w-3" />
+                    <span>Contact: (Mock) 555-123-4567</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
@@ -230,3 +237,4 @@ export function OrderListItem({
     </Card>
   );
 }
+
