@@ -14,8 +14,11 @@ import { Label } from '@/components/ui/label';
 
 // Sample cart data
 const sampleCartItems: CartItemType[] = [
-  { productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' },
-  { productId: '3', name: 'Chicken Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' },
+  { productId: 'prod_pizza_margherita', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' },
+  { productId: 'prod_burger_classic', name: 'Classic Beef Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger beef' },
+  { productId: 'prod_salad_caesar', name: 'Caesar Salad', price: 7.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'salad caesar' },
+  { productId: 'prod_pasta_carbonara', name: 'Pasta Carbonara', price: 14.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pasta carbonara' },
+  { productId: 'prod_soft_drink_cola', name: 'Cola Soft Drink', price: 2.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'cola drink' },
   { productId: 'p1', name: 'Laptop Pro 15"', price: 1299.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'laptop professional' },
   { productId: 'p2', name: 'Men\'s Casual Shirt', price: 39.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'shirt casual' },
   { productId: '7', name: 'Aromatic Coffee Beans', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'coffee beans' },
@@ -116,17 +119,17 @@ export function ShoppingCartView() {
       {cartItems.length > 0 && (
         <CardFooter className="flex flex-col items-stretch gap-1 p-3 border-t">
           <div className="flex items-center space-x-2 py-2">
-            <Checkbox
-              id="delivery-option"
-              checked={isDeliverySelected}
-              onCheckedChange={(checked) => setIsDeliverySelected(Boolean(checked))}
-            />
             <Label
               htmlFor="delivery-option"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Would you like this delivered?
             </Label>
+            <Checkbox
+              id="delivery-option"
+              checked={isDeliverySelected}
+              onCheckedChange={(checked) => setIsDeliverySelected(Boolean(checked))}
+            />
           </div>
           <Separator />
           <div className="flex justify-between text-xs">
