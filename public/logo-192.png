@@ -1,0 +1,6 @@
+Placeholder for a 192x192 logo. In a real scenario, this would be an actual PNG image file.
+For Firebase Studio: Since I cannot create actual binary image files, please imagine a simple Dailybuy logo here.
+This file is referenced by the Notification API for the icon.
+If you have a logo image (e.g., a 192x192 PNG), you can replace this text file with it.
+Ensure the path /logo-192.png correctly points to your image in the public folder.
+For example, create public/logo-192.png

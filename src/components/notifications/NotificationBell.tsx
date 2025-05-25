@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Bell, CheckCheck, Settings2, X } from 'lucide-react';
+import { Bell, CheckCheck, Settings2, X, Zap } from 'lucide-react'; // Added Zap
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import type { AppNotification } from '@/lib/types';
 import { NotificationItem } from './NotificationItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 const mockNotifications: AppNotification[] = [
   { id: '1', userId: 'user1', message: 'Your order #ORD123 has been placed.', createdAt: new Date(Date.now() - 1000 * 60 * 5), read: false, link: '/orders', iconName: 'ShoppingBag', category: 'Order' },
@@ -26,9 +27,9 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast(); // Initialize toast
 
   useEffect(() => {
-    // Simulate fetching notifications
     setNotifications(mockNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     setIsClient(true);
   }, []);
@@ -48,12 +49,47 @@ export function NotificationBell() {
   };
   
   const handleNotificationClick = (notification: AppNotification) => {
-    // Mark as read is handled by NotificationItem's own onClick
-    // Close popover after clicking an item (if not a link that navigates away)
     if (!notification.link) {
         setIsOpen(false);
     }
-    // Navigation will be handled by Link component in NotificationItem if link exists
+  };
+
+  const showBrowserNotification = (title: string, body: string, iconUrl?: string) => {
+    if (!('Notification' in window)) {
+      toast({ title: 'Error', description: 'This browser does not support desktop notification.', variant: 'destructive' });
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      const notification = new Notification(title, { body, icon: iconUrl || '/logo-192.png' });
+      notification.onclick = () => {
+        window.focus(); // Bring window to focus
+        // Optionally navigate to a specific link or close popover
+        setIsOpen(false); 
+      };
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          const notification = new Notification(title, { body, icon: iconUrl || '/logo-192.png' });
+           notification.onclick = () => {
+            window.focus();
+            setIsOpen(false);
+          };
+        } else {
+          toast({ title: 'Permission Denied', description: 'Desktop notifications were not granted.', variant: 'destructive'});
+        }
+      });
+    } else {
+       toast({ title: 'Permission Denied', description: 'Desktop notifications are currently denied. Please check your browser settings.', variant: 'destructive' });
+    }
+  };
+
+  const handleTestDesktopNotification = () => {
+    showBrowserNotification(
+      'Dailybuy Test Notification', 
+      'This is a test desktop notification from Dailybuy!',
+      '/logo-192.png' // Placeholder icon
+    );
   };
 
 
@@ -98,7 +134,7 @@ export function NotificationBell() {
             </PopoverClose>
           </div>
         </div>
-        <ScrollArea className="h-[300px] sm:h-[400px]">
+        <ScrollArea className="h-[250px] sm:h-[350px]"> {/* Adjusted height for new button */}
           {notifications.length === 0 ? (
             <p className="p-4 text-sm text-center text-muted-foreground">No new notifications.</p>
           ) : (
@@ -115,8 +151,16 @@ export function NotificationBell() {
           )}
         </ScrollArea>
         <Separator />
-        <div className="p-2 text-center">
-          <Button variant="link" size="sm" asChild className="text-primary">
+        <div className="p-3 space-y-2">
+           <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full" 
+            onClick={handleTestDesktopNotification}
+          >
+            <Zap className="mr-2 h-4 w-4" /> Test Desktop Notification
+          </Button>
+          <Button variant="link" size="sm" asChild className="text-primary w-full">
             <Link href="/notifications" onClick={() => setIsOpen(false)}>View All Notifications</Link>
           </Button>
         </div>
