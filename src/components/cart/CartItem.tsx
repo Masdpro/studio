@@ -35,11 +35,11 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
     <div className="flex items-center gap-4 p-4 border-b">
       <div className="relative w-20 h-20 rounded-md overflow-hidden shrink-0">
         <Image
-          src={item.imageUrl || "https://placehold.co/600x400.png"}
+          src={item.imageUrl || "https://placehold.co/80x80.png"}
           alt={item.name}
-          fill
+          fill={true}
           style={{ objectFit: 'cover' }}
-          data-ai-hint={item.aiHint || "food item"}
+          data-ai-hint={item.aiHint || "product item"}
           sizes="80px"
         />
       </div>
@@ -69,3 +69,5 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
     </div>
   );
 }
+
+    

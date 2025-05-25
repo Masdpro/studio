@@ -104,7 +104,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             <FormItem>
               <FormLabel>Product Name</FormLabel>
               <FormControl>
-                <Input placeholder="E.g., Margherita Pizza" {...field} />
+                <Input placeholder="E.g., Wireless Headphones" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -130,7 +130,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             <FormItem>
               <FormLabel>Price ($)</FormLabel>
               <FormControl>
-                <Input type="number" step="0.01" placeholder="9.99" {...field} />
+                <Input type="number" step="0.01" placeholder="99.99" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -181,7 +181,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                   <Image
                     src={field.value}
                     alt="Product Preview"
-                    fill
+                    fill={true}
                     style={{ objectFit: 'cover' }}
                     data-ai-hint={field.value.startsWith('data:') ? "product preview" : (form.getValues('aiHint') || "product item")}
                     sizes="128px"
@@ -214,7 +214,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             <FormItem>
               <FormLabel>Category (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="E.g., Pizza, Burgers, Salads" {...field} />
+                <Input placeholder="E.g., Electronics, Books, Apparel" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -227,10 +227,10 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             <FormItem>
               <FormLabel>AI Hint (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="E.g., 'food pizza' (max 2 words)" {...field} />
+                <Input placeholder="E.g., 'laptop computer' (max 2 words)" {...field} />
               </FormControl>
               <FormDescription>
-                One or two keywords for AI image generation or search (e.g., "pizza margherita").
+                One or two keywords for AI image generation or search.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -243,3 +243,5 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     </Form>
   );
 }
+
+    

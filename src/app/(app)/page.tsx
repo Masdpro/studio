@@ -23,29 +23,31 @@ import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
-  { id: '1', vendorId: 'v1', name: 'Margherita Pizza', description: 'Classic cheese and tomato pizza with a crispy crust.', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza margherita' },
-  { id: '2', vendorId: 'v1', name: 'Pepperoni Passion Pizza', description: 'Loaded with spicy pepperoni and mozzarella cheese.', price: 14.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza pepperoni' },
-  { id: '3', vendorId: 'v2', name: 'Ultimate Chicken Burger', description: 'Grilled chicken breast, bacon, cheese, lettuce, and tomato.', price: 9.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger chicken' },
-  { id: '4', vendorId: 'v2', name: 'Garden Veggie Burger', description: 'A delicious plant-based patty with fresh garden vegetables.', price: 8.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger veggie' },
-  { id: '5', vendorId: 'v3', name: 'Classic Caesar Salad', description: 'Crisp romaine, Parmesan, croutons, and creamy Caesar dressing.', price: 7.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Salads', aiHint: 'salad caesar' },
-  { id: '6', vendorId: 'v3', name: 'Mediterranean Greek Salad', description: 'Tomatoes, cucumbers, olives, feta, and a tangy vinaigrette.', price: 8.49, imageUrl: 'https://placehold.co/600x400.png', category: 'Salads', aiHint: 'salad greek' },
-  { id: '7', vendorId: 'v4', name: 'Sparkling Cola', description: 'Classic refreshing cola beverage, chilled to perfection.', price: 2.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Drinks', aiHint: 'drink soda' },
-  { id: '8', vendorId: 'v4', name: 'Fresh Orange Juice', description: '100% freshly squeezed orange juice, full of vitamins.', price: 3.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Drinks', aiHint: 'drink juice' },
-  { id: '9', vendorId: 'v5', name: 'Decadent Chocolate Cake', description: 'A rich and moist chocolate layer cake with fudge frosting.', price: 5.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert cake' },
-  { id: '10', vendorId: 'v5', name: 'Vanilla Bean Ice Cream', description: 'Creamy vanilla bean ice cream, perfect for a treat.', price: 3.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert icecream' },
-  { id: '11', vendorId: 'v1', name: 'Spaghetti Carbonara', description: 'Classic Italian pasta with eggs, cheese, pancetta, and pepper.', price: 13.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Pasta', aiHint: 'pasta carbonara' },
-  { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter' },
+  { id: '1', vendorId: 'v1', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'headphones wireless' },
+  { id: '2', vendorId: 'v1', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'smartwatch modern' },
+  { id: '3', vendorId: 'v2', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'shirt cotton' },
+  { id: '4', vendorId: 'v2', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'jeans blue' },
+  { id: '5', vendorId: 'v3', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'book novel' },
+  { id: '6', vendorId: 'v3', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'book science' },
+  { id: '7', vendorId: 'v4', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'coffee beans' },
+  { id: '8', vendorId: 'v4', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'bread artisan' },
+  { id: '9', vendorId: 'v5', name: 'Ergonomic Office Chair', description: 'Comfortable office chair with lumbar support and adjustable height.', price: 250.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'chair office' },
+  { id: '10', vendorId: 'v5', name: 'Minimalist Desk Lamp', description: 'Sleek LED desk lamp with adjustable brightness.', price: 45.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'lamp desk' },
+  { id: '11', vendorId: 'v1', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'speaker bluetooth' },
+  { id: '12', vendorId: 'v6', name: 'Yoga Mat Premium', description: 'Eco-friendly, non-slip yoga mat for all practice levels.', price: 39.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'yoga mat' },
 ];
+
 
 // Mock vendor data with location tags, coordinates, and external store URLs
 const sampleVendors: Vendor[] = [
-  { id: 'v1', businessName: 'Pizza Place', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/pizzapalace', operatingHours: '11 AM - 10 PM, Mon-Sun', status: 'Open' },
-  { id: 'v2', businessName: 'Burger Bonanza', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/burgerbonanza', operatingHours: '10 AM - 9 PM, Tue-Sun', status: 'Open' },
-  { id: 'v3', businessName: 'Salad Supreme', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, operatingHours: '9 AM - 7 PM, Mon-Fri', status: 'Closed' }, // No external URL
-  { id: 'v4', businessName: 'Drinks & Co.', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/drinksco', operatingHours: '24/7', status: 'Open' },
-  { id: 'v5', businessName: 'Dessert Dreams', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, operatingHours: '12 PM - 8 PM, Wed-Sun', status: 'Opening Soon' },
-  { id: 'v6', businessName: 'Sushi Central', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/sushicentral', operatingHours: '5 PM - 11 PM, Daily', status: 'Temporarily Unavailable' },
+  { id: 'v1', businessName: 'Tech Gadgets Inc.', streetAddress: '101 Circuit Board Rd', city: 'Techville', country: 'Innovaland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/techgadgets', operatingHours: '10 AM - 8 PM, Mon-Sat', status: 'Open' },
+  { id: 'v2', businessName: 'Fashion Forward', streetAddress: '202 Style St', city: 'Trend City', country: 'Clothia', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/fashionforward', operatingHours: '11 AM - 7 PM, Tue-Sun', status: 'Open' },
+  { id: 'v3', businessName: 'The Book Nook', streetAddress: '303 Chapter Ave', city: 'Readington', country: 'Literaria', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, operatingHours: '10 AM - 6 PM, Mon-Fri', status: 'Closed' },
+  { id: 'v4', businessName: 'Gourmet Pantry', streetAddress: '404 Flavor Ln', city: 'Foodville', country: 'Delicia', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/gourmetpantry', operatingHours: '8 AM - 9 PM, Daily', status: 'Open' },
+  { id: 'v5', businessName: 'Home Comforts', streetAddress: '505 Cozy Corner', city: 'Furnishtown', country: 'Habitatia', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, operatingHours: '10 AM - 6 PM, Wed-Sun', status: 'Opening Soon' },
+  { id: 'v6', businessName: 'Active Life Sports', streetAddress: '606 Fitness Way', city: 'Sportstown', country: 'Energetica', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/activelife', operatingHours: '9 AM - 8 PM, Daily', status: 'Temporarily Unavailable' },
 ];
+
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
 const ALL_LOCATIONS_VALUE = "All Locations";
@@ -277,11 +279,11 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto">
-      <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Delicious Foods</h1>
+      <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Great Products</h1>
 
       <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
         <div className="grid md:grid-cols-2 gap-6 items-start">
-          <div>
+           <div>
             <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
               <MapPin className="h-6 w-6 mr-3 text-primary" />
               Filter by Location
@@ -311,7 +313,6 @@ export default function HomePage() {
               </Alert>
             )}
           </div>
-
           <div>
             <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
               <Store className="h-6 w-6 mr-3 text-primary" />
@@ -342,6 +343,7 @@ export default function HomePage() {
                 )}
             </div>
           </div>
+
         </div>
 
         <div>
@@ -363,7 +365,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-
+        
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <Input
@@ -431,4 +433,6 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     

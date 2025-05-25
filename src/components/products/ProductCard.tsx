@@ -53,12 +53,14 @@ export function ProductCard({
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <div className="relative w-full h-48 overflow-hidden bg-muted">
-        <img
+        <Image
           src={product.imageUrl || "https://placehold.co/300x200.png"}
           alt={product.name}
-          data-ai-hint={product.aiHint || "food item"}
+          fill={true}
+          style={{ objectFit: 'cover' }}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          data-ai-hint={product.aiHint || "product item"}
           className="w-full h-full object-cover"
-          style={{ display: 'block' }}
         />
       </div>
       <CardContent className="p-4 flex-grow">
@@ -117,3 +119,5 @@ export function ProductCard({
     </Card>
   );
 }
+
+    

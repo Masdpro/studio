@@ -16,12 +16,12 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
     <Card className="flex flex-col md:flex-row items-center gap-4 p-4 rounded-lg shadow-sm">
       <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-md overflow-hidden shrink-0">
         <Image
-          src={product.imageUrl || "https://placehold.co/600x400.png"}
+          src={product.imageUrl || "https://placehold.co/128x128.png"}
           alt={product.name}
-          fill
+          fill={true}
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 96px, 128px"
-          data-ai-hint={product.aiHint || "food item"}
+          data-ai-hint={product.aiHint || "product item"}
         />
       </div>
       <div className="flex-grow">
@@ -47,3 +47,5 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
     </Card>
   );
 }
+
+    
