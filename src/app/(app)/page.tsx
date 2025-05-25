@@ -73,9 +73,9 @@ const sampleProducts: Product[] = [
 const sampleVendors: Vendor[] = [
   { id: 'v1', businessName: 'Tech Gadgets Inc.', streetAddress: '101 Circuit Board Rd', city: 'Techville', country: 'Innovaland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/techgadgets', operatingHours: '10 AM - 8 PM, Mon-Sat', status: 'Open' },
   { id: 'v2', businessName: 'Fashion Forward', streetAddress: '202 Style St', city: 'Trend City', country: 'Clothia', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/fashionforward', operatingHours: '11 AM - 7 PM, Tue-Sun', status: 'Open' },
-  { id: 'v3', businessName: 'The Book Nook', streetAddress: '303 Chapter Ave', city: 'Readington', country: 'Literaria', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, operatingHours: '10 AM - 6 PM, Mon-Fri', status: 'Closed' },
+  { id: 'v3', businessName: 'The Book Nook', streetAddress: '303 Chapter Ave', city: 'Readington', country: 'Literaria', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, externalStoreUrl: 'https://example.com/thebooknook', operatingHours: '10 AM - 6 PM, Mon-Fri', status: 'Closed' },
   { id: 'v4', businessName: 'Gourmet Pantry & Foods', streetAddress: '404 Flavor Ln', city: 'Foodville', country: 'Delicia', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/gourmetpantry', operatingHours: '8 AM - 9 PM, Daily', status: 'Open' },
-  { id: 'v5', businessName: 'Home Comforts', streetAddress: '505 Cozy Corner', city: 'Furnishtown', country: 'Habitatia', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, operatingHours: '10 AM - 6 PM, Wed-Sun', status: 'Opening Soon' },
+  { id: 'v5', businessName: 'Home Comforts', streetAddress: '505 Cozy Corner', city: 'Furnishtown', country: 'Habitatia', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, externalStoreUrl: 'https://example.com/homecomforts', operatingHours: '10 AM - 6 PM, Wed-Sun', status: 'Opening Soon' },
   { id: 'v6', businessName: 'Active Life Sports', streetAddress: '606 Fitness Way', city: 'Sportstown', country: 'Energetica', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/activelife', operatingHours: '9 AM - 8 PM, Daily', status: 'Temporarily Unavailable' },
 ];
 
@@ -212,7 +212,7 @@ export default function HomePage() {
         }
       }
     );
-  }, [toast]);
+  }, [toast]); // Removed setSelectedLocation from dependencies as it's handled by selectedLocationRef
 
   useEffect(() => {
     if (isMounted.current) {
@@ -285,9 +285,17 @@ export default function HomePage() {
       const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
 
       let matchesLocationCriteria = false;
-      if (selectedLocation === ALL_LOCATIONS_VALUE || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) {
+      if (selectedLocation === ALL_LOCATIONS_VALUE ) {
         matchesLocationCriteria = true;
-      } else {
+      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+        if (userCoords) { // If we have user coords, filter by them
+            matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
+        } else if (!isLocating && !locationError) { // If not locating and no error, it means location hasn't been fetched or was cleared
+            matchesLocationCriteria = true; // Show all products from all locations until location resolves or fails
+        } else { // isLocating or locationError is true, implies waiting or failed
+            matchesLocationCriteria = false; // Show no products based on location until resolved
+        }
+      } else { // A specific location tag is selected
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
 
@@ -466,3 +474,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
