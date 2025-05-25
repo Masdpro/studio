@@ -19,7 +19,7 @@ interface OrderListItemProps {
   onScanForDelivery?: (orderId: string) => void;
   onCancelOrder?: (orderId: string) => void;
   onAttendToOrder?: (orderId: string) => void;
-  onMarkAsReadyForPickup?: (orderId: string) => void; // New prop
+  onMarkAsReadyForPickup?: (orderId: string) => void;
 }
 
 const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -89,7 +89,7 @@ export function OrderListItem({
   onScanForDelivery,
   onCancelOrder,
   onAttendToOrder,
-  onMarkAsReadyForPickup, // New prop
+  onMarkAsReadyForPickup,
 }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
@@ -100,7 +100,7 @@ export function OrderListItem({
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
-  const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup; // Condition for new button
+  const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup;
   const shouldShowViewDetailsButton = order.items.length > 1 || (userRole === 'vendor' && (order.status === 'Processing' || order.status === 'Pending'));
 
 
@@ -226,7 +226,7 @@ export function OrderListItem({
               onClick={() => onMarkAsReadyForPickup(order.id)}
             >
               <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />
-              Mark Ready for Pickup
+              Ready for Pickup
             </Button>
           )}
 
@@ -281,3 +281,6 @@ export function OrderListItem({
     </Card>
   );
 }
+
+
+    
