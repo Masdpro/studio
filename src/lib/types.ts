@@ -57,6 +57,7 @@ export type Order = {
   estimatedDistance?: string; // e.g., "5 km"
   createdAt: Date;
   deliveryAgentId?: string; // Who took the delivery - should be present if agent involved and order delivered
+  deliveryPreference: 'delivery' | 'pickup'; // Customer's preference
 };
 
 export type TimeWindow = {
@@ -106,3 +107,4 @@ export type AppNotification = {
   iconName?: keyof typeof import('lucide-react'); // Optional: lucide-react icon name
   category?: 'Order' | 'Account' | 'Promotion' | 'System'; // Example categories
 };
+

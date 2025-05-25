@@ -5,7 +5,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -100,7 +100,20 @@ export function OrderListItem({
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
+  
   const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup;
+  let vendorReadyButtonText = "Ready for Pickup"; // Default
+  let vendorReadyButtonIcon = <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />;
+  if (canVendorMarkReady) {
+    if (order.deliveryPreference === 'delivery') {
+      vendorReadyButtonText = "Post for Delivery";
+      vendorReadyButtonIcon = <Send className="h-4 w-4 mr-1 sm:mr-2" />;
+    } else {
+      vendorReadyButtonText = "Ready for Customer Pickup";
+      vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
+    }
+  }
+
   const shouldShowViewDetailsButton = order.items.length > 1 || (userRole === 'vendor' && (order.status === 'Processing' || order.status === 'Pending'));
 
 
@@ -129,6 +142,11 @@ export function OrderListItem({
           <h4 className="font-semibold text-sm text-muted-foreground">Items:</h4>
           <p className="text-sm line-clamp-2">{itemSummary}</p>
         </div>
+        {userRole === 'vendor' && order.deliveryPreference && (
+            <p className="text-xs text-muted-foreground">
+                Customer Preference: {order.deliveryPreference === 'delivery' ? 'Delivery Requested' : 'Self Pickup'}
+            </p>
+        )}
 
         {userRole === 'customer' && (
           <>
@@ -222,11 +240,11 @@ export function OrderListItem({
             <Button
               variant="default"
               size="sm"
-              className="bg-sky-600 hover:bg-sky-700 text-white"
+              className={order.deliveryPreference === 'delivery' ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-sky-600 hover:bg-sky-700 text-white"}
               onClick={() => onMarkAsReadyForPickup(order.id)}
             >
-              <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />
-              Ready for Pickup
+              {vendorReadyButtonIcon}
+              {vendorReadyButtonText}
             </Button>
           )}
 
