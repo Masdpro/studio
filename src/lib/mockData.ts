@@ -1,6 +1,6 @@
 
 // src/lib/mockData.ts
-import type { Order, Vendor, DeliveryAgent, Product, CartItem } from '@/lib/types';
+import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review } from '@/lib/types';
 
 export const sampleProductsForMockOrders: Product[] = [
   { id: 'prod_pizza_margherita', vendorId: 'vendor001', name: 'Margherita Pizza', description: 'Classic delight with 100% real mozzarella cheese', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pizza margherita' },
@@ -36,7 +36,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust001', // John Doe
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[0], 1), mapProductToCartItem(sampleProductsForMockOrders[4], 2)],
-    totalAmount: (sampleProductsForMockOrders[0].price * 1) + (sampleProductsForMockOrders[4].price * 2),
+    totalAmount: (sampleProductsForMockOrders[0].price * 1) + (sampleProductsForMockOrders[4].price * 2) + 5.00,
     status: 'Processing',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
@@ -51,10 +51,10 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 1)],
     totalAmount: sampleProductsForMockOrders[2].price * 1,
-    status: 'ReadyForCustomerPickup', // Changed for testing
+    status: 'ReadyForCustomerPickup',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
-    deliveryFee: 0, // No fee for self-pickup
+    deliveryFee: 0,
     estimatedDistance: '2 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
     deliveryPreference: 'pickup',
@@ -64,7 +64,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust003', // Alice Wonderland
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[1], 2)],
-    totalAmount: sampleProductsForMockOrders[1].price * 2,
+    totalAmount: (sampleProductsForMockOrders[1].price * 2) + 6.00,
     status: 'AcceptedByAgent',
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'Alice Wonderland, 303 Buyer Ave, Metroburg, Tastyland',
@@ -79,7 +79,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust001', // John Doe
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[3], 1)],
-    totalAmount: sampleProductsForMockOrders[3].price * 1,
+    totalAmount: (sampleProductsForMockOrders[3].price * 1) + 5.50,
     status: 'PickedUpByAgent',
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
@@ -94,7 +94,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust002', // Jane Smith
     vendorId: 'vendor003', // QuickMart Groceries
     items: [mapProductToCartItem(sampleProductsForMockOrders[4], 4)],
-    totalAmount: sampleProductsForMockOrders[4].price * 4,
+    totalAmount: (sampleProductsForMockOrders[4].price * 4) + 7.00,
     status: 'Out for Delivery',
     pickupAddress: `${sampleVendors[2].streetAddress}, ${sampleVendors[2].city}, ${sampleVendors[2].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
@@ -109,7 +109,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust003', // Alice Wonderland
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[0], 1)],
-    totalAmount: sampleProductsForMockOrders[0].price * 1,
+    totalAmount: (sampleProductsForMockOrders[0].price * 1) + 4.00,
     status: 'Delivered',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'Alice Wonderland, 303 Buyer Ave, Metroburg, Tastyland',
@@ -124,7 +124,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust001', // John Doe
     vendorId: 'vendor003', // QuickMart Groceries
     items: [mapProductToCartItem(sampleProductsForMockOrders[4], 10)],
-    totalAmount: sampleProductsForMockOrders[4].price * 10,
+    totalAmount: (sampleProductsForMockOrders[4].price * 10) + 8.00,
     status: 'Cancelled',
     pickupAddress: `${sampleVendors[2].streetAddress}, ${sampleVendors[2].city}, ${sampleVendors[2].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
@@ -138,14 +138,14 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust002', // Jane Smith
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[1], 1)],
-    totalAmount: sampleProductsForMockOrders[1].price * 1,
+    totalAmount: (sampleProductsForMockOrders[1].price * 1) + 6.50,
     status: 'Processing',
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
     deliveryFee: 6.50,
     estimatedDistance: '5.5 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 0.75), // 45 mins ago
-    deliveryPreference: 'delivery', // For testing ReadyForPickup (agent)
+    deliveryPreference: 'delivery',
   },
   {
     id: 'order009',
@@ -156,7 +156,7 @@ export const masterSampleOrders: Order[] = [
     status: 'Pending',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
-    deliveryFee: 0, // No fee for self-pickup
+    deliveryFee: 0,
     estimatedDistance: '3.5 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 0.1), // 6 minutes ago
     deliveryPreference: 'pickup',
@@ -166,7 +166,7 @@ export const masterSampleOrders: Order[] = [
     customerId: 'cust003', // Alice Wonderland
     vendorId: 'vendor003', // QuickMart Groceries
     items: [mapProductToCartItem(sampleProductsForMockOrders[4], 5)],
-    totalAmount: sampleProductsForMockOrders[4].price * 5,
+    totalAmount: (sampleProductsForMockOrders[4].price * 5) + 7.50,
     status: 'Processing',
     pickupAddress: `${sampleVendors[2].streetAddress}, ${sampleVendors[2].city}, ${sampleVendors[2].country}`,
     deliveryAddress: 'Alice Wonderland, 303 Buyer Ave, Metroburg, Tastyland',
@@ -176,12 +176,12 @@ export const masterSampleOrders: Order[] = [
     deliveryPreference: 'delivery',
   },
    {
-    id: 'order011', // New order for testing ReadyForPickup status
+    id: 'order011',
     customerId: 'cust001',
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[1], 1)],
-    totalAmount: sampleProductsForMockOrders[1].price * 1,
-    status: 'ReadyForPickup', // Explicitly set for agent view
+    totalAmount: (sampleProductsForMockOrders[1].price * 1) + 3.00,
+    status: 'ReadyForPickup',
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: '123 Test Delivery St, Testville',
     deliveryFee: 3.00,
@@ -190,18 +190,35 @@ export const masterSampleOrders: Order[] = [
     deliveryPreference: 'delivery',
   },
   {
-    id: 'order012', // New order for testing ReadyForCustomerPickup status for customer scan
-    customerId: 'cust001', // Changed to cust001 for easier testing in "My Orders"
+    id: 'order012',
+    customerId: 'cust001',
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 2)],
     totalAmount: sampleProductsForMockOrders[2].price * 2,
-    status: 'ReadyForCustomerPickup', // Explicitly set
+    status: 'PickedUpByCustomer', // Changed to allow testing "Leave Review" for self-pickup
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
-    deliveryFee: 0, // No delivery fee for self-pickup
+    deliveryFee: 0,
     estimatedDistance: "0km",
-    createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), // 2.5 hours ago
+    createdAt: new Date(Date.now() - 3600 * 1000 * 26), // 26 hours ago
     deliveryPreference: 'pickup',
   },
 ];
 
+export const sampleReviews: Review[] = [
+  // Reviews for vendor001
+  { id: 'review001', orderId: 'order006', reviewerId: 'cust003', revieweeType: 'vendor', revieweeId: 'vendor001', rating: 'positive', comment: 'Great pizza, fast delivery!', createdAt: new Date(Date.now() - 3600 * 1000 * 23) },
+  { id: 'review002', orderId: 'order001', reviewerId: 'cust001', revieweeType: 'vendor', revieweeId: 'vendor001', rating: 'positive', comment: 'Always good!', createdAt: new Date(Date.now() - 3600 * 1000 * 1) },
+  { id: 'review003', orderId: 'order002', reviewerId: 'cust002', revieweeType: 'vendor', revieweeId: 'vendor001', rating: 'negative', comment: 'Salad was a bit wilted.', createdAt: new Date(Date.now() - 3600 * 1000 * 0.5) },
+  // Reviews for vendor002
+  { id: 'review004', orderId: 'order003', reviewerId: 'cust003', revieweeType: 'vendor', revieweeId: 'vendor002', rating: 'positive', comment: 'Burgers are amazing!', createdAt: new Date(Date.now() - 3600 * 1000 * 2) },
+  { id: 'review005', orderId: 'order004', reviewerId: 'cust001', revieweeType: 'vendor', revieweeId: 'vendor002', rating: 'positive', createdAt: new Date(Date.now() - 3600 * 1000 * 0.2) },
+  // Reviews for vendor003
+  { id: 'review006', orderId: 'order005', reviewerId: 'cust002', revieweeType: 'vendor', revieweeId: 'vendor003', rating: 'negative', comment: 'Took too long to prepare.', createdAt: new Date(Date.now() - 3600 * 1000 * 0.1) },
+  // Reviews for agent001
+  { id: 'review007', orderId: 'order003', reviewerId: 'cust003', revieweeType: 'delivery_agent', revieweeId: 'agent001', rating: 'positive', comment: 'Alex was very polite.', createdAt: new Date(Date.now() - 3600 * 1000 * 2) },
+  { id: 'review008', orderId: 'order004', reviewerId: 'cust001', revieweeType: 'delivery_agent', revieweeId: 'agent001', rating: 'positive', createdAt: new Date(Date.now() - 3600 * 1000 * 0.2) },
+  // Reviews for agent002
+  { id: 'review009', orderId: 'order006', reviewerId: 'cust003', revieweeType: 'delivery_agent', revieweeId: 'agent002', rating: 'negative', comment: 'Agent seemed rushed.', createdAt: new Date(Date.now() - 3600 * 1000 * 23) },
+  { id: 'review010', orderId: 'order005', reviewerId: 'cust002', revieweeType: 'delivery_agent', revieweeId: 'agent002', rating: 'positive', comment: 'Friendly and on time!', createdAt: new Date(Date.now() - 3600 * 1000 * 0.1) },
+];

@@ -5,12 +5,13 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck, ScanLine } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck, ScanLine, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
-import React, { useState } from 'react';
-import { OrderDetailsDialog } from './OrderDetailsDialog'; // Import the new dialog
+import React, { useState, useMemo } from 'react';
+import { OrderDetailsDialog } from './OrderDetailsDialog';
+import { sampleReviews } from '@/lib/mockData'; // Import sampleReviews
 
 interface OrderListItemProps {
   order: Order;
@@ -31,8 +32,8 @@ const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof 
     case 'Processing':
     case 'AcceptedByAgent':
       return 'default';
-    case 'ReadyForPickup': 
-    case 'ReadyForCustomerPickup': 
+    case 'ReadyForPickup':
+    case 'ReadyForCustomerPickup':
     case 'PickedUpByAgent':
     case 'PickedUpByCustomer':
       return 'outline';
@@ -53,10 +54,10 @@ const getStatusIcon = (status: Order['status']) => {
       return <Clock className="h-4 w-4 mr-1.5" />;
     case 'Processing':
       return <Package className="h-4 w-4 mr-1.5" />;
-    case 'ReadyForPickup': 
-      return <ShoppingBag className="h-4 w-4 mr-1.5 text-orange-600" />; 
-    case 'ReadyForCustomerPickup': 
-      return <UserCheck className="h-4 w-4 mr-1.5 text-teal-600" />; 
+    case 'ReadyForPickup':
+      return <ShoppingBag className="h-4 w-4 mr-1.5 text-orange-600" />;
+    case 'ReadyForCustomerPickup':
+      return <UserCheck className="h-4 w-4 mr-1.5 text-teal-600" />;
     case 'PickedUpByCustomer':
       return <PackageCheck className="h-4 w-4 mr-1.5 text-green-600" />;
     case 'AcceptedByAgent':
@@ -78,8 +79,8 @@ const getStatusColorClass = (status: Order['status']): string => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'Processing': return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'ReadyForPickup': return 'bg-orange-100 text-orange-800 border-orange-300'; 
-      case 'ReadyForCustomerPickup': return 'bg-teal-100 text-teal-800 border-teal-300'; 
+      case 'ReadyForPickup': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'ReadyForCustomerPickup': return 'bg-teal-100 text-teal-800 border-teal-300';
       case 'PickedUpByCustomer': return 'bg-green-100 text-green-800 border-green-300';
       case 'AcceptedByAgent': return 'bg-indigo-100 text-indigo-800 border-indigo-300';
       case 'PickedUpByAgent': return 'bg-cyan-100 text-cyan-800 border-cyan-300';
@@ -108,6 +109,16 @@ export function OrderListItem({
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
+  const vendorReviews = useMemo(() => {
+    const reviewsForVendor = sampleReviews.filter(
+      (review) => review.revieweeId === order.vendorId && review.revieweeType === 'vendor'
+    );
+    return {
+      positive: reviewsForVendor.filter((r) => r.rating === 'positive').length,
+      negative: reviewsForVendor.filter((r) => r.rating === 'negative').length,
+    };
+  }, [order.vendorId]);
+
   const showVendorAgentPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'delivery' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
 
@@ -123,8 +134,8 @@ export function OrderListItem({
     if (order.deliveryPreference === 'delivery') {
       vendorReadyButtonText = "Post for Delivery";
       vendorReadyButtonIcon = <Send className="h-4 w-4 mr-1 sm:mr-2" />;
-    } else { 
-      vendorReadyButtonText = "Ready for Pickup"; 
+    } else {
+      vendorReadyButtonText = "Ready for Pickup";
       vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
     }
   }
@@ -135,7 +146,7 @@ export function OrderListItem({
   const canLeaveReview = userRole === 'customer' && (order.status === 'Delivered' || order.status === 'PickedUpByCustomer');
   const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   const canCustomerCancel = userRole === 'customer' && (order.status === 'Pending' || order.status === 'Processing') && onCancelOrder;
-  
+
   const handleViewDetailsClick = () => {
     setIsDetailsDialogOpen(true);
   };
@@ -172,7 +183,15 @@ export function OrderListItem({
             <>
               <div>
                 <h4 className="font-semibold text-sm text-muted-foreground">Vendor:</h4>
-                <p className="text-sm">{order.vendorId} (Details placeholder)</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span>{order.vendorId}</span>
+                  <div className="flex items-center gap-1 text-xs">
+                    <ThumbsUp className="h-3 w-3 text-green-500" />
+                    <span>{vendorReviews.positive}</span>
+                    <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
+                    <span>{vendorReviews.negative}</span>
+                  </div>
+                </div>
                 <p className="text-xs text-muted-foreground">Pickup from: {order.pickupAddress}</p>
               </div>
                {order.deliveryAgentId && (
@@ -215,6 +234,15 @@ export function OrderListItem({
                 <Package className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
                 <div>
                   <p className="font-semibold">Pickup From (Vendor):</p>
+                   <div className="flex items-center gap-2 text-sm">
+                    <span>{order.vendorId}</span>
+                    <div className="flex items-center gap-1 text-xs">
+                        <ThumbsUp className="h-3 w-3 text-green-500" />
+                        <span>{vendorReviews.positive}</span>
+                        <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
+                        <span>{vendorReviews.negative}</span>
+                    </div>
+                  </div>
                   <p className="text-sm">{order.pickupAddress}</p>
                 </div>
               </div>
@@ -271,7 +299,7 @@ export function OrderListItem({
               </Button>
             )}
 
-            {userRole === 'delivery_agent' && order.status === 'ReadyForPickup' && onAcceptDelivery && (
+            {userRole === 'delivery_agent' && order.status === 'ReadyForPickup' && !order.deliveryAgentId && onAcceptDelivery && (
               <Button className="bg-primary hover:bg-primary/80" onClick={() => onAcceptDelivery(order.id)}>
                 Accept Delivery
               </Button>
@@ -316,7 +344,7 @@ export function OrderListItem({
                 size="sm"
                 onClick={handleViewDetailsClick}
                 aria-label="View order details"
-                className="px-2 sm:px-3" 
+                className="px-2 sm:px-3"
               >
                 <Eye className="h-4 w-4" />
                 <span className="hidden sm:inline sm:ml-1">View Details</span>
@@ -335,7 +363,7 @@ export function OrderListItem({
       </Card>
       {isDetailsDialogOpen && (
         <OrderDetailsDialog
-          order={order} // Pass the full order object
+          order={order}
           isOpen={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
         />
