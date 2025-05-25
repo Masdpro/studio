@@ -5,7 +5,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -17,6 +17,7 @@ interface OrderListItemProps {
   onAcceptDelivery?: (orderId: string) => void;
   onScanForPickup?: (orderId: string) => void;
   onScanForDelivery?: (orderId: string) => void;
+  onCancelOrder?: (orderId: string) => void;
 }
 
 const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -83,7 +84,8 @@ export function OrderListItem({
   userRole,
   onAcceptDelivery,
   onScanForPickup,
-  onScanForDelivery
+  onScanForDelivery,
+  onCancelOrder,
 }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
@@ -98,6 +100,7 @@ export function OrderListItem({
 
   const canLeaveReview = userRole === 'customer' && order.status === 'Delivered';
   const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
+  const canCustomerCancel = userRole === 'customer' && (order.status === 'Pending' || order.status === 'Processing') && onCancelOrder;
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
@@ -210,6 +213,17 @@ export function OrderListItem({
           {userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery') && onScanForDelivery && (
             <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => onScanForDelivery(order.id)}>
               <ShieldCheck className="h-4 w-4 mr-2" /> Scan at Delivery
+            </Button>
+          )}
+
+          {canCustomerCancel && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onCancelOrder(order.id)}
+            >
+              <Ban className="h-4 w-4 mr-1 sm:mr-2" />
+              Cancel Order
             </Button>
           )}
 

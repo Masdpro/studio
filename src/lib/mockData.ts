@@ -37,7 +37,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[0], 1), mapProductToCartItem(sampleProductsForMockOrders[4], 2)],
     totalAmount: (sampleProductsForMockOrders[0].price * 1) + (sampleProductsForMockOrders[4].price * 2),
-    status: 'Processing',
+    status: 'Processing', // Cancellable by customer
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
     deliveryFee: 5.00,
@@ -50,7 +50,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 1)],
     totalAmount: sampleProductsForMockOrders[2].price * 1,
-    status: 'ReadyForPickup',
+    status: 'ReadyForPickup', // Not cancellable by customer anymore
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
     deliveryFee: 4.50,
@@ -63,7 +63,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[1], 2)],
     totalAmount: sampleProductsForMockOrders[1].price * 2,
-    status: 'AcceptedByAgent',
+    status: 'AcceptedByAgent', // Not cancellable by customer
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'Alice Wonderland, 303 Buyer Ave, Metroburg, Tastyland',
     deliveryFee: 6.00,
@@ -77,7 +77,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[3], 1)],
     totalAmount: sampleProductsForMockOrders[3].price * 1,
-    status: 'PickedUpByAgent',
+    status: 'PickedUpByAgent', // Not cancellable
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
     deliveryFee: 5.50,
@@ -91,7 +91,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor003', // QuickMart Groceries
     items: [mapProductToCartItem(sampleProductsForMockOrders[4], 4)],
     totalAmount: sampleProductsForMockOrders[4].price * 4,
-    status: 'Out for Delivery',
+    status: 'Out for Delivery', // Not cancellable
     pickupAddress: `${sampleVendors[2].streetAddress}, ${sampleVendors[2].city}, ${sampleVendors[2].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
     deliveryFee: 7.00,
@@ -105,7 +105,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[0], 1)],
     totalAmount: sampleProductsForMockOrders[0].price * 1,
-    status: 'Delivered',
+    status: 'Delivered', // Not cancellable
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'Alice Wonderland, 303 Buyer Ave, Metroburg, Tastyland',
     deliveryFee: 4.00,
@@ -119,7 +119,7 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor003', // QuickMart Groceries
     items: [mapProductToCartItem(sampleProductsForMockOrders[4], 10)],
     totalAmount: sampleProductsForMockOrders[4].price * 10,
-    status: 'Cancelled',
+    status: 'Cancelled', // Already cancelled
     pickupAddress: `${sampleVendors[2].streetAddress}, ${sampleVendors[2].city}, ${sampleVendors[2].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
     deliveryFee: 8.00,
@@ -132,12 +132,25 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[1], 1)],
     totalAmount: sampleProductsForMockOrders[1].price * 1,
-    status: 'ReadyForPickup',
+    status: 'ReadyForPickup', // Not cancellable by customer
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
     deliveryFee: 6.50,
     estimatedDistance: '5.5 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 0.75), // 45 mins ago
+  },
+  {
+    id: 'order009',
+    customerId: 'cust001', // John Doe
+    vendorId: 'vendor001', // Good Eats Pizzeria
+    items: [mapProductToCartItem(sampleProductsForMockOrders[0], 3)],
+    totalAmount: (sampleProductsForMockOrders[0].price * 3),
+    status: 'Pending', // Cancellable by customer
+    pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
+    deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
+    deliveryFee: 5.20,
+    estimatedDistance: '3.5 km',
+    createdAt: new Date(Date.now() - 3600 * 1000 * 0.1), // 6 minutes ago
   },
 ];
 

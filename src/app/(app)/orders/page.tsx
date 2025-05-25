@@ -2,11 +2,12 @@
 // src/app/(app)/orders/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '@/lib/types';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import { Loader2 } from 'lucide-react';
 import { masterSampleOrders } from '@/lib/mockData';
+import { useToast } from '@/hooks/use-toast';
 
 // Simulate a logged-in customer
 const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
@@ -14,6 +15,7 @@ const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
 export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // In a real app, fetch orders for the logged-in customer
@@ -23,6 +25,19 @@ export default function CustomerOrdersPage() {
     setOrders(customerOrders);
     setIsLoading(false);
   }, []);
+
+  const handleCancelOrder = useCallback((orderId: string) => {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId ? { ...order, status: 'Cancelled' as Order['status'] } : order
+      )
+    );
+    toast({
+      title: 'Order Cancelled',
+      description: `Order ${orderId} has been cancelled. A full refund will be processed (mock).`,
+      variant: 'default',
+    });
+  }, [toast]);
 
   if (isLoading) {
      return (
@@ -40,6 +55,7 @@ export default function CustomerOrdersPage() {
         title="My Orders"
         description="Track the status of your current and past orders."
         userRole="customer"
+        onCancelOrder={handleCancelOrder}
       />
     </div>
   );
