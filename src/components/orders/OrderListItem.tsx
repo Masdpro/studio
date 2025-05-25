@@ -124,7 +124,7 @@ export function OrderListItem({
       vendorReadyButtonText = "Post for Delivery";
       vendorReadyButtonIcon = <Send className="h-4 w-4 mr-1 sm:mr-2" />;
     } else { // This is the 'pickup' case
-      vendorReadyButtonText = "Ready for Pickup";
+      vendorReadyButtonText = "Ready for Pickup"; // Text simplified per user request
       vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
     }
   }
@@ -311,9 +311,10 @@ export function OrderListItem({
               size="sm"
               onClick={() => console.log('View order details for:', order.id, order)}
               aria-label="View order details"
+              className="px-2 sm:px-3" // Apply responsive padding
             >
-              <Eye className="h-4 w-4 mr-1 sm:mr-0 md:mr-1" />
-              <span className="hidden sm:inline md:inline">View Details</span>
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline sm:ml-1">View Details</span>
             </Button>
           )}
 
