@@ -48,6 +48,20 @@ export default function VendorDashboardPage() {
     });
   }, [toast]);
 
+  const handleMarkAsReadyForPickup = useCallback((orderId: string) => {
+    setDisplayedVendorOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId && order.status === 'Processing'
+          ? { ...order, status: 'ReadyForPickup' as Order['status'] }
+          : order
+      )
+    );
+    toast({
+      title: 'Order Ready!',
+      description: `Order ${orderId} has been marked as ready for pickup.`,
+    });
+  }, [toast]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
@@ -84,7 +98,7 @@ export default function VendorDashboardPage() {
                 Manage Your Profile
               </CardTitle>
               <CardDescription>
-                Keep your business information up to date. Your current status on Dailybuy is <span className="font-semibold">{currentVendor.status}</span>.
+                Keep your business information up to date. Your status on Dailybuy for taking orders is: <span className="font-semibold">{currentVendor.status}</span>.
                 Your physical store hours are: <span className="font-semibold">{currentVendor.operatingHours || 'Not set'}</span>.
               </CardDescription>
             </CardHeader>
@@ -105,6 +119,7 @@ export default function VendorDashboardPage() {
             description="Monitor the status of orders placed with your business."
             userRole="vendor"
             onAttendToOrder={handleAttendToOrder}
+            onMarkAsReadyForPickup={handleMarkAsReadyForPickup} // Pass the new handler
           />
         </TabsContent>
 

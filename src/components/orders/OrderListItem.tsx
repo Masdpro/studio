@@ -18,7 +18,8 @@ interface OrderListItemProps {
   onScanForPickup?: (orderId: string) => void;
   onScanForDelivery?: (orderId: string) => void;
   onCancelOrder?: (orderId: string) => void;
-  onAttendToOrder?: (orderId: string) => void; // New prop
+  onAttendToOrder?: (orderId: string) => void;
+  onMarkAsReadyForPickup?: (orderId: string) => void; // New prop
 }
 
 const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -87,7 +88,8 @@ export function OrderListItem({
   onScanForPickup,
   onScanForDelivery,
   onCancelOrder,
-  onAttendToOrder, // New prop
+  onAttendToOrder,
+  onMarkAsReadyForPickup, // New prop
 }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
@@ -97,9 +99,9 @@ export function OrderListItem({
   const showVendorPickupBarcode = userRole === 'vendor' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   
-  const isVendorProcessing = userRole === 'vendor' && order.status === 'Processing';
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
-  const shouldShowViewDetailsButton = order.items.length > 1 || isVendorProcessing;
+  const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup; // Condition for new button
+  const shouldShowViewDetailsButton = order.items.length > 1 || (userRole === 'vendor' && (order.status === 'Processing' || order.status === 'Pending'));
 
 
   const canLeaveReview = userRole === 'customer' && order.status === 'Delivered';
@@ -213,6 +215,18 @@ export function OrderListItem({
             >
               <PlayCircle className="h-4 w-4 mr-1 sm:mr-2" />
               Attend to Order
+            </Button>
+          )}
+
+          {canVendorMarkReady && (
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-sky-600 hover:bg-sky-700 text-white"
+              onClick={() => onMarkAsReadyForPickup(order.id)}
+            >
+              <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />
+              Mark Ready for Pickup
             </Button>
           )}
 
