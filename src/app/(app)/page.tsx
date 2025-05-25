@@ -46,6 +46,7 @@ const sampleVendors: Vendor[] = [
 ];
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
+const ALL_LOCATIONS_VALUE = "All Locations"; // Define a constant for "All Locations"
 const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
 
 const SESSION_STORAGE_KEYS = {
@@ -59,7 +60,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>(USER_CURRENT_LOCATION_VALUE);
+  const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE); // Default to "All Locations"
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -84,19 +85,17 @@ export default function HomePage() {
     const storedSelectedLocation = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedLocation);
     if (storedSelectedLocation) {
       setSelectedLocation(storedSelectedLocation);
-      // If a specific location is restored, clear any user coords/locating state.
-      // The other effect that listens to selectedLocation will handle fetching if it's USER_CURRENT_LOCATION_VALUE.
       if (storedSelectedLocation !== USER_CURRENT_LOCATION_VALUE) {
         setUserCoords(null);
         setLocationError(null);
         setIsLocating(false);
       }
     }
-    // If no storedSelectedLocation, selectedLocation remains its default (USER_CURRENT_LOCATION_VALUE).
-    // The effect listening to selectedLocation (guarded by isMounted.current) will then trigger location fetch.
+    // If no storedSelectedLocation, selectedLocation remains its default (ALL_LOCATIONS_VALUE).
+    // The effect listening to selectedLocation (guarded by isMounted.current) will then trigger location fetch IF it's USER_CURRENT_LOCATION_VALUE.
 
-    isMounted.current = true; // Signal that initial mount and hydration read attempt is complete
-  }, []); // Empty dependency array ensures this runs once on mount
+    isMounted.current = true; 
+  }, []); 
 
   // Save state to sessionStorage whenever it changes, but only after initial mount
   useEffect(() => {
@@ -140,7 +139,7 @@ export default function HomePage() {
     const uniqueLocations = Array.from(
       new Set(sampleVendors.map(v => v.locationTag))
     ).filter(Boolean).sort() as string[];
-    return ['All Locations', USER_CURRENT_LOCATION_VALUE, ...uniqueLocations];
+    return [ALL_LOCATIONS_VALUE, USER_CURRENT_LOCATION_VALUE, ...uniqueLocations];
   }, []);
 
   const handleFetchUserLocation = useCallback(() => {
@@ -148,9 +147,8 @@ export default function HomePage() {
       setLocationError("Geolocation is not supported by your browser.");
       toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive" });
       setIsLocating(false);
-      // Fallback if geolocation isn't even supported and current location was selected
       if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
-          setSelectedLocation('All Locations');
+          setSelectedLocation(ALL_LOCATIONS_VALUE);
       }
       return;
     }
@@ -174,21 +172,19 @@ export default function HomePage() {
         setLocationError(message);
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
-        // Use the ref here to check the LATEST selectedLocation
         if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
-          setSelectedLocation('All Locations'); // Fallback if location fetch fails
+          setSelectedLocation(ALL_LOCATIONS_VALUE); 
         }
       }
     );
-  }, [toast]); // Dependencies: toast. Setters are stable. selectedLocationRef is a ref.
+  }, [toast]); 
 
   // Effect to trigger location fetching or clear location state
   useEffect(() => {
-    if (isMounted.current) { // Only run after initial hydration attempt
+    if (isMounted.current) { 
       if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
         handleFetchUserLocation();
       } else {
-        // If a specific location is chosen (or "All Locations"), clear user coords and locating state
         setUserCoords(null);
         setLocationError(null);
         setIsLocating(false);
@@ -199,7 +195,6 @@ export default function HomePage() {
 
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
-    // The useEffect above will handle fetching or clearing coords.
   };
 
   const vendorsForFilter = useMemo(() => {
@@ -211,7 +206,7 @@ export default function HomePage() {
         Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
         Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
       );
-    } else if (selectedLocation !== 'All Locations' && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
+    } else if (selectedLocation !== ALL_LOCATIONS_VALUE && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
       vendorsFilteredByLocation = sampleVendors.filter(vendor => vendor.locationTag === selectedLocation);
     }
 
@@ -222,7 +217,7 @@ export default function HomePage() {
   }, [selectedLocation, userCoords]);
 
   useEffect(() => {
-    if (isMounted.current) { // Ensure this also respects the mount status
+    if (isMounted.current) { 
         if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
           setSelectedVendorId('All');
         }
@@ -244,7 +239,7 @@ export default function HomePage() {
         Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
         Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
       );
-    } else if (selectedLocation !== 'All Locations' && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
+    } else if (selectedLocation !== ALL_LOCATIONS_VALUE && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
       vendorsToFilterBy = sampleVendors.filter(vendor => vendor.locationTag === selectedLocation);
     }
 
@@ -256,7 +251,7 @@ export default function HomePage() {
       const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
 
       let matchesLocationCriteria = false;
-      if (selectedLocation === 'All Locations' || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) { 
+      if (selectedLocation === ALL_LOCATIONS_VALUE || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) { 
         matchesLocationCriteria = true;
       } else { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
@@ -419,4 +414,6 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
