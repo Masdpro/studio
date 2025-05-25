@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 const sampleCartItems: CartItemType[] = [
   { productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' },
   { productId: '3', name: 'Chicken Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' },
+  { productId: 'p1', name: 'Laptop Pro 15"', description: 'High-performance laptop for professionals.', price: 1299.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'laptop professional' },
+  { productId: 'p2', name: 'Men\'s Casual Shirt', description: 'Comfortable cotton shirt for everyday wear.', price: 39.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'shirt casual' },
+
 ];
 
 export function ShoppingCartView() {
@@ -69,14 +72,14 @@ export function ShoppingCartView() {
 
   if (!isClient) {
     return (
-      <Card className="w-full max-w-3xl mx-auto">
+      <Card className="w-full flex-1 flex flex-col shadow-xl overflow-hidden">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
             <ShoppingBag className="h-6 w-6 text-primary" />
             Your Shopping Cart
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-grow overflow-y-auto p-4 md:p-6">
           <p>Loading cart...</p>
         </CardContent>
       </Card>
@@ -84,14 +87,21 @@ export function ShoppingCartView() {
   }
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-xl">
+    <Card className="w-full flex-1 flex flex-col shadow-xl overflow-hidden">
+      {/* CardHeader is part of the SheetHeader now, so we can omit it here if desired, 
+          or keep it for consistency if ShoppingCartView is used elsewhere.
+          For this sheet context, it's probably redundant if SheetHeader is present.
+          Let's assume the SheetHeader in AppHeader is sufficient.
+      */}
+      {/* 
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           <ShoppingBag className="h-6 w-6 text-primary" />
           Your Shopping Cart
         </CardTitle>
-      </CardHeader>
-      <CardContent>
+      </CardHeader> 
+      */}
+      <CardContent className="flex-grow overflow-y-auto p-4 md:p-6">
         {cartItems.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">Your cart is empty.</p>
         ) : (
@@ -108,7 +118,7 @@ export function ShoppingCartView() {
         )}
       </CardContent>
       {cartItems.length > 0 && (
-        <CardFooter className="flex flex-col items-stretch gap-4 p-6">
+        <CardFooter className="flex flex-col items-stretch gap-4 p-6 border-t">
           <Separator />
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
@@ -135,5 +145,3 @@ export function ShoppingCartView() {
     </Card>
   );
 }
-
-    

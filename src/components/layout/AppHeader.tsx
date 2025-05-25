@@ -59,9 +59,8 @@ export function AppHeader() {
               <ShoppingCart className="h-6 w-6 text-primary" /> Your Cart
             </SheetTitle>
           </SheetHeader>
-          <div className="flex-grow overflow-y-auto">
-            <ShoppingCartView />
-          </div>
+          {/* ShoppingCartView will take remaining space and handle its own scrolling */}
+          <ShoppingCartView />
         </SheetContent>
       </Sheet>
 
