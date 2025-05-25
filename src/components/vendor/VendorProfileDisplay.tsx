@@ -75,7 +75,6 @@ export function VendorProfileDisplay({ vendor }: VendorProfileDisplayProps) {
             </div>
           </div>
         )}
-        {/* Placeholder for more vendor details like bio, opening hours, etc. */}
          <div className="p-3 bg-muted/50 rounded-md">
             <p className="text-sm text-muted-foreground">About Us (placeholder)</p>
             <p className="font-medium">
@@ -84,13 +83,6 @@ export function VendorProfileDisplay({ vendor }: VendorProfileDisplayProps) {
             </p>
         </div>
       </div>
-       {/* Footer can be added here if needed, e.g., for actions or a persistent close button
-      // Example SheetFooter:
-      // import { SheetFooter } from '@/components/ui/sheet';
-      // <SheetFooter className="p-6 border-t">
-      //   <Button variant="outline" onClick={() => { /* logic to close sheet */ }}>Close</Button>
-      // </SheetFooter>
-      */}
     </div>
   );
 }
