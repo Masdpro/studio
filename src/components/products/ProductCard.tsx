@@ -6,15 +6,16 @@ import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Store } from 'lucide-react';
+import { ShoppingCart, Store, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
   vendorName: string;
+  vendorLocation?: string;
 }
 
-export function ProductCard({ product, vendorName }: ProductCardProps) {
+export function ProductCard({ product, vendorName, vendorLocation }: ProductCardProps) {
   const { toast } = useToast();
 
   const handleAddToCart = () => {
@@ -31,7 +32,7 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
         <Image
           src={product.imageUrl || "https://placehold.co/600x400.png"}
           alt={product.name}
-          fill
+          fill={true}
           style={{ objectFit: 'cover' }}
           className="group-hover:scale-105 transition-transform duration-300"
           data-ai-hint={product.aiHint || "food item"}
@@ -43,10 +44,18 @@ export function ProductCard({ product, vendorName }: ProductCardProps) {
         <CardDescription className="text-muted-foreground text-sm mb-2 min-h-[2.5rem] line-clamp-2">
           {product.description}
         </CardDescription>
-        <Badge variant="secondary" className="mb-2 inline-flex items-center">
-          <Store className="h-3 w-3 mr-1.5" />
-          {vendorName}
-        </Badge>
+        <div className="flex flex-wrap gap-1 mb-2">
+          <Badge variant="secondary" className="inline-flex items-center">
+            <Store className="h-3 w-3 mr-1.5" />
+            {vendorName}
+          </Badge>
+          {vendorLocation && (
+            <Badge variant="outline" className="inline-flex items-center">
+              <MapPin className="h-3 w-3 mr-1.5" />
+              {vendorLocation}
+            </Badge>
+          )}
+        </div>
         <p className="text-lg font-bold text-primary mt-auto">${product.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">

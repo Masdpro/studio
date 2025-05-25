@@ -112,6 +112,7 @@ export default function HomePage() {
     }
   }, [selectedLocation, handleFetchUserLocation]);
 
+
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
     if (value === USER_CURRENT_LOCATION_VALUE) {
@@ -293,7 +294,8 @@ export default function HomePage() {
           {filteredProducts.map((product) => {
             const vendor = sampleVendors.find(v => v.id === product.vendorId);
             const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
-            return <ProductCard key={product.id} product={product} vendorName={vendorName} />;
+            const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
+            return <ProductCard key={product.id} product={product} vendorName={vendorName} vendorLocation={vendorLocation} />;
           })}
         </div>
       ) : (
