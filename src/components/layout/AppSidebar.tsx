@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Home, ShoppingCart, UserPlus, Truck, Route, Settings, Store, Bike, ListChecks, UserCircle as UserProfileIcon } from 'lucide-react';
+import { Home, ShoppingCart, UserPlus, Truck, Route, Settings, Store, Bike, ListChecks, UserCircle as UserProfileIcon, Bell } from 'lucide-react'; // Added Bell
 import {
   Sidebar,
   SidebarHeader,
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/cart', label: 'Cart', icon: ShoppingCart, tooltip: "View Your Cart" },
   { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
   { href: '/profile', label: 'My Profile', icon: UserProfileIcon, tooltip: "View Your Profile" },
+  { href: '/notifications', label: 'Notifications', icon: Bell, tooltip: "View Notifications" }, // Added
 ];
 
 const vendorItems = [

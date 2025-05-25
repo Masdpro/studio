@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, UserCircle, ShoppingBag } from 'lucide-react'; // Changed Package to ShoppingBag
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
+import { NotificationBell } from '@/components/notifications/NotificationBell'; // Added
 
 export function AppHeader() {
   return (
@@ -19,8 +20,9 @@ export function AppHeader() {
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
       </nav>
-      <div className="ml-auto flex items-center gap-2 md:gap-4">
+      <div className="ml-auto flex items-center gap-1 md:gap-2"> {/* Reduced gap for smaller screens */}
         <UserWalletDisplay />
+        <NotificationBell /> {/* Added NotificationBell */}
         <Button variant="ghost" size="icon" asChild>
           <Link href="/cart">
             <ShoppingCart className="h-5 w-5" />

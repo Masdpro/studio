@@ -96,4 +96,13 @@ export type Review = {
   createdAt: Date;
 };
 
-    
+export type AppNotification = {
+  id: string;
+  userId: string; // To whom this notification belongs
+  message: string;
+  createdAt: Date;
+  read: boolean;
+  link?: string; // Optional: Path to navigate to on click
+  iconName?: keyof typeof import('lucide-react'); // Optional: lucide-react icon name
+  category?: 'Order' | 'Account' | 'Promotion' | 'System'; // Example categories
+};
