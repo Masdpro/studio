@@ -39,6 +39,9 @@ const sampleProducts: Product[] = [
   { id: '14', vendorId: 'v4', name: 'Spicy Chicken Wings (12pcs)', description: 'Crispy chicken wings tossed in a fiery buffalo sauce.', price: 11.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'chicken wings' },
   { id: '15', vendorId: 'v2', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'scarf silk' },
   { id: '16', vendorId: 'v3', name: "Children's Illustrated Storybook", description: 'A beautifully illustrated storybook for young readers.', price: 9.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'kids book' },
+  { id: '17', vendorId: 'v6', name: 'Adjustable Dumbbell Set', description: 'Versatile dumbbell set for home workouts, 5-25 lbs.', price: 129.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'dumbbell set' },
+  { id: '18', vendorId: 'v5', name: 'Modern Bookshelf', description: 'Stylish 5-tier bookshelf for living room or office.', price: 89.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'bookshelf modern' },
+  { id: '19', vendorId: 'v4', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'olive oil' },
 ];
 
 
@@ -100,6 +103,9 @@ export default function HomePage() {
         setLocationError(null);
         setIsLocating(false);
       }
+    } else {
+      // If no stored location, default to ALL_LOCATIONS_VALUE
+      setSelectedLocation(ALL_LOCATIONS_VALUE);
     }
     isMounted.current = true; 
   }, []); 
@@ -437,6 +443,8 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
 
     
