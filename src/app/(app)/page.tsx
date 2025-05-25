@@ -21,18 +21,18 @@ import { useToast } from '@/hooks/use-toast';
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
-  { id: '1', vendorId: 'v1', name: 'Margherita Pizza', description: 'Classic cheese and tomato pizza with a crispy crust.', price: 12.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Pizza', aiHint: 'pizza margherita' },
-  { id: '2', vendorId: 'v1', name: 'Pepperoni Passion Pizza', description: 'Loaded with spicy pepperoni and mozzarella cheese.', price: 14.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Pizza', aiHint: 'pizza pepperoni' },
-  { id: '3', vendorId: 'v2', name: 'Ultimate Chicken Burger', description: 'Grilled chicken breast, bacon, cheese, lettuce, and tomato.', price: 9.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Burgers', aiHint: 'burger chicken' },
-  { id: '4', vendorId: 'v2', name: 'Garden Veggie Burger', description: 'A delicious plant-based patty with fresh garden vegetables.', price: 8.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Burgers', aiHint: 'burger veggie' },
-  { id: '5', vendorId: 'v3', name: 'Classic Caesar Salad', description: 'Crisp romaine, Parmesan, croutons, and creamy Caesar dressing.', price: 7.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Salads', aiHint: 'salad caesar' },
-  { id: '6', vendorId: 'v3', name: 'Mediterranean Greek Salad', description: 'Tomatoes, cucumbers, olives, feta, and a tangy vinaigrette.', price: 8.49, imageUrl: 'https://placehold.co/300x200.png', category: 'Salads', aiHint: 'salad greek' },
-  { id: '7', vendorId: 'v4', name: 'Sparkling Cola', description: 'Classic refreshing cola beverage, chilled to perfection.', price: 2.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Drinks', aiHint: 'drink soda' },
-  { id: '8', vendorId: 'v4', name: 'Fresh Orange Juice', description: '100% freshly squeezed orange juice, full of vitamins.', price: 3.00, imageUrl: 'https://placehold.co/300x200.png', category: 'Drinks', aiHint: 'drink juice' },
-  { id: '9', vendorId: 'v5', name: 'Decadent Chocolate Cake', description: 'A rich and moist chocolate layer cake with fudge frosting.', price: 5.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Desserts', aiHint: 'dessert cake' },
-  { id: '10', vendorId: 'v5', name: 'Vanilla Bean Ice Cream', description: 'Creamy vanilla bean ice cream, perfect for a treat.', price: 3.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Desserts', aiHint: 'dessert icecream' },
-  { id: '11', vendorId: 'v1', name: 'Spaghetti Carbonara', description: 'Classic Italian pasta with eggs, cheese, pancetta, and pepper.', price: 13.50, imageUrl: 'https://placehold.co/300x200.png', category: 'Pasta', aiHint: 'pasta carbonara' },
-  { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/300x200.png', category: 'Sushi', aiHint: 'sushi platter' },
+  { id: '1', vendorId: 'v1', name: 'Margherita Pizza', description: 'Classic cheese and tomato pizza with a crispy crust.', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza margherita' },
+  { id: '2', vendorId: 'v1', name: 'Pepperoni Passion Pizza', description: 'Loaded with spicy pepperoni and mozzarella cheese.', price: 14.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Pizza', aiHint: 'pizza pepperoni' },
+  { id: '3', vendorId: 'v2', name: 'Ultimate Chicken Burger', description: 'Grilled chicken breast, bacon, cheese, lettuce, and tomato.', price: 9.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger chicken' },
+  { id: '4', vendorId: 'v2', name: 'Garden Veggie Burger', description: 'A delicious plant-based patty with fresh garden vegetables.', price: 8.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Burgers', aiHint: 'burger veggie' },
+  { id: '5', vendorId: 'v3', name: 'Classic Caesar Salad', description: 'Crisp romaine, Parmesan, croutons, and creamy Caesar dressing.', price: 7.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Salads', aiHint: 'salad caesar' },
+  { id: '6', vendorId: 'v3', name: 'Mediterranean Greek Salad', description: 'Tomatoes, cucumbers, olives, feta, and a tangy vinaigrette.', price: 8.49, imageUrl: 'https://placehold.co/600x400.png', category: 'Salads', aiHint: 'salad greek' },
+  { id: '7', vendorId: 'v4', name: 'Sparkling Cola', description: 'Classic refreshing cola beverage, chilled to perfection.', price: 2.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Drinks', aiHint: 'drink soda' },
+  { id: '8', vendorId: 'v4', name: 'Fresh Orange Juice', description: '100% freshly squeezed orange juice, full of vitamins.', price: 3.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Drinks', aiHint: 'drink juice' },
+  { id: '9', vendorId: 'v5', name: 'Decadent Chocolate Cake', description: 'A rich and moist chocolate layer cake with fudge frosting.', price: 5.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert cake' },
+  { id: '10', vendorId: 'v5', name: 'Vanilla Bean Ice Cream', description: 'Creamy vanilla bean ice cream, perfect for a treat.', price: 3.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Desserts', aiHint: 'dessert icecream' },
+  { id: '11', vendorId: 'v1', name: 'Spaghetti Carbonara', description: 'Classic Italian pasta with eggs, cheese, pancetta, and pepper.', price: 13.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Pasta', aiHint: 'pasta carbonara' },
+  { id: '12', vendorId: 'v6', name: 'Sushi Platter', description: 'Assortment of fresh nigiri and maki rolls.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sushi', aiHint: 'sushi platter' },
 ];
 
 // Mock vendor data with location tags, coordinates, and external store URLs
@@ -52,7 +52,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>('All Locations');
+  const [selectedLocation, setSelectedLocation] = useState<string>(USER_CURRENT_LOCATION_VALUE); // Default to current location
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -87,7 +87,8 @@ export default function HomePage() {
     }
     setIsLocating(true);
     setLocationError(null);
-    setUserCoords(null);
+    // Don't clear userCoords here, let it persist until new data or error
+    // setUserCoords(null); 
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -106,17 +107,28 @@ export default function HomePage() {
         setLocationError(message);
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
-        setSelectedLocation('All Locations');
+        // If error, and selectedLocation is current, switch to 'All Locations'
+        if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+          setSelectedLocation('All Locations');
+        }
       }
     );
-  }, [toast]);
+  }, [toast, selectedLocation]); // Added selectedLocation to dependencies
+
+
+  useEffect(() => {
+    if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+      handleFetchUserLocation();
+    }
+  }, [selectedLocation, handleFetchUserLocation]);
+
 
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
     if (value === USER_CURRENT_LOCATION_VALUE) {
       handleFetchUserLocation();
     } else {
-      setUserCoords(null);
+      setUserCoords(null); // Clear user coords if not filtering by current location
       setLocationError(null);
       setIsLocating(false);
     }
@@ -149,9 +161,9 @@ export default function HomePage() {
       let matchesLocationCriteria = false;
       if (selectedLocation === 'All Locations') {
         matchesLocationCriteria = true;
-      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) { // Check userCoords here
+      } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
-      } else { // Regular location tag filter
+      } else { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
 
@@ -272,12 +284,12 @@ export default function HomePage() {
         </div>
       ) : (
          <div className="text-center py-16">
-          {isLocating ? (
+          {isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE ? (
             <>
               <LocateFixed className="h-16 w-16 text-muted-foreground mx-auto mb-4 animate-pulse" />
               <p className="text-2xl font-semibold text-foreground mb-2">Finding nearby products...</p>
               <p className="text-lg text-muted-foreground">
-                Please wait while we fetch your location.
+                Please wait while we fetch your location. Make sure location permissions are enabled for your browser.
               </p>
             </>
           ) : (
@@ -294,4 +306,6 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
