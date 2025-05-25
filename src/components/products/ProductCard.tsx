@@ -61,7 +61,7 @@ export function ProductCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           data-ai-hint={product.aiHint || "product item"}
           className="w-full h-full object-cover"
-          // priority={true} // Temporarily removed for diagnostics
+          priority={true} 
         />
       </div>
       <CardContent className="p-4 flex-grow">
