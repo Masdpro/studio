@@ -21,27 +21,51 @@ import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 
-// Enhanced sample product data with more categories and aiHints, including Foods
+// Enhanced sample product data with more items in all categories
 const sampleProducts: Product[] = [
+  // Electronics (v1)
   { id: '1', vendorId: 'v1', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'headphones wireless' },
   { id: '2', vendorId: 'v1', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'smartwatch modern' },
+  { id: '11', vendorId: 'v1', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'speaker bluetooth' },
+  { id: '20', vendorId: 'v1', name: '4K Action Camera', description: 'Rugged 4K action camera for adventure recording.', price: 199.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'action camera' },
+
+  // Apparel (v2)
   { id: '3', vendorId: 'v2', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'shirt cotton' },
   { id: '4', vendorId: 'v2', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'jeans blue' },
+  { id: '15', vendorId: 'v2', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'scarf silk' },
+  { id: '21', vendorId: 'v2', name: 'Running Shoes', description: 'Lightweight and comfortable running shoes for men.', price: 75.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'running shoes' },
+
+  // Books (v3)
   { id: '5', vendorId: 'v3', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'book novel' },
   { id: '6', vendorId: 'v3', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'book science' },
+  { id: '16', vendorId: 'v3', name: "Children's Illustrated Storybook", description: 'A beautifully illustrated storybook for young readers.', price: 9.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'kids book' },
+  { id: '22', vendorId: 'v3', name: 'Cookbook: Global Flavors', description: 'A cookbook featuring recipes from around the world.', price: 22.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'cookbook recipe' },
+
+  // Groceries (v4)
   { id: '7', vendorId: 'v4', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'coffee beans' },
   { id: '8', vendorId: 'v4', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'bread artisan' },
+  { id: '19', vendorId: 'v4', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'olive oil' },
+  { id: '23', vendorId: 'v4', name: 'Imported Pasta (Spaghetti)', description: 'Authentic Italian spaghetti, 500g pack.', price: 3.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'pasta spaghetti' },
+  { id: '24', vendorId: 'v4', name: 'Canned Diced Tomatoes', description: 'Organic diced tomatoes, perfect for sauces. 400g can.', price: 1.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'canned tomatoes' },
+
+  // Furniture (v5)
   { id: '9', vendorId: 'v5', name: 'Ergonomic Office Chair', description: 'Comfortable office chair with lumbar support and adjustable height.', price: 250.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'chair office' },
   { id: '10', vendorId: 'v5', name: 'Minimalist Desk Lamp', description: 'Sleek LED desk lamp with adjustable brightness.', price: 45.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'lamp desk' },
-  { id: '11', vendorId: 'v1', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'speaker bluetooth' },
+  { id: '18', vendorId: 'v5', name: 'Modern Bookshelf', description: 'Stylish 5-tier bookshelf for living room or office.', price: 89.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'bookshelf modern' },
+  { id: '25', vendorId: 'v5', name: 'Wooden Coffee Table', description: 'Solid oak coffee table with a rustic finish.', price: 179.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'coffee table' },
+  { id: '26', vendorId: 'v5', name: 'Adjustable Floor Lamp', description: 'Modern floor lamp with adjustable head and dimmer.', price: 65.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'floor lamp' },
+
+  // Sports (v6)
   { id: '12', vendorId: 'v6', name: 'Yoga Mat Premium', description: 'Eco-friendly, non-slip yoga mat for all practice levels.', price: 39.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'yoga mat' },
+  { id: '17', vendorId: 'v6', name: 'Adjustable Dumbbell Set', description: 'Versatile dumbbell set for home workouts, 5-25 lbs.', price: 129.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'dumbbell set' },
+  { id: '27', vendorId: 'v6', name: 'Professional Basketball', description: 'Official size and weight basketball for indoor/outdoor use.', price: 29.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'basketball sport' },
+  { id: '28', vendorId: 'v6', name: 'Resistance Bands Set', description: 'Set of 5 resistance bands for fitness and therapy.', price: 19.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'resistance bands' },
+
+  // Foods (v4)
   { id: '13', vendorId: 'v4', name: 'Gourmet Pizza Margherita', description: 'Classic Italian pizza with fresh mozzarella and basil.', price: 14.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pizza margherita' },
   { id: '14', vendorId: 'v4', name: 'Spicy Chicken Wings (12pcs)', description: 'Crispy chicken wings tossed in a fiery buffalo sauce.', price: 11.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'chicken wings' },
-  { id: '15', vendorId: 'v2', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'scarf silk' },
-  { id: '16', vendorId: 'v3', name: "Children's Illustrated Storybook", description: 'A beautifully illustrated storybook for young readers.', price: 9.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'kids book' },
-  { id: '17', vendorId: 'v6', name: 'Adjustable Dumbbell Set', description: 'Versatile dumbbell set for home workouts, 5-25 lbs.', price: 129.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'dumbbell set' },
-  { id: '18', vendorId: 'v5', name: 'Modern Bookshelf', description: 'Stylish 5-tier bookshelf for living room or office.', price: 89.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'bookshelf modern' },
-  { id: '19', vendorId: 'v4', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'olive oil' },
+  { id: '29', vendorId: 'v4', name: 'Fresh Salmon Fillet (1lb)', description: 'Premium quality fresh Atlantic salmon fillet.', price: 18.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'salmon fillet' },
+  { id: '30', vendorId: 'v4', name: 'Organic Berry Mix (Frozen)', description: 'A mix of organic strawberries, blueberries, and raspberries. 10oz.', price: 7.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'frozen berries' },
 ];
 
 
@@ -71,7 +95,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE); 
+  const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE);
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -104,11 +128,10 @@ export default function HomePage() {
         setIsLocating(false);
       }
     } else {
-      // If no stored location, default to ALL_LOCATIONS_VALUE
       setSelectedLocation(ALL_LOCATIONS_VALUE);
     }
-    isMounted.current = true; 
-  }, []); 
+    isMounted.current = true;
+  }, []);
 
   // Save state to sessionStorage whenever it changes, but only after initial mount
   useEffect(() => {
@@ -185,14 +208,14 @@ export default function HomePage() {
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
         if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
-          setSelectedLocation(ALL_LOCATIONS_VALUE); 
+          setSelectedLocation(ALL_LOCATIONS_VALUE);
         }
       }
     );
-  }, [toast]); 
+  }, [toast]);
 
   useEffect(() => {
-    if (isMounted.current) { 
+    if (isMounted.current) {
       if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
         handleFetchUserLocation();
       } else {
@@ -223,12 +246,12 @@ export default function HomePage() {
 
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = vendorsFilteredByLocation.filter(v => productVendorIds.includes(v.id));
-    
+
     return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
   }, [selectedLocation, userCoords]);
 
   useEffect(() => {
-    if (isMounted.current) { 
+    if (isMounted.current) {
         if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
           setSelectedVendorId('All');
         }
@@ -258,16 +281,16 @@ export default function HomePage() {
 
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-      
+
       const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
 
       let matchesLocationCriteria = false;
-      if (selectedLocation === ALL_LOCATIONS_VALUE || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) { 
+      if (selectedLocation === ALL_LOCATIONS_VALUE || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) {
         matchesLocationCriteria = true;
-      } else { 
+      } else {
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
-      
+
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         searchTerm === '' ||
@@ -375,7 +398,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-        
+
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <Input
@@ -399,10 +422,10 @@ export default function HomePage() {
             const vendorCountry = vendor?.country || '';
 
             return (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                vendorName={vendorName} 
+              <ProductCard
+                key={product.id}
+                product={product}
+                vendorName={vendorName}
                 vendorLocation={vendorLocation}
                 vendorStreetAddress={vendorStreetAddress}
                 vendorCity={vendorCity}
@@ -443,10 +466,3 @@ export default function HomePage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-    
