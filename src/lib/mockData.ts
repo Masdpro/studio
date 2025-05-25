@@ -51,13 +51,13 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 1)],
     totalAmount: sampleProductsForMockOrders[2].price * 1,
-    status: 'Processing', // Changed to Processing to test new button
+    status: 'Processing',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
     deliveryFee: 4.50,
     estimatedDistance: '2 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
-    deliveryPreference: 'pickup',
+    deliveryPreference: 'pickup', // For testing ReadyForCustomerPickup
   },
   {
     id: 'order003',
@@ -139,13 +139,13 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor002', // Burger Central
     items: [mapProductToCartItem(sampleProductsForMockOrders[1], 1)],
     totalAmount: sampleProductsForMockOrders[1].price * 1,
-    status: 'Processing', // Changed to test new button
+    status: 'Processing',
     pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
     deliveryFee: 6.50,
     estimatedDistance: '5.5 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 0.75), // 45 mins ago
-    deliveryPreference: 'delivery',
+    deliveryPreference: 'delivery', // For testing ReadyForPickup (agent)
   },
   {
     id: 'order009',
@@ -175,6 +175,32 @@ export const masterSampleOrders: Order[] = [
     createdAt: new Date(Date.now() - 3600 * 1000 * 5), // 5 hours ago
     deliveryPreference: 'delivery',
   },
+   {
+    id: 'order011', // New order for testing ReadyForPickup status
+    customerId: 'cust001',
+    vendorId: 'vendor002', // Burger Central
+    items: [mapProductToCartItem(sampleProductsForMockOrders[1], 1)],
+    totalAmount: sampleProductsForMockOrders[1].price * 1,
+    status: 'ReadyForPickup', // Explicitly set for agent view
+    pickupAddress: `${sampleVendors[1].streetAddress}, ${sampleVendors[1].city}, ${sampleVendors[1].country}`,
+    deliveryAddress: '123 Test Delivery St, Testville',
+    deliveryFee: 3.00,
+    estimatedDistance: "1km",
+    createdAt: new Date(Date.now() - 3600 * 1000 * 1.5), // 1.5 hours ago
+    deliveryPreference: 'delivery',
+  },
+  {
+    id: 'order012', // New order for testing ReadyForCustomerPickup status
+    customerId: 'cust002',
+    vendorId: 'vendor001', // Good Eats Pizzeria
+    items: [mapProductToCartItem(sampleProductsForMockOrders[2], 2)],
+    totalAmount: sampleProductsForMockOrders[2].price * 2,
+    status: 'ReadyForCustomerPickup', // Explicitly set
+    pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
+    deliveryAddress: '456 Test Pickup Ave, Testburg',
+    deliveryFee: 0, // No delivery fee for self-pickup
+    estimatedDistance: "0km",
+    createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), // 2.5 hours ago
+    deliveryPreference: 'pickup',
+  },
 ];
-
-    

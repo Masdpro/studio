@@ -24,20 +24,26 @@ export default function DeliveryAgentDashboardPage() {
   // Store all orders and derive subsections from it
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [currentScanOrderId, setCurrentScanOrderId] = useState<string | null>(null);
   const [currentScanPurpose, setCurrentScanPurpose] = useState<'pickup' | 'delivery' | null>(null);
 
   const { toast } = useToast();
 
-  useEffect(() => {
+ useEffect(() => {
     setAgent(currentAgent);
     // Set the master list of orders. In a real app, this would be fetched.
     // For the demo, we'll sort them initially.
-    setAllOrders([...masterSampleOrders].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    // Ensure masterSampleOrders is properly loaded
+    if (masterSampleOrders && masterSampleOrders.length > 0) {
+        setAllOrders([...masterSampleOrders].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    } else {
+        setAllOrders([]); // Handle case where mockData might be empty or undefined
+    }
     setIsLoading(false);
   }, []);
+
 
   const updateOrderStatus = useCallback((orderId: string, newStatus: Order['status'], agentIdForAssignment?: string) => {
     setAllOrders(prevOrders =>
@@ -84,7 +90,7 @@ export default function DeliveryAgentDashboardPage() {
       </div>
     );
   }
-  
+
   const agentFullAddress = `${agent.streetAddress}, ${agent.city}, ${agent.country}`;
 
   const availableDeliveries = allOrders.filter(o => o.status === 'ReadyForPickup' && !o.deliveryAgentId);
@@ -116,10 +122,10 @@ export default function DeliveryAgentDashboardPage() {
             <Button variant="outline" size="sm" className="mt-2">Edit Profile (Soon)</Button>
           </CardContent>
         </Card>
-        
-        <VendorWalletWidget /> 
+
+        <VendorWalletWidget />
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
@@ -153,9 +159,9 @@ export default function DeliveryAgentDashboardPage() {
           ) : (
             <div className="space-y-6">
               {myActiveDeliveries.map((order) => (
-                <OrderListItem 
-                  key={order.id} 
-                  order={order} 
+                <OrderListItem
+                  key={order.id}
+                  order={order}
                   userRole="delivery_agent"
                   onScanForPickup={() => openScanner(order.id, 'pickup')}
                   onScanForDelivery={() => openScanner(order.id, 'delivery')}
@@ -165,7 +171,7 @@ export default function DeliveryAgentDashboardPage() {
           )}
         </CardContent>
       </Card>
-      
+
       <Separator />
 
       {/* Available Deliveries Section */}
@@ -176,7 +182,7 @@ export default function DeliveryAgentDashboardPage() {
             Available Deliveries
           </CardTitle>
           <CardDescription>
-            Browse and accept deliveries available in your area.
+            Browse and accept deliveries available in your area. Only orders marked for agent pickup are shown.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -185,9 +191,9 @@ export default function DeliveryAgentDashboardPage() {
           ) : (
             <div className="space-y-6">
               {availableDeliveries.map((order) => (
-                 <OrderListItem 
-                  key={order.id} 
-                  order={order} 
+                 <OrderListItem
+                  key={order.id}
+                  order={order}
                   userRole="delivery_agent"
                   onAcceptDelivery={handleAcceptDelivery}
                 />
@@ -196,7 +202,7 @@ export default function DeliveryAgentDashboardPage() {
           )}
         </CardContent>
       </Card>
-      
+
       {/* Completed Deliveries Section */}
       {myCompletedDeliveries.length > 0 && (
         <>
@@ -229,5 +235,3 @@ export default function DeliveryAgentDashboardPage() {
     </div>
   );
 }
-
-    

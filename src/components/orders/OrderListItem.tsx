@@ -5,7 +5,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck } from 'lucide-react'; // Added UserCheck
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -29,7 +29,8 @@ const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof 
     case 'Processing':
     case 'AcceptedByAgent':
       return 'default';
-    case 'ReadyForPickup':
+    case 'ReadyForPickup': // For agent
+    case 'ReadyForCustomerPickup': // For customer
     case 'PickedUpByAgent':
       return 'outline';
     case 'Out for Delivery':
@@ -49,8 +50,10 @@ const getStatusIcon = (status: Order['status']) => {
       return <Clock className="h-4 w-4 mr-1.5" />;
     case 'Processing':
       return <Package className="h-4 w-4 mr-1.5" />;
-    case 'ReadyForPickup':
-      return <ShoppingBag className="h-4 w-4 mr-1.5" />;
+    case 'ReadyForPickup': // For agent
+      return <ShoppingBag className="h-4 w-4 mr-1.5 text-orange-600" />; // Distinct icon/color
+    case 'ReadyForCustomerPickup': // For customer
+      return <UserCheck className="h-4 w-4 mr-1.5 text-teal-600" />; // Distinct icon/color
     case 'AcceptedByAgent':
       return <User className="h-4 w-4 mr-1.5" />;
     case 'PickedUpByAgent':
@@ -70,7 +73,8 @@ const getStatusColorClass = (status: Order['status']): string => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'Processing': return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'ReadyForPickup': return 'bg-sky-100 text-sky-800 border-sky-300';
+      case 'ReadyForPickup': return 'bg-orange-100 text-orange-800 border-orange-300'; // For agent
+      case 'ReadyForCustomerPickup': return 'bg-teal-100 text-teal-800 border-teal-300'; // For customer
       case 'AcceptedByAgent': return 'bg-indigo-100 text-indigo-800 border-indigo-300';
       case 'PickedUpByAgent': return 'bg-cyan-100 text-cyan-800 border-cyan-300';
       case 'Out for Delivery': return 'bg-purple-100 text-purple-800 border-purple-300';
@@ -94,22 +98,23 @@ export function OrderListItem({
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
 
-  const [reviewSubmitted, setReviewSubmitted] = useState(false); 
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
+  // Vendor shows barcode for agent pickup if order is ReadyForPickup OR AcceptedByAgent (agent already claimed it)
   const showVendorPickupBarcode = userRole === 'vendor' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
-  
+
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
-  
+
   const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup;
-  let vendorReadyButtonText = "Ready for Pickup"; 
-  let vendorReadyButtonIcon = <PackageCheck className="h-4 w-4 mr-1 sm:mr-2" />; 
+  let vendorReadyButtonText = "Ready for Pickup";
+  let vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
   if (canVendorMarkReady) {
     if (order.deliveryPreference === 'delivery') {
       vendorReadyButtonText = "Post for Delivery";
       vendorReadyButtonIcon = <Send className="h-4 w-4 mr-1 sm:mr-2" />;
     } else { // This is the 'pickup' case
-      vendorReadyButtonText = "Ready for Pickup"; // Changed from "Ready for Customer Pickup"
+      vendorReadyButtonText = "Ready for Pickup";
       vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
     }
   }
@@ -133,7 +138,7 @@ export function OrderListItem({
           </div>
           <Badge variant={getStatusVariant(order.status)} className={`flex items-center text-xs md:text-sm ${getStatusColorClass(order.status)}`}>
             {getStatusIcon(order.status)}
-            {order.status}
+            {order.status === 'ReadyForCustomerPickup' ? 'Ready for Self-Pickup' : order.status}
           </Badge>
         </div>
       </CardHeader>
@@ -185,7 +190,7 @@ export function OrderListItem({
             )}
           </>
         )}
-        
+
         {userRole === 'delivery_agent' && (
            <>
             <div className="flex items-start gap-2">
@@ -229,7 +234,7 @@ export function OrderListItem({
               variant="default"
               size="sm"
               className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => onAttendToOrder(order.id)}
+              onClick={() => onAttendToOrder && onAttendToOrder(order.id)}
             >
               <PlayCircle className="h-4 w-4 mr-1 sm:mr-2" />
               Attend to Order
@@ -241,7 +246,7 @@ export function OrderListItem({
               variant="default"
               size="sm"
               className={order.deliveryPreference === 'delivery' ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-sky-600 hover:bg-sky-700 text-white"}
-              onClick={() => onMarkAsReadyForPickup(order.id)}
+              onClick={() => onMarkAsReadyForPickup && onMarkAsReadyForPickup(order.id)}
             >
               {vendorReadyButtonIcon}
               {vendorReadyButtonText}
@@ -268,7 +273,7 @@ export function OrderListItem({
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => onCancelOrder(order.id)}
+              onClick={() => onCancelOrder && onCancelOrder(order.id)}
             >
               <Ban className="h-4 w-4 mr-1 sm:mr-2" />
               Cancel Order
@@ -276,9 +281,9 @@ export function OrderListItem({
           )}
 
           {shouldShowViewDetailsButton && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => console.log('View order details for:', order.id, order)}
               aria-label="View order details"
             >
@@ -288,8 +293,8 @@ export function OrderListItem({
           )}
 
           {canLeaveReview && (
-            <ReviewDialog 
-              order={order} 
+            <ReviewDialog
+              order={order}
               onReviewSubmitted={() => setReviewSubmitted(true)}
               isReviewSubmitted={reviewSubmitted}
             />

@@ -25,7 +25,7 @@ export default function VendorDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
+ useEffect(() => {
     // In a real app, fetch orders for this specific vendor
     const ordersForVendor = masterSampleOrders.filter(
       (order) => order.vendorId === currentVendor.id
@@ -33,6 +33,7 @@ export default function VendorDashboardPage() {
     setDisplayedVendorOrders(ordersForVendor);
     setIsLoading(false);
   }, []);
+
 
   const handleAttendToOrder = useCallback((orderId: string) => {
     setDisplayedVendorOrders(prevOrders =>
@@ -50,16 +51,18 @@ export default function VendorDashboardPage() {
 
   const handleMarkAsReadyForPickup = useCallback((orderId: string) => {
     setDisplayedVendorOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId && order.status === 'Processing'
-          ? { ...order, status: 'ReadyForPickup' as Order['status'] }
-          : order
-      )
+      prevOrders.map(order => {
+        if (order.id === orderId && order.status === 'Processing') {
+          const newStatus = order.deliveryPreference === 'delivery' ? 'ReadyForPickup' : 'ReadyForCustomerPickup';
+          toast({
+            title: 'Order Ready!',
+            description: `Order ${orderId} marked as ${newStatus === 'ReadyForPickup' ? 'ready for delivery pickup' : 'ready for customer pickup'}.`,
+          });
+          return { ...order, status: newStatus as Order['status'] };
+        }
+        return order;
+      })
     );
-    toast({
-      title: 'Order Ready!',
-      description: `Order ${orderId} has been marked as ready for pickup.`,
-    });
   }, [toast]);
 
   if (isLoading) {
@@ -119,7 +122,7 @@ export default function VendorDashboardPage() {
             description="Monitor the status of orders placed with your business."
             userRole="vendor"
             onAttendToOrder={handleAttendToOrder}
-            onMarkAsReadyForPickup={handleMarkAsReadyForPickup} // Pass the new handler
+            onMarkAsReadyForPickup={handleMarkAsReadyForPickup}
           />
         </TabsContent>
 
