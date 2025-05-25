@@ -32,7 +32,7 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start gap-4 p-4 border-b"> {/* Main container */}
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border-b"> {/* Main container: changed items-start to sm:items-center */}
       {/* Left Side: Image and Name */}
       <div className="flex flex-col items-center w-full sm:w-20 sm:shrink-0">
         <div className="relative w-20 h-20 rounded-md overflow-hidden">
