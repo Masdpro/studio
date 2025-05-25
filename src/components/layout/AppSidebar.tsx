@@ -16,10 +16,10 @@ import {
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, tooltip: "Browse Products" },
-  { href: '/cart', label: 'Cart', icon: ShoppingCart, tooltip: "View Your Cart" },
-  { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
-  { href: '/profile', label: 'My Profile', icon: UserProfileIcon, tooltip: "View Your Profile" },
-  { href: '/notifications', label: 'Notifications', icon: Bell, tooltip: "View Notifications" }, // Added
+  // { href: '/cart', label: 'Cart', icon: ShoppingCart, tooltip: "View Your Cart" }, // Removed
+  // { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" }, // Removed
+  // { href: '/profile', label: 'My Profile', icon: UserProfileIcon, tooltip: "View Your Profile" }, // Removed
+  { href: '/notifications', label: 'Notifications', icon: Bell, tooltip: "View Notifications" },
 ];
 
 const vendorItems = [
