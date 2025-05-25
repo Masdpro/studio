@@ -14,11 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 const sampleCartItems: CartItemType[] = [
   { productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' },
   { productId: '3', name: 'Chicken Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' },
-  { productId: 'p1', name: 'Laptop Pro 15"', description: 'High-performance laptop for professionals.', price: 1299.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'laptop professional' },
-  { productId: 'p2', name: 'Men\'s Casual Shirt', description: 'Comfortable cotton shirt for everyday wear.', price: 39.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'shirt casual' },
-  { productId: '7', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'coffee beans' },
-  { id: '8', vendorId: 'v4', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, quantity: 3, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'bread artisan' },
-
+  { productId: 'p1', name: 'Laptop Pro 15"', price: 1299.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'laptop professional' },
+  { productId: 'p2', name: 'Men\'s Casual Shirt', price: 39.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'shirt casual' },
+  { productId: '7', name: 'Aromatic Coffee Beans', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'coffee beans' },
+  { productId: '8', name: 'Artisan Bread Loaf', price: 6.50, quantity: 3, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'bread artisan' },
 ];
 
 export function ShoppingCartView() {
@@ -27,7 +26,17 @@ export function ShoppingCartView() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setCartItems(sampleCartItems.map(item => ({ ...item, imageUrl: item.imageUrl || 'https://placehold.co/600x400.png', aiHint: item.aiHint || 'product item' })));
+    // Ensure all items in sampleCartItems have necessary fields like productId
+    // For this mock data, we'll map it to ensure structure and add defaults if needed.
+    const processedSampleItems = sampleCartItems.map(item => ({
+        ...item,
+        // Ensure productId exists, defaulting or transforming if necessary from other fields.
+        // In this case, '8' was 'id' before, so we ensure it's productId
+        productId: item.productId || (item as any).id, // Handle potential 'id' field from older data
+        imageUrl: item.imageUrl || 'https://placehold.co/600x400.png',
+        aiHint: item.aiHint || 'product item'
+    }));
+    setCartItems(processedSampleItems);
     setIsClient(true);
   }, []);
 
@@ -35,7 +44,7 @@ export function ShoppingCartView() {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
         item.productId === productId ? { ...item, quantity } : item
-      ).filter(item => item.quantity > 0) 
+      ).filter(item => item.quantity > 0)
     );
   };
 
@@ -69,7 +78,7 @@ export function ShoppingCartView() {
     });
     // In a real app, you would then clear the cart, deduct from buyer wallet, credit seller, etc.
     // For this example, we'll keep the cart items for demo purposes.
-    // setCartItems([]); 
+    // setCartItems([]);
   };
 
   if (!isClient) {
@@ -107,24 +116,24 @@ export function ShoppingCartView() {
         )}
       </CardContent>
       {cartItems.length > 0 && (
-        <CardFooter className="flex flex-col items-stretch gap-2 p-4 border-t"> {/* Reduced padding and gap */}
+        <CardFooter className="flex flex-col items-stretch gap-1 p-3 border-t"> {/* Reduced padding and gap */}
           <Separator />
-          <div className="flex justify-between text-sm"> {/* Made text smaller */}
+          <div className="flex justify-between text-xs"> {/* Made text smaller */}
             <span className="text-muted-foreground">Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm"> {/* Made text smaller */}
+          <div className="flex justify-between text-xs"> {/* Made text smaller */}
             <span className="text-muted-foreground">Taxes ({(taxRate * 100).toFixed(0)}%)</span>
             <span>${taxes.toFixed(2)}</span>
           </div>
           <Separator />
-          <div className="flex justify-between font-bold text-lg mt-1"> {/* Reduced top margin slightly */}
+          <div className="flex justify-between font-bold text-base mt-0.5"> {/* Reduced top margin slightly */}
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
-          <Button 
-            size="lg" 
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-2" /* Reduced top margin */
+          <Button
+            size="lg"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-1.5" /* Reduced top margin */
             onClick={handleProceedToCheckout}
           >
             Proceed to Checkout
