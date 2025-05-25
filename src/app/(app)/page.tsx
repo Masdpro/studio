@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import Link from 'next/link'; // Import Link
+import Link from 'next/link';
 import { ProductCard } from '@/components/products/ProductCard';
 import type { Product } from '@/lib/types';
-import type { Vendor } from '@/lib/types'; // Import Vendor type
+import type { Vendor } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function HomePage() {
   // Hydrate state from sessionStorage on component mount
   useEffect(() => {
     const storedSearchTerm = sessionStorage.getItem(SESSION_STORAGE_KEYS.searchTerm);
-    if (storedSearchTerm) setSearchTerm(storedSearchTerm);
+    if (storedSearchTerm !== null) setSearchTerm(storedSearchTerm); // Check for null to allow empty string
 
     const storedSelectedCategory = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedCategory);
     if (storedSelectedCategory) setSelectedCategory(storedSelectedCategory);
@@ -120,6 +120,7 @@ export default function HomePage() {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser.");
       toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive" });
+      setIsLocating(false); // Ensure locating is false if API not supported
       return;
     }
     setIsLocating(true);
@@ -147,7 +148,7 @@ export default function HomePage() {
         }
       }
     );
-  }, [toast, selectedLocation]);
+  }, [toast, selectedLocation]); // Removed setSelectedLocation from deps as it might cause loop, it's set inside
 
   useEffect(() => {
     if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
@@ -159,11 +160,11 @@ export default function HomePage() {
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
     if (value === USER_CURRENT_LOCATION_VALUE) {
-      handleFetchUserLocation();
+      // handleFetchUserLocation will be called by the useEffect listening to selectedLocation
     } else {
-      setUserCoords(null);
+      setUserCoords(null); // Clear user coords if a specific location tag is chosen
       setLocationError(null);
-      setIsLocating(false);
+      setIsLocating(false); // Ensure locating is false
     }
   };
 
@@ -187,6 +188,7 @@ export default function HomePage() {
   }, [selectedLocation, userCoords]);
 
   useEffect(() => {
+    // If the current selectedVendorId is no longer in the valid list of vendors for the current location, reset to 'All'
     if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
       setSelectedVendorId('All');
     }
@@ -215,23 +217,30 @@ export default function HomePage() {
 
     return sampleProducts.filter(product => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      
+      // Vendor match: either 'All' vendors are selected, or product's vendor matches selected vendor
       const matchesVendor = selectedVendorId === 'All' || product.vendorId === selectedVendorId;
 
+      // Location match:
+      // 1. If 'All Locations' is selected, all vendors match.
+      // 2. Otherwise, the product's vendor must be in the set of vendors filtered by location.
       let matchesLocationCriteria = false;
-      if (selectedLocation === 'All Locations') {
+      if (selectedLocation === 'All Locations' || (selectedLocation === USER_CURRENT_LOCATION_VALUE && !userCoords && !locationError && !isLocating) ) { // If current location is selected but no coords yet (and not actively error/locating), treat as all locations to avoid empty list
         matchesLocationCriteria = true;
       } else { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
-
+      
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
-        searchTerm === '' || // Add this line to include all products if search term is empty
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase());
+        searchTerm === '' ||
+        product.name.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower) ||
+        (product.category && product.category.toLowerCase().includes(searchLower));
 
       return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
-  }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords]);
+  }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating]);
 
   return (
     <div className="container mx-auto">
@@ -324,7 +333,7 @@ export default function HomePage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <Input
             type="search"
-            placeholder="Search by name or description..."
+            placeholder="Search by name, description, or category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-12 w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary"
