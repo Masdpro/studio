@@ -105,7 +105,10 @@ export default function VendorDashboardPage() {
                 <Settings className="h-6 w-6 text-primary" />
                 Manage Your Profile
               </CardTitle>
-              <CardDescription>Keep your business information up to date. Current status: <span className="font-semibold">{sampleVendor.status}</span>. Operating Hours: <span className="font-semibold">{sampleVendor.operatingHours || 'Not set'}</span>.</CardDescription>
+              <CardDescription>
+                Keep your business information up to date. Your current status on Dailybuy is <span className="font-semibold">{sampleVendor.status}</span>.
+                Your physical store hours are: <span className="font-semibold">{sampleVendor.operatingHours || 'Not set'}</span>.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <VendorProfileForm vendor={sampleVendor} />

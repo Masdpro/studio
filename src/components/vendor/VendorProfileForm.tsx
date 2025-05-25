@@ -154,12 +154,12 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
           name="operatingHours"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Operating Hours</FormLabel>
+              <FormLabel>Physical Store Operating Hours</FormLabel>
               <FormControl>
                 <Input placeholder="E.g., 9 AM - 5 PM, Mon-Fri" {...field} />
               </FormControl>
                <FormDescription>
-                    Let customers know when you are open.
+                    Let customers know your general physical store hours. Your status below determines if you are taking orders on Dailybuy.
                   </FormDescription>
               <FormMessage />
             </FormItem>
@@ -170,11 +170,11 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Current Status</FormLabel>
+              <FormLabel>Store Status on Dailybuy</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select current status" />
+                    <SelectValue placeholder="Select current status on Dailybuy" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -183,6 +183,9 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+              <FormDescription>
+                Controls if your store appears open and can take orders on Dailybuy.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
