@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 
-// Enhanced sample product data with more categories and aiHints
+// Enhanced sample product data with more categories and aiHints, including Foods
 const sampleProducts: Product[] = [
   { id: '1', vendorId: 'v1', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'headphones wireless' },
   { id: '2', vendorId: 'v1', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'smartwatch modern' },
@@ -35,6 +35,10 @@ const sampleProducts: Product[] = [
   { id: '10', vendorId: 'v5', name: 'Minimalist Desk Lamp', description: 'Sleek LED desk lamp with adjustable brightness.', price: 45.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Furniture', aiHint: 'lamp desk' },
   { id: '11', vendorId: 'v1', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'speaker bluetooth' },
   { id: '12', vendorId: 'v6', name: 'Yoga Mat Premium', description: 'Eco-friendly, non-slip yoga mat for all practice levels.', price: 39.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Sports', aiHint: 'yoga mat' },
+  { id: '13', vendorId: 'v4', name: 'Gourmet Pizza Margherita', description: 'Classic Italian pizza with fresh mozzarella and basil.', price: 14.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pizza margherita' },
+  { id: '14', vendorId: 'v4', name: 'Spicy Chicken Wings (12pcs)', description: 'Crispy chicken wings tossed in a fiery buffalo sauce.', price: 11.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'chicken wings' },
+  { id: '15', vendorId: 'v2', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'scarf silk' },
+  { id: '16', vendorId: 'v3', name: "Children's Illustrated Storybook", description: 'A beautifully illustrated storybook for young readers.', price: 9.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'kids book' },
 ];
 
 
@@ -43,7 +47,7 @@ const sampleVendors: Vendor[] = [
   { id: 'v1', businessName: 'Tech Gadgets Inc.', streetAddress: '101 Circuit Board Rd', city: 'Techville', country: 'Innovaland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/techgadgets', operatingHours: '10 AM - 8 PM, Mon-Sat', status: 'Open' },
   { id: 'v2', businessName: 'Fashion Forward', streetAddress: '202 Style St', city: 'Trend City', country: 'Clothia', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/fashionforward', operatingHours: '11 AM - 7 PM, Tue-Sun', status: 'Open' },
   { id: 'v3', businessName: 'The Book Nook', streetAddress: '303 Chapter Ave', city: 'Readington', country: 'Literaria', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, operatingHours: '10 AM - 6 PM, Mon-Fri', status: 'Closed' },
-  { id: 'v4', businessName: 'Gourmet Pantry', streetAddress: '404 Flavor Ln', city: 'Foodville', country: 'Delicia', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/gourmetpantry', operatingHours: '8 AM - 9 PM, Daily', status: 'Open' },
+  { id: 'v4', businessName: 'Gourmet Pantry & Foods', streetAddress: '404 Flavor Ln', city: 'Foodville', country: 'Delicia', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/gourmetpantry', operatingHours: '8 AM - 9 PM, Daily', status: 'Open' },
   { id: 'v5', businessName: 'Home Comforts', streetAddress: '505 Cozy Corner', city: 'Furnishtown', country: 'Habitatia', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, operatingHours: '10 AM - 6 PM, Wed-Sun', status: 'Opening Soon' },
   { id: 'v6', businessName: 'Active Life Sports', streetAddress: '606 Fitness Way', city: 'Sportstown', country: 'Energetica', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/activelife', operatingHours: '9 AM - 8 PM, Daily', status: 'Temporarily Unavailable' },
 ];
@@ -433,6 +437,8 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
 
     
