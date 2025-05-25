@@ -9,6 +9,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 // Sample cart data
 const sampleCartItems: CartItemType[] = [
@@ -23,16 +25,13 @@ const sampleCartItems: CartItemType[] = [
 export function ShoppingCartView() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [isDeliverySelected, setIsDeliverySelected] = useState(true); // Default to delivery
   const { toast } = useToast();
 
   useEffect(() => {
-    // Ensure all items in sampleCartItems have necessary fields like productId
-    // For this mock data, we'll map it to ensure structure and add defaults if needed.
     const processedSampleItems = sampleCartItems.map(item => ({
         ...item,
-        // Ensure productId exists, defaulting or transforming if necessary from other fields.
-        // In this case, '8' was 'id' before, so we ensure it's productId
-        productId: item.productId || (item as any).id, // Handle potential 'id' field from older data
+        productId: item.productId || (item as any).id,
         imageUrl: item.imageUrl || 'https://placehold.co/600x400.png',
         aiHint: item.aiHint || 'product item'
     }));
@@ -59,7 +58,9 @@ export function ShoppingCartView() {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const taxRate = 0.08; // 8% tax
   const taxes = subtotal * taxRate;
-  const total = subtotal + taxes;
+  // Simulate delivery fee if delivery is selected
+  const deliveryFee = isDeliverySelected ? 5.00 : 0;
+  const total = subtotal + taxes + deliveryFee;
 
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
@@ -71,14 +72,11 @@ export function ShoppingCartView() {
       return;
     }
 
-    // Mock payment processing
+    const deliveryMessage = isDeliverySelected ? "Delivery option selected." : "Self-pickup selected.";
     toast({
       title: 'Order Placed!',
-      description: `Your order for $${total.toFixed(2)} has been successfully placed. Payment will be processed from your wallet.`,
+      description: `Your order for $${total.toFixed(2)} has been successfully placed. ${deliveryMessage} Payment will be processed from your wallet.`,
     });
-    // In a real app, you would then clear the cart, deduct from buyer wallet, credit seller, etc.
-    // For this example, we'll keep the cart items for demo purposes.
-    // setCartItems([]);
   };
 
   if (!isClient) {
@@ -116,24 +114,43 @@ export function ShoppingCartView() {
         )}
       </CardContent>
       {cartItems.length > 0 && (
-        <CardFooter className="flex flex-col items-stretch gap-1 p-3 border-t"> {/* Reduced padding and gap */}
+        <CardFooter className="flex flex-col items-stretch gap-1 p-3 border-t">
+          <div className="flex items-center space-x-2 py-2">
+            <Checkbox
+              id="delivery-option"
+              checked={isDeliverySelected}
+              onCheckedChange={(checked) => setIsDeliverySelected(Boolean(checked))}
+            />
+            <Label
+              htmlFor="delivery-option"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Would you like this delivered?
+            </Label>
+          </div>
           <Separator />
-          <div className="flex justify-between text-xs"> {/* Made text smaller */}
+          <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-xs"> {/* Made text smaller */}
+          <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Taxes ({(taxRate * 100).toFixed(0)}%)</span>
             <span>${taxes.toFixed(2)}</span>
           </div>
+          {isDeliverySelected && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Delivery Fee</span>
+              <span>${deliveryFee.toFixed(2)}</span>
+            </div>
+          )}
           <Separator />
-          <div className="flex justify-between font-bold text-base mt-0.5"> {/* Reduced top margin slightly */}
+          <div className="flex justify-between font-bold text-base mt-0.5">
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
           <Button
             size="lg"
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-1.5" /* Reduced top margin */
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-1.5"
             onClick={handleProceedToCheckout}
           >
             Proceed to Checkout
