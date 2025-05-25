@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Store, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface ProductCardProps {
   product: Product;
@@ -42,15 +43,13 @@ export function ProductCard({
 
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <div className="relative aspect-video w-full overflow-hidden">
-        <Image
-          src={product.imageUrl || "https://placehold.co/600x400.png"}
+      <div className="relative w-full h-48 overflow-hidden bg-muted">
+        <img
+          src={product.imageUrl || "https://placehold.co/300x200.png"}
           alt={product.name}
-          fill={true}
-          style={{ objectFit: 'cover' }}
-          className="group-hover:scale-105 transition-transform duration-300"
           data-ai-hint={product.aiHint || "food item"}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="w-full h-full object-cover"
+          style={{ display: 'block' }}
         />
       </div>
       <CardContent className="p-4 flex-grow">
@@ -58,11 +57,13 @@ export function ProductCard({
         <CardDescription className="text-muted-foreground text-sm mb-2 min-h-[2.5rem] line-clamp-2">
           {product.description}
         </CardDescription>
-        <div className="flex flex-wrap gap-1 mb-2">
-          <Badge variant="secondary" className="inline-flex items-center">
-            <Store className="h-3 w-3 mr-1.5" />
-            {vendorName}
-          </Badge>
+        <div className="flex flex-wrap gap-1 mb-2 items-center">
+          <Link href={`/vendor/${product.vendorId}/profile`} passHref>
+            <Badge variant="secondary" className="inline-flex items-center cursor-pointer hover:bg-secondary/80 transition-colors">
+              <Store className="h-3 w-3 mr-1.5" />
+              {vendorName}
+            </Badge>
+          </Link>
           {vendorLocation && (
             <button
               onClick={() => setIsAddressExpanded(!isAddressExpanded)}
