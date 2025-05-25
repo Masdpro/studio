@@ -39,12 +39,12 @@ const sampleProducts: Product[] = [
 
 // Mock vendor data with location tags, coordinates, and external store URLs
 const sampleVendors: Vendor[] = [
-  { id: 'v1', businessName: 'Pizza Place', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/pizzapalace' },
-  { id: 'v2', businessName: 'Burger Bonanza', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/burgerbonanza' },
-  { id: 'v3', businessName: 'Salad Supreme', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400 }, // No external URL
-  { id: 'v4', businessName: 'Drinks & Co.', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/drinksco' },
-  { id: 'v5', businessName: 'Dessert Dreams', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500 },
-  { id: 'v6', businessName: 'Sushi Central', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/sushicentral' },
+  { id: 'v1', businessName: 'Pizza Place', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', contactEmail:'v1@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/pizzapalace', operatingHours: '11 AM - 10 PM, Mon-Sun', status: 'Open' },
+  { id: 'v2', businessName: 'Burger Bonanza', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', contactEmail:'v2@example.com', phone:'123', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/burgerbonanza', operatingHours: '10 AM - 9 PM, Tue-Sun', status: 'Open' },
+  { id: 'v3', businessName: 'Salad Supreme', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland', contactEmail:'v3@example.com', phone:'123', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, operatingHours: '9 AM - 7 PM, Mon-Fri', status: 'Closed' }, // No external URL
+  { id: 'v4', businessName: 'Drinks & Co.', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', contactEmail:'v4@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/drinksco', operatingHours: '24/7', status: 'Open' },
+  { id: 'v5', businessName: 'Dessert Dreams', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', contactEmail:'v5@example.com', phone:'123', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, operatingHours: '12 PM - 8 PM, Wed-Sun', status: 'Opening Soon' },
+  { id: 'v6', businessName: 'Sushi Central', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland', contactEmail:'v6@example.com', phone:'123', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/sushicentral', operatingHours: '5 PM - 11 PM, Daily', status: 'Temporarily Unavailable' },
 ];
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
@@ -317,28 +317,30 @@ export default function HomePage() {
               <Store className="h-6 w-6 mr-3 text-primary" />
               Filter by Vendor
             </h3>
-            <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
-              <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
-                <SelectValue placeholder="Select a vendor" />
-              </SelectTrigger>
-              <SelectContent>
-                {vendorsForFilter.map(vendor => (
-                  <SelectItem key={vendor.id} value={vendor.id}>
-                    {vendor.businessName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-             {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-               <div className="mt-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/vendor/${selectedVendorId}/store`}>
-                    Visit {selectedVendorDetails.businessName}'s Site
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            )}
+             <div className="flex flex-col">
+                <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
+                <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
+                    <SelectValue placeholder="Select a vendor" />
+                </SelectTrigger>
+                <SelectContent>
+                    {vendorsForFilter.map(vendor => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.businessName}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+                {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+                <div className="mt-2">
+                    <Button variant="outline" size="sm" asChild>
+                    <Link href={`/vendor/${selectedVendorId}/store`}>
+                        Visit {selectedVendorDetails.businessName}'s Site
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                    </Link>
+                    </Button>
+                </div>
+                )}
+            </div>
           </div>
         </div>
 

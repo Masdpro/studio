@@ -22,7 +22,9 @@ const sampleVendor: Vendor = {
   streetAddress: '123 Food Lane',
   city: 'Culinary City',
   country: 'Foodland',
-  externalStoreUrl: 'https://example.com/awesomeeats'
+  externalStoreUrl: 'https://example.com/awesomeeats',
+  operatingHours: '10 AM - 10 PM, Daily',
+  status: 'Open',
 };
 
 const fullVendorAddress = `${sampleVendor.streetAddress}, ${sampleVendor.city}, ${sampleVendor.country}`;
@@ -80,13 +82,13 @@ export default function VendorDashboardPage() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold text-primary mb-6">Vendor Dashboard</h1>
-      <Tabs defaultValue="wallet" className="w-full">
+      <Tabs defaultValue="profile" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
-          <TabsTrigger value="wallet" className="flex items-center gap-2">
-            <WalletIcon className="h-5 w-5" /> Wallet
-          </TabsTrigger>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <Settings className="h-5 w-5" /> Profile
+          </TabsTrigger>
+          <TabsTrigger value="wallet" className="flex items-center gap-2">
+            <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5" /> Orders
@@ -96,10 +98,6 @@ export default function VendorDashboardPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="wallet">
-          <VendorWalletWidget />
-        </TabsContent>
-
         <TabsContent value="profile">
           <Card>
             <CardHeader>
@@ -107,12 +105,16 @@ export default function VendorDashboardPage() {
                 <Settings className="h-6 w-6 text-primary" />
                 Manage Your Profile
               </CardTitle>
-              <CardDescription>Keep your business information up to date.</CardDescription>
+              <CardDescription>Keep your business information up to date. Current status: <span className="font-semibold">{sampleVendor.status}</span>. Operating Hours: <span className="font-semibold">{sampleVendor.operatingHours || 'Not set'}</span>.</CardDescription>
             </CardHeader>
             <CardContent>
               <VendorProfileForm vendor={sampleVendor} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="wallet">
+          <VendorWalletWidget />
         </TabsContent>
 
         <TabsContent value="orders">

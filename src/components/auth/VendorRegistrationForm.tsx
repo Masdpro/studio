@@ -18,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
 const vendorRegistrationSchema = z.object({
   businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
@@ -27,6 +30,8 @@ const vendorRegistrationSchema = z.object({
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
   country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
   externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  operatingHours: z.string().min(5, { message: "Please provide operating hours (e.g., 9 AM - 5 PM, Mon-Fri)." }),
+  status: z.enum(vendorStatusOptions, { required_error: "Please select a status." }),
 });
 
 type VendorRegistrationFormValues = z.infer<typeof vendorRegistrationSchema>;
@@ -43,6 +48,8 @@ export function VendorRegistrationForm() {
       city: '',
       country: '',
       externalStoreUrl: '',
+      operatingHours: '',
+      status: 'Open',
     },
   });
 
@@ -142,6 +149,44 @@ export function VendorRegistrationForm() {
                   <FormControl>
                     <Input placeholder="Your Country" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="operatingHours"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Operating Hours</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., 9 AM - 5 PM, Mon-Fri" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Let customers know when you are open.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your current status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {vendorStatusOptions.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

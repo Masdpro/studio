@@ -8,20 +8,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Store, Mail, Phone, MapPin, Globe, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Store, Mail, Phone, MapPin, Globe, ArrowLeft, AlertTriangle, Clock, Power, CheckCircle, XCircle } from 'lucide-react';
 import type { Vendor } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 
 // Mock function to get vendor data - replace with actual data fetching in a real app
 const getVendorById = (id: string): Vendor | undefined => {
   const sampleVendorsForPage: Vendor[] = [
-    { id: 'v1', businessName: 'Pizza Place', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', contactEmail:'v1@example.com', phone:'123-0001', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/pizzapalace' },
-    { id: 'v2', businessName: 'Burger Bonanza', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', contactEmail:'v2@example.com', phone:'123-0002', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/burgerbonanza' },
-    { id: 'v3', businessName: 'Salad Supreme', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland', contactEmail:'v3@example.com', phone:'123-0003', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400 },
-    { id: 'v4', businessName: 'Drinks & Co.', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', contactEmail:'v4@example.com', phone:'123-0004', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/drinksco' },
-    { id: 'v5', businessName: 'Dessert Dreams', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', contactEmail:'v5@example.com', phone:'123-0005', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500 },
-    { id: 'v6', businessName: 'Sushi Central', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland', contactEmail:'v6@example.com', phone:'123-0006', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/sushicentral' },
+    { id: 'v1', businessName: 'Pizza Place', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', contactEmail:'v1@example.com', phone:'123-0001', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437, externalStoreUrl: 'https://example.com/pizzapalace', operatingHours: '11 AM - 10 PM, Mon-Sun', status: 'Open' },
+    { id: 'v2', businessName: 'Burger Bonanza', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', contactEmail:'v2@example.com', phone:'123-0002', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000, externalStoreUrl: 'https://example.com/burgerbonanza', operatingHours: '10 AM - 9 PM, Tue-Sun', status: 'Open' },
+    { id: 'v3', businessName: 'Salad Supreme', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland', contactEmail:'v3@example.com', phone:'123-0003', locationTag: 'Downtown', latitude: 34.0500, longitude: -118.2400, operatingHours: '9 AM - 7 PM, Mon-Fri', status: 'Closed' },
+    { id: 'v4', businessName: 'Drinks & Co.', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', contactEmail:'v4@example.com', phone:'123-0004', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712, externalStoreUrl: 'https://example.com/drinksco', operatingHours: '24/7', status: 'Open' },
+    { id: 'v5', businessName: 'Dessert Dreams', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', contactEmail:'v5@example.com', phone:'123-0005', locationTag: 'Suburbia', latitude: 33.9500, longitude: -118.3500, operatingHours: '12 PM - 8 PM, Wed-Sun', status: 'Opening Soon' },
+    { id: 'v6', businessName: 'Sushi Central', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland', contactEmail:'v6@example.com', phone:'123-0006', locationTag: 'Uptown', latitude: 40.7800, longitude: -73.9700, externalStoreUrl: 'https://example.com/sushicentral', operatingHours: '5 PM - 11 PM, Daily', status: 'Temporarily Unavailable' },
   ];
   return sampleVendorsForPage.find(v => v.id === id);
+};
+
+const getStatusBadgeVariant = (status?: Vendor['status']): React.ComponentProps<typeof Badge>['variant'] => {
+  switch (status) {
+    case 'Open': return 'default';
+    case 'Closed': case 'Temporarily Unavailable': return 'destructive';
+    case 'Opening Soon': return 'secondary';
+    default: return 'outline';
+  }
+};
+
+const getStatusIcon = (status?: Vendor['status']) => {
+  switch (status) {
+    case 'Open': return <CheckCircle className="h-5 w-5 text-green-600" />;
+    case 'Closed': return <XCircle className="h-5 w-5 text-red-600" />;
+    case 'Temporarily Unavailable': return <AlertTriangle className="h-5 w-5 text-orange-500" />;
+    case 'Opening Soon': return <Clock className="h-5 w-5 text-blue-500" />;
+    default: return <Power className="h-5 w-5 text-muted-foreground" />;
+  }
 };
 
 export default function VendorProfilePage() {
@@ -88,7 +108,6 @@ export default function VendorProfilePage() {
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader className="text-center">
           <Avatar className="w-24 h-24 mx-auto mb-4 border-2 border-primary">
-            {/* For simplicity, not adding a real image URL for vendor avatar */}
             <AvatarImage src={`https://placehold.co/100x100.png?text=${vendorInitials}`} alt={vendor.businessName} data-ai-hint="store logo" />
             <AvatarFallback className="text-3xl">{vendorInitials}</AvatarFallback>
           </Avatar>
@@ -96,11 +115,28 @@ export default function VendorProfilePage() {
             <Store className="h-8 w-8 text-primary" />
             {vendor.businessName}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="mb-2">
             {vendor.locationTag ? `Located in ${vendor.locationTag}` : 'Vendor Profile'}
           </CardDescription>
+          {vendor.status && (
+            <div className="flex items-center justify-center gap-2">
+              {getStatusIcon(vendor.status)}
+              <Badge variant={getStatusBadgeVariant(vendor.status)} className="text-md">
+                {vendor.status}
+              </Badge>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
+          {vendor.operatingHours && (
+            <div className="flex items-start gap-4 p-3 bg-muted/50 rounded-md">
+              <Clock className="h-5 w-5 text-primary mt-1 shrink-0" />
+              <div>
+                <p className="text-sm text-muted-foreground">Operating Hours</p>
+                <p className="font-medium">{vendor.operatingHours}</p>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-start gap-4 p-3 bg-muted/50 rounded-md">
               <Mail className="h-5 w-5 text-primary mt-1 shrink-0" />
@@ -145,4 +181,3 @@ export default function VendorProfilePage() {
     </div>
   );
 }
-

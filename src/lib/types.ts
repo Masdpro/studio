@@ -12,6 +12,8 @@ export type Vendor = {
   locationTag?: string; // For filtering by location
   latitude?: number; // For geolocation
   longitude?: number; // For geolocation
+  operatingHours?: string; // e.g., "9 AM - 5 PM, Mon-Fri"
+  status?: 'Open' | 'Closed' | 'Opening Soon' | 'Temporarily Unavailable';
 };
 
 export type Product = {
