@@ -212,7 +212,7 @@ export default function HomePage() {
         }
       }
     );
-  }, [toast]); // Removed setSelectedLocation from dependencies as it's handled by selectedLocationRef
+  }, [toast]);
 
   useEffect(() => {
     if (isMounted.current) {
@@ -319,8 +319,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container mx-auto">
-      <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Great Products</h1>
+    <div className="container mx-auto pt-10"> {/* Added pt-10 for padding at the top */}
+      {/* <h1 className="text-4xl font-bold my-10 text-center text-primary">Discover Great Products</h1> */}
 
       <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
         <div className="grid md:grid-cols-2 gap-6 items-start">
