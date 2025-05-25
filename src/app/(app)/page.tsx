@@ -48,6 +48,13 @@ const sampleVendors: Vendor[] = [
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
 const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
 
+const SESSION_STORAGE_KEYS = {
+  searchTerm: 'homePageSearchTerm',
+  selectedCategory: 'homePageSelectedCategory',
+  selectedVendorId: 'homePageSelectedVendorId',
+  selectedLocation: 'homePageSelectedLocation',
+};
+
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -58,6 +65,42 @@ export default function HomePage() {
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Hydrate state from sessionStorage on component mount
+  useEffect(() => {
+    const storedSearchTerm = sessionStorage.getItem(SESSION_STORAGE_KEYS.searchTerm);
+    if (storedSearchTerm) setSearchTerm(storedSearchTerm);
+
+    const storedSelectedCategory = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedCategory);
+    if (storedSelectedCategory) setSelectedCategory(storedSelectedCategory);
+
+    const storedSelectedVendorId = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedVendorId);
+    if (storedSelectedVendorId) setSelectedVendorId(storedSelectedVendorId);
+
+    const storedSelectedLocation = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedLocation);
+    if (storedSelectedLocation) {
+      setSelectedLocation(storedSelectedLocation);
+    }
+    // If nothing is stored for selectedLocation, it defaults to USER_CURRENT_LOCATION_VALUE from useState
+  }, []);
+
+  // Save state to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.searchTerm, searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedCategory, selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedVendorId, selectedVendorId);
+  }, [selectedVendorId]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedLocation, selectedLocation);
+  }, [selectedLocation]);
+
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
@@ -100,7 +143,7 @@ export default function HomePage() {
         setIsLocating(false);
         toast({ title: "Location Error", description: message, variant: "destructive" });
         if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
-          setSelectedLocation('All Locations');
+          setSelectedLocation('All Locations'); // Fallback if location fetch fails
         }
       }
     );
@@ -144,7 +187,6 @@ export default function HomePage() {
   }, [selectedLocation, userCoords]);
 
   useEffect(() => {
-    // If the selected vendor is no longer in the filtered list (due to location change), reset to "All Vendors"
     if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
       setSelectedVendorId('All');
     }
@@ -183,6 +225,7 @@ export default function HomePage() {
       }
 
       const matchesSearch =
+        searchTerm === '' || // Add this line to include all products if search term is empty
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
