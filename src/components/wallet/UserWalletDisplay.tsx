@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,9 +13,26 @@ import { Label } from '@/components/ui/label';
 // In a real app, this would come from a user context or API
 const INITIAL_BALANCE = 100.00;
 
+const formatNumberWithCommas = (value: string): string => {
+  if (value === null || value === undefined || value.trim() === '') return '';
+  const parts = value.split('.');
+  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (parts.length > 1) {
+    return `${integerPart}.${parts[1]}`;
+  }
+  if (value.endsWith('.') && !integerPart.endsWith('.')) {
+      return `${integerPart}.`;
+  }
+  return integerPart;
+};
+
+const parseFormattedNumber = (value: string): string => {
+  return value.replace(/,/g, '');
+};
+
 export function UserWalletDisplay() {
   const [balance, setBalance] = useState(INITIAL_BALANCE);
-  const [addAmount, setAddAmount] = useState('');
+  const [addAmount, setAddAmount] = useState(''); // Stores raw numeric string
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
@@ -23,8 +41,19 @@ export function UserWalletDisplay() {
     // Potentially load balance from localStorage here if persisting
   }, []);
 
+  const handleAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseFormattedNumber(rawValue);
+
+    if (numericValue === '' || /^\d*\.?\d*$/.test(numericValue)) {
+      if (numericValue.split('.').length <= 2) {
+         setAddAmount(numericValue);
+      }
+    }
+  };
+
   const handleAddFunds = () => {
-    const amount = parseFloat(addAmount);
+    const amount = parseFloat(addAmount); // addAmount is already unformatted
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: 'Invalid Amount',
@@ -79,10 +108,10 @@ export function UserWalletDisplay() {
             <div className="flex items-center gap-2">
               <Input
                 id="add-amount"
-                type="number"
-                placeholder="Amount"
-                value={addAmount}
-                onChange={(e) => setAddAmount(e.target.value)}
+                type="text" // Changed from number to text
+                placeholder="Amount (e.g., 1,000.00)"
+                value={formatNumberWithCommas(addAmount)}
+                onChange={handleAddAmountChange}
                 className="flex-1"
               />
               <Button onClick={handleAddFunds} size="icon" aria-label="Add Funds">

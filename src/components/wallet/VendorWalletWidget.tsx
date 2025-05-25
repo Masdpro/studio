@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,9 +12,26 @@ import { Label } from '@/components/ui/label';
 // In a real app, this would come from a vendor's specific data
 const INITIAL_VENDOR_BALANCE = 500.00;
 
+const formatNumberWithCommas = (value: string): string => {
+  if (value === null || value === undefined || value.trim() === '') return '';
+  const parts = value.split('.');
+  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (parts.length > 1) {
+    return `${integerPart}.${parts[1]}`;
+  }
+   if (value.endsWith('.') && !integerPart.endsWith('.')) {
+      return `${integerPart}.`;
+  }
+  return integerPart;
+};
+
+const parseFormattedNumber = (value: string): string => {
+  return value.replace(/,/g, '');
+};
+
 export function VendorWalletWidget() {
   const [balance, setBalance] = useState(INITIAL_VENDOR_BALANCE);
-  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState(''); // Stores raw numeric string
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
@@ -22,8 +40,19 @@ export function VendorWalletWidget() {
     // Potentially load balance from localStorage or API
   }, []);
 
+  const handleWithdrawAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseFormattedNumber(rawValue);
+
+    if (numericValue === '' || /^\d*\.?\d*$/.test(numericValue)) {
+       if (numericValue.split('.').length <= 2) {
+        setWithdrawAmount(numericValue);
+      }
+    }
+  };
+
   const handleWithdrawFunds = () => {
-    const amount = parseFloat(withdrawAmount);
+    const amount = parseFloat(withdrawAmount); // withdrawAmount is already unformatted
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: 'Invalid Amount',
@@ -84,10 +113,10 @@ export function VendorWalletWidget() {
           <div className="flex items-center gap-2">
             <Input
               id="withdraw-amount"
-              type="number"
-              placeholder="Amount to withdraw"
-              value={withdrawAmount}
-              onChange={(e) => setWithdrawAmount(e.target.value)}
+              type="text" // Changed from number to text
+              placeholder="Amount (e.g., 5,000.00)"
+              value={formatNumberWithCommas(withdrawAmount)}
+              onChange={handleWithdrawAmountChange}
               className="flex-1 h-11"
             />
             <Button onClick={handleWithdrawFunds} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
