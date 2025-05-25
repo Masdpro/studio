@@ -119,6 +119,17 @@ export function OrderListItem({
     };
   }, [order.vendorId]);
 
+  const agentReviews = useMemo(() => {
+    if (!order.deliveryAgentId) return { positive: 0, negative: 0 };
+    const reviewsForAgent = sampleReviews.filter(
+      (review) => review.revieweeId === order.deliveryAgentId && review.revieweeType === 'delivery_agent'
+    );
+    return {
+      positive: reviewsForAgent.filter((r) => r.rating === 'positive').length,
+      negative: reviewsForAgent.filter((r) => r.rating === 'negative').length,
+    };
+  }, [order.deliveryAgentId]);
+
   const showVendorAgentPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'delivery' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
 
@@ -197,7 +208,13 @@ export function OrderListItem({
                {order.deliveryAgentId && (
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   <Truck className="h-3 w-3" />
-                  Agent: {order.deliveryAgentId}
+                  <span>Agent: {order.deliveryAgentId}</span>
+                   <div className="flex items-center gap-1 text-xs">
+                    (<ThumbsUp className="h-3 w-3 text-green-500" />
+                    <span>{agentReviews.positive}</span>
+                    <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
+                    <span>{agentReviews.negative})</span>
+                  </div>
                 </div>
               )}
               {showCustomerDeliveryBarcode && (
@@ -210,13 +227,19 @@ export function OrderListItem({
             <>
               <div>
                 <h4 className="font-semibold text-sm text-muted-foreground">Customer:</h4>
-                <p className="text-sm">{order.customerId} (Details placeholder)</p>
+                <p className="text-sm">{order.customerId}</p>
                 <p className="text-xs text-muted-foreground">Delivery to: {order.deliveryAddress}</p>
               </div>
               {order.deliveryAgentId && (
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   <Truck className="h-3 w-3" />
-                  Assigned Agent: {order.deliveryAgentId}
+                   <span>Assigned Agent: {order.deliveryAgentId}</span>
+                   <div className="flex items-center gap-1 text-xs">
+                    (<ThumbsUp className="h-3 w-3 text-green-500" />
+                    <span>{agentReviews.positive}</span>
+                    <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
+                    <span>{agentReviews.negative})</span>
+                  </div>
                 </div>
               )}
               {showVendorAgentPickupBarcode && (
@@ -331,7 +354,7 @@ export function OrderListItem({
                 variant="outline"
                 size="sm"
                 className="border-teal-500 text-teal-600 hover:bg-teal-50 hover:text-teal-700"
-                onClick={() => onScanForCustomerPickup(order.id)}
+                onClick={() => onScanForCustomerPickup && onScanForCustomerPickup(order.id)}
               >
                 <ScanLine className="h-4 w-4 mr-1 sm:mr-2" />
                 Scan to Confirm Pickup
@@ -371,3 +394,4 @@ export function OrderListItem({
     </>
   );
 }
+
