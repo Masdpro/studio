@@ -18,6 +18,7 @@ interface ProductCardProps {
   vendorStreetAddress: string;
   vendorCity: string;
   vendorCountry: string;
+  onViewVendorProfile?: (vendorId: string) => void;
 }
 
 export function ProductCard({ 
@@ -26,7 +27,8 @@ export function ProductCard({
   vendorLocation,
   vendorStreetAddress,
   vendorCity,
-  vendorCountry 
+  vendorCountry,
+  onViewVendorProfile
 }: ProductCardProps) {
   const { toast } = useToast();
   const [isAddressExpanded, setIsAddressExpanded] = useState(false);
@@ -40,6 +42,13 @@ export function ProductCard({
   };
 
   const fullAddress = `${vendorStreetAddress}, ${vendorCity}, ${vendorCountry}`;
+
+  const handleVendorNameClick = (e: React.MouseEvent) => {
+    if (onViewVendorProfile) {
+      e.preventDefault(); // Prevent default link behavior if it were a link
+      onViewVendorProfile(product.vendorId);
+    }
+  };
 
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -58,12 +67,26 @@ export function ProductCard({
           {product.description}
         </CardDescription>
         <div className="flex flex-wrap gap-1 mb-2 items-center">
-          <Link href={`/vendor/${product.vendorId}/profile`} passHref>
-            <Badge variant="secondary" className="inline-flex items-center cursor-pointer hover:bg-secondary/80 transition-colors">
-              <Store className="h-3 w-3 mr-1.5" />
-              {vendorName}
-            </Badge>
-          </Link>
+          {onViewVendorProfile ? (
+             <Badge 
+                variant="secondary" 
+                className="inline-flex items-center cursor-pointer hover:bg-secondary/80 transition-colors"
+                onClick={handleVendorNameClick}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleVendorNameClick(e as any);}}
+              >
+                <Store className="h-3 w-3 mr-1.5" />
+                {vendorName}
+              </Badge>
+          ) : (
+            <Link href={`/vendor/${product.vendorId}/profile`} passHref>
+              <Badge variant="secondary" className="inline-flex items-center cursor-pointer hover:bg-secondary/80 transition-colors">
+                <Store className="h-3 w-3 mr-1.5" />
+                {vendorName}
+              </Badge>
+            </Link>
+          )}
           {vendorLocation && (
             <button
               onClick={() => setIsAddressExpanded(!isAddressExpanded)}

@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 
 // Enhanced sample product data with more categories and aiHints
 const sampleProducts: Product[] = [
@@ -46,7 +48,7 @@ const sampleVendors: Vendor[] = [
 ];
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
-const ALL_LOCATIONS_VALUE = "All Locations"; // Define a constant for "All Locations"
+const ALL_LOCATIONS_VALUE = "All Locations";
 const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
 
 const SESSION_STORAGE_KEYS = {
@@ -60,7 +62,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE); // Default to "All Locations"
+  const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE); 
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -70,6 +72,8 @@ export default function HomePage() {
   const selectedLocationRef = useRef(selectedLocation);
   const isMounted = useRef(false);
 
+  const [isVendorProfileSheetOpen, setIsVendorProfileSheetOpen] = useState(false);
+  const [activeVendorForProfile, setActiveVendorForProfile] = useState<Vendor | null>(null);
 
   // Hydrate state from sessionStorage on component mount
   useEffect(() => {
@@ -91,9 +95,6 @@ export default function HomePage() {
         setIsLocating(false);
       }
     }
-    // If no storedSelectedLocation, selectedLocation remains its default (ALL_LOCATIONS_VALUE).
-    // The effect listening to selectedLocation (guarded by isMounted.current) will then trigger location fetch IF it's USER_CURRENT_LOCATION_VALUE.
-
     isMounted.current = true; 
   }, []); 
 
@@ -122,7 +123,6 @@ export default function HomePage() {
     }
   }, [selectedLocation]);
 
-  // Update ref for use in async callbacks
   useEffect(() => {
     selectedLocationRef.current = selectedLocation;
   }, [selectedLocation]);
@@ -179,7 +179,6 @@ export default function HomePage() {
     );
   }, [toast]); 
 
-  // Effect to trigger location fetching or clear location state
   useEffect(() => {
     if (isMounted.current) { 
       if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
@@ -267,6 +266,14 @@ export default function HomePage() {
       return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
   }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating]);
+
+  const handleViewVendorProfile = (vendorId: string) => {
+    const vendor = sampleVendors.find(v => v.id === vendorId);
+    if (vendor) {
+      setActiveVendorForProfile(vendor);
+      setIsVendorProfileSheetOpen(true);
+    }
+  };
 
   return (
     <div className="container mx-auto">
@@ -386,6 +393,7 @@ export default function HomePage() {
                 vendorStreetAddress={vendorStreetAddress}
                 vendorCity={vendorCity}
                 vendorCountry={vendorCountry}
+                onViewVendorProfile={handleViewVendorProfile}
               />
             );
           })}
@@ -411,9 +419,14 @@ export default function HomePage() {
           )}
         </div>
       )}
+      <Sheet open={isVendorProfileSheetOpen} onOpenChange={setIsVendorProfileSheetOpen}>
+        <SheetContent className="w-full max-w-md sm:max-w-lg p-0 overflow-y-auto" side="right">
+          {activeVendorForProfile && (
+            <VendorProfileDisplay vendor={activeVendorForProfile} />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
-    
-
     
