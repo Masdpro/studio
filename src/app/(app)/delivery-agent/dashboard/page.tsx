@@ -2,63 +2,27 @@
 // src/app/(app)/delivery-agent/dashboard/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Order, DeliveryAgent } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Star, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now
+import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now, consider a dedicated AgentWalletWidget
 import { OrderListItem } from '@/components/orders/OrderListItem';
 import { BarcodeScannerDialog } from '@/components/delivery/BarcodeScannerDialog';
 import { Separator } from '@/components/ui/separator';
+import { masterSampleOrders, sampleDeliveryAgents } from '@/lib/mockData';
 
-// Mock data
-const sampleAgent: DeliveryAgent = {
-  id: 'da001',
-  name: 'Alex Rider',
-  email: 'alex.rider@example.com',
-  phone: '555-0001',
-  streetAddress: '77 Delivery Lane',
-  city: 'Transporter City',
-  country: 'Agentland',
-  vehicleDetails: 'Scooter - Red Vespa, Plate: RIDE01',
-  profileManaged: true,
-};
+// Use a specific agent from mockData
+const MOCK_CURRENT_AGENT_ID = 'agent001'; // Alex Rider
+const currentAgent = sampleDeliveryAgents.find(a => a.id === MOCK_CURRENT_AGENT_ID) || sampleDeliveryAgents[0];
 
-const generateInitialAvailableDeliveries = (): Order[] => [
-  {
-    id: 'order001',
-    customerId: 'cust123',
-    vendorId: 'v1',
-    items: [{ productId: '1', name: 'Margherita Pizza', price: 12.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' }],
-    totalAmount: 12.99,
-    status: 'ReadyForPickup',
-    pickupAddress: 'Awesome Eats, 123 Food Lane, Culinary City, Foodland',
-    deliveryAddress: 'John Doe, 456 Customer Ave, Suburbia, USA',
-    deliveryFee: 5.00,
-    estimatedDistance: '3 km',
-    createdAt: new Date(Date.now() - 3600 * 1000 * 1), 
-  },
-  {
-    id: 'order002',
-    customerId: 'cust456',
-    vendorId: 'v2',
-    items: [{ productId: '3', name: 'Ultimate Chicken Burger', price: 9.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger chicken' }],
-    totalAmount: 19.00,
-    status: 'ReadyForPickup',
-    pickupAddress: 'Burger Joint, 789 Grill Rd, Flavor Town, Foodland',
-    deliveryAddress: 'Jane Smith, 101 Shopper St, Metroville, USA',
-    deliveryFee: 7.50,
-    estimatedDistance: '8 km',
-    createdAt: new Date(Date.now() - 3600 * 1000 * 2), 
-  },
-];
 
 export default function DeliveryAgentDashboardPage() {
   const [agent, setAgent] = useState<DeliveryAgent | null>(null);
-  const [availableDeliveries, setAvailableDeliveries] = useState<Order[]>([]);
-  const [activeDeliveries, setActiveDeliveries] = useState<Order[]>([]);
+  // Store all orders and derive subsections from it
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -68,17 +32,27 @@ export default function DeliveryAgentDashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setAgent(sampleAgent);
-    setAvailableDeliveries(generateInitialAvailableDeliveries());
+    setAgent(currentAgent);
+    // Set the master list of orders. In a real app, this would be fetched.
+    // For the demo, we'll sort them initially.
+    setAllOrders([...masterSampleOrders].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
     setIsLoading(false);
   }, []);
 
+  const updateOrderStatus = useCallback((orderId: string, newStatus: Order['status'], agentIdForAssignment?: string) => {
+    setAllOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId
+          ? { ...order, status: newStatus, deliveryAgentId: agentIdForAssignment || order.deliveryAgentId }
+          : order
+      )
+    );
+  }, []);
+
   const handleAcceptDelivery = (orderId: string) => {
-    const orderToAccept = availableDeliveries.find(o => o.id === orderId);
-    if (orderToAccept) {
-      const acceptedOrder: Order = { ...orderToAccept, status: 'AcceptedByAgent', deliveryAgentId: agent?.id };
-      setActiveDeliveries(prev => [acceptedOrder, ...prev]);
-      setAvailableDeliveries(prev => prev.filter(order => order.id !== orderId));
+    const orderToAccept = allOrders.find(o => o.id === orderId && o.status === 'ReadyForPickup' && !o.deliveryAgentId);
+    if (orderToAccept && agent) {
+      updateOrderStatus(orderId, 'AcceptedByAgent', agent.id);
       toast({
         title: 'Delivery Accepted!',
         description: `Order ${orderId} is now assigned to you.`,
@@ -93,20 +67,13 @@ export default function DeliveryAgentDashboardPage() {
   };
 
   const handleScanSuccess = (orderId: string, purpose: 'pickup' | 'delivery') => {
-    setActiveDeliveries(prev => 
-      prev.map(order => {
-        if (order.id === orderId) {
-          if (purpose === 'pickup') {
-            toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });
-            return { ...order, status: 'PickedUpByAgent' }; 
-          } else if (purpose === 'delivery') {
-            toast({ title: 'Delivery Confirmed', description: `Order ${orderId} delivered to customer.` });
-            return { ...order, status: 'Delivered' };
-          }
-        }
-        return order;
-      })
-    );
+    if (purpose === 'pickup') {
+      updateOrderStatus(orderId, 'PickedUpByAgent');
+      toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });
+    } else if (purpose === 'delivery') {
+      updateOrderStatus(orderId, 'Delivered');
+      toast({ title: 'Delivery Confirmed', description: `Order ${orderId} delivered to customer.` });
+    }
   };
 
   if (isLoading || !agent) {
@@ -120,14 +87,16 @@ export default function DeliveryAgentDashboardPage() {
   
   const agentFullAddress = `${agent.streetAddress}, ${agent.city}, ${agent.country}`;
 
-  const deliveriesToDisplay = activeDeliveries.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
-  const completedDeliveries = activeDeliveries.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
+  const availableDeliveries = allOrders.filter(o => o.status === 'ReadyForPickup' && !o.deliveryAgentId);
+  const myActiveDeliveries = allOrders.filter(o => o.deliveryAgentId === agent.id && o.status !== 'Delivered' && o.status !== 'Cancelled');
+  const myCompletedDeliveries = allOrders.filter(o => o.deliveryAgentId === agent.id && (o.status === 'Delivered' || o.status === 'Cancelled'));
+
 
   return (
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <Bike className="h-8 w-8" />
-        Delivery Agent Dashboard
+        Delivery Agent Dashboard ({agent.name})
       </h1>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -179,11 +148,11 @@ export default function DeliveryAgentDashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {deliveriesToDisplay.length === 0 ? (
+          {myActiveDeliveries.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">You have no active deliveries.</p>
           ) : (
             <div className="space-y-6">
-              {deliveriesToDisplay.map((order) => (
+              {myActiveDeliveries.map((order) => (
                 <OrderListItem 
                   key={order.id} 
                   order={order} 
@@ -228,19 +197,19 @@ export default function DeliveryAgentDashboardPage() {
         </CardContent>
       </Card>
       
-      {/* Completed Deliveries Section (Optional) */}
-      {completedDeliveries.length > 0 && (
+      {/* Completed Deliveries Section */}
+      {myCompletedDeliveries.length > 0 && (
         <>
           <Separator />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 <ClipboardList className="h-6 w-6 text-primary" />
-                Completed Deliveries
+                My Completed Deliveries
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {completedDeliveries.map((order) => (
+              {myCompletedDeliveries.map((order) => (
                 <OrderListItem key={order.id} order={order} userRole="delivery_agent" />
               ))}
             </CardContent>
@@ -260,3 +229,5 @@ export default function DeliveryAgentDashboardPage() {
     </div>
   );
 }
+
+    

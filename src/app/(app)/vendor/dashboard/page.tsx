@@ -12,63 +12,11 @@ import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { masterSampleOrders, sampleVendors } from '@/lib/mockData';
 
-// Placeholder vendor data, in a real app this would come from auth/DB
-const sampleVendor: Vendor = {
-  id: 'v123', // Ensure this ID matches vendorId in sampleVendorOrders
-  businessName: 'Awesome Eats',
-  contactEmail: 'contact@awesomeeats.com',
-  phone: '555-1234',
-  streetAddress: '123 Food Lane',
-  city: 'Culinary City',
-  country: 'Foodland',
-  externalStoreUrl: 'https://example.com/awesomeeats',
-  operatingHours: '10 AM - 10 PM, Daily',
-  status: 'Open',
-};
-
-const fullVendorAddress = `${sampleVendor.streetAddress}, ${sampleVendor.city}, ${sampleVendor.country}`;
-
-// Mock data for vendor orders
-const generateSampleVendorOrders = (): Order[] => [
-  {
-    id: 'orderToVendor001',
-    customerId: 'cust123',
-    vendorId: 'v123', // Matches sampleVendor.id
-    items: [{ productId: 'p1', name: 'Gourmet Burger (from this vendor)', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger gourmet' }],
-    totalAmount: 15.99,
-    status: 'ReadyForPickup',
-    pickupAddress: fullVendorAddress,
-    deliveryAddress: 'John Doe, 456 Customer Ave, Suburbia, USA',
-    deliveryFee: 6.00,
-    createdAt: new Date(Date.now() - 3600 * 1000 * 2), // 2 hours ago
-  },
-  {
-    id: 'orderToVendor002',
-    customerId: 'cust789',
-    vendorId: 'v123', // Matches sampleVendor.id
-    items: [{ productId: 'p2', name: 'Artisan Pizza (from this vendor)', price: 18.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza artisan' }],
-    totalAmount: 37.00,
-    status: 'Processing',
-    pickupAddress: fullVendorAddress,
-    deliveryAddress: 'Jane Smith, 101 Shopper St, Metroville, USA',
-    deliveryFee: 8.00,
-    createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
-  },
-  {
-    id: 'orderToVendor003',
-    customerId: 'cust456',
-    vendorId: 'v123', // Matches sampleVendor.id
-    items: [{ productId: 'p1', name: 'Gourmet Burger (from this vendor)', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger gourmet' }],
-    totalAmount: 15.99,
-    status: 'Delivered',
-    pickupAddress: fullVendorAddress,
-    deliveryAddress: 'Alice Wonderland, 777 Dream Lane, Fantasyland, USA',
-    deliveryFee: 5.50,
-    createdAt: new Date(Date.now() - 3600 * 1000 * 72), // 3 days ago
-    deliveryAgentId: 'da003',
-  },
-];
+// Use a specific vendor from mockData
+const MOCK_CURRENT_VENDOR_ID = 'vendor001'; // Good Eats Pizzeria
+const currentVendor = sampleVendors.find(v => v.id === MOCK_CURRENT_VENDOR_ID) || sampleVendors[0];
 
 
 export default function VendorDashboardPage() {
@@ -77,7 +25,10 @@ export default function VendorDashboardPage() {
 
   useEffect(() => {
     // In a real app, fetch orders for this specific vendor
-    setVendorOrders(generateSampleVendorOrders());
+    const ordersForVendor = masterSampleOrders.filter(
+      (order) => order.vendorId === currentVendor.id
+    ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+    setVendorOrders(ordersForVendor);
     setIsLoading(false);
   }, []);
 
@@ -92,7 +43,7 @@ export default function VendorDashboardPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold text-primary mb-6">Vendor Dashboard</h1>
+      <h1 className="text-3xl font-bold text-primary mb-6">{currentVendor.businessName} Dashboard</h1>
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
           <TabsTrigger value="profile" className="flex items-center gap-2">
@@ -117,12 +68,12 @@ export default function VendorDashboardPage() {
                 Manage Your Profile
               </CardTitle>
               <CardDescription>
-                Keep your business information up to date. Your current status on Dailybuy is <span className="font-semibold">{sampleVendor.status}</span>.
-                Your physical store hours are: <span className="font-semibold">{sampleVendor.operatingHours || 'Not set'}</span>.
+                Keep your business information up to date. Your current status on Dailybuy is <span className="font-semibold">{currentVendor.status}</span>.
+                Your physical store hours are: <span className="font-semibold">{currentVendor.operatingHours || 'Not set'}</span>.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <VendorProfileForm vendor={sampleVendor} />
+              <VendorProfileForm vendor={currentVendor} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -162,10 +113,10 @@ export default function VendorDashboardPage() {
           <CardTitle className="text-xl">Your External Storefront</CardTitle>
         </CardHeader>
         <CardContent>
-          {sampleVendor.externalStoreUrl ? (
+          {currentVendor.externalStoreUrl ? (
             <p>
               Customers can visit your external storefront at:{' '}
-              <Link href={`/vendor/${sampleVendor.id}/store`} className="text-primary underline hover:text-primary/80">
+              <Link href={`/vendor/${currentVendor.id}/store`} className="text-primary underline hover:text-primary/80">
                 View Your Store Page on Dailybuy
               </Link>
             </p>
@@ -177,3 +128,5 @@ export default function VendorDashboardPage() {
     </div>
   );
 }
+
+    
