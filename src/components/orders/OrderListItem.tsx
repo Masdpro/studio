@@ -5,7 +5,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck } from 'lucide-react'; // Added UserCheck
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -101,7 +101,10 @@ export function OrderListItem({
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   // Vendor shows barcode for agent pickup if order is ReadyForPickup OR AcceptedByAgent (agent already claimed it)
-  const showVendorPickupBarcode = userRole === 'vendor' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
+  const showVendorAgentPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'delivery' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
+  // Vendor shows barcode for customer pickup if order is ReadyForCustomerPickup
+  const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
+
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
 
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
@@ -185,8 +188,11 @@ export function OrderListItem({
                 Assigned Agent: {order.deliveryAgentId}
               </div>
             )}
-            {showVendorPickupBarcode && (
+            {showVendorAgentPickupBarcode && (
               <BarcodeDisplay orderId={order.id} label="Barcode for Agent Pickup" />
+            )}
+            {showVendorCustomerPickupBarcode && (
+              <BarcodeDisplay orderId={order.id} label="Barcode for Customer Pickup Confirmation" />
             )}
           </>
         )}
@@ -304,3 +310,4 @@ export function OrderListItem({
     </Card>
   );
 }
+
