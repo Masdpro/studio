@@ -47,6 +47,7 @@ export type Order = {
     | 'Processing'
     | 'ReadyForPickup' // Vendor has prepared it for DELIVERY AGENT
     | 'ReadyForCustomerPickup' // Vendor has prepared it for CUSTOMER SELF-PICKUP
+    | 'PickedUpByCustomer' // Customer has confirmed self-pickup
     | 'AcceptedByAgent' // Agent has accepted the task
     | 'PickedUpByAgent' // Agent scanned at vendor
     | 'Out for Delivery' // After pickup, or synonymous with PickedUpByAgent

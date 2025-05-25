@@ -51,13 +51,13 @@ export const masterSampleOrders: Order[] = [
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 1)],
     totalAmount: sampleProductsForMockOrders[2].price * 1,
-    status: 'Processing',
+    status: 'ReadyForCustomerPickup', // Changed for testing
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
-    deliveryFee: 4.50,
+    deliveryFee: 0, // No fee for self-pickup
     estimatedDistance: '2 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
-    deliveryPreference: 'pickup', // For testing ReadyForCustomerPickup
+    deliveryPreference: 'pickup',
   },
   {
     id: 'order003',
@@ -156,7 +156,7 @@ export const masterSampleOrders: Order[] = [
     status: 'Pending',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
-    deliveryFee: 5.20,
+    deliveryFee: 0, // No fee for self-pickup
     estimatedDistance: '3.5 km',
     createdAt: new Date(Date.now() - 3600 * 1000 * 0.1), // 6 minutes ago
     deliveryPreference: 'pickup',
@@ -190,17 +190,18 @@ export const masterSampleOrders: Order[] = [
     deliveryPreference: 'delivery',
   },
   {
-    id: 'order012', // New order for testing ReadyForCustomerPickup status
-    customerId: 'cust002',
+    id: 'order012', // New order for testing ReadyForCustomerPickup status for customer scan
+    customerId: 'cust001', // Changed to cust001 for easier testing in "My Orders"
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 2)],
     totalAmount: sampleProductsForMockOrders[2].price * 2,
     status: 'ReadyForCustomerPickup', // Explicitly set
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
-    deliveryAddress: '456 Test Pickup Ave, Testburg',
+    deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
     deliveryFee: 0, // No delivery fee for self-pickup
     estimatedDistance: "0km",
     createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), // 2.5 hours ago
     deliveryPreference: 'pickup',
   },
 ];
+

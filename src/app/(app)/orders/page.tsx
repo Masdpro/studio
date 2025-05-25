@@ -8,6 +8,7 @@ import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import { Loader2 } from 'lucide-react';
 import { masterSampleOrders } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { BarcodeScannerDialog, type ScanPurpose } from '@/components/delivery/BarcodeScannerDialog';
 
 // Simulate a logged-in customer
 const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
@@ -17,7 +18,14 @@ export default function CustomerOrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  // State for scanner dialog
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [currentScanOrderId, setCurrentScanOrderId] = useState<string | null>(null);
+  const [currentScanPurpose, setCurrentScanPurpose] = useState<ScanPurpose | null>(null);
+
+
   useEffect(() => {
+    setIsLoading(true);
     // In a real app, fetch orders for the logged-in customer
     const customerOrders = masterSampleOrders.filter(
       (order) => order.customerId === MOCK_CURRENT_CUSTOMER_ID
@@ -39,6 +47,27 @@ export default function CustomerOrdersPage() {
     });
   }, [toast]);
 
+  const openCustomerScanner = (orderId: string) => {
+    setCurrentScanOrderId(orderId);
+    setCurrentScanPurpose('customer_pickup');
+    setIsScannerOpen(true);
+  };
+
+  const handleCustomerScanSuccess = (orderId: string, purpose: ScanPurpose) => {
+    if (purpose === 'customer_pickup') {
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id === orderId ? { ...order, status: 'PickedUpByCustomer' as Order['status'] } : order
+        )
+      );
+      toast({
+        title: 'Pickup Confirmed!',
+        description: `You have successfully confirmed pickup for order ${orderId}.`,
+      });
+    }
+  };
+
+
   if (isLoading) {
      return (
       <div className="container mx-auto py-8 text-center">
@@ -56,9 +85,18 @@ export default function CustomerOrdersPage() {
         description="Track the status of your current and past orders."
         userRole="customer"
         onCancelOrder={handleCancelOrder}
+        onScanForCustomerPickup={openCustomerScanner}
       />
+      {currentScanOrderId && currentScanPurpose && (
+        <BarcodeScannerDialog
+          open={isScannerOpen}
+          onOpenChange={setIsScannerOpen}
+          orderId={currentScanOrderId}
+          scanPurpose={currentScanPurpose}
+          onScanSuccess={handleCustomerScanSuccess}
+        />
+      )}
     </div>
   );
 }
 
-    

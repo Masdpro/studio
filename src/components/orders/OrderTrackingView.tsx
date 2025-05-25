@@ -13,7 +13,8 @@ interface OrderTrackingViewProps {
   userRole: 'customer' | 'vendor';
   onCancelOrder?: (orderId: string) => void;
   onAttendToOrder?: (orderId: string) => void;
-  onMarkAsReadyForPickup?: (orderId: string) => void; // New prop
+  onMarkAsReadyForPickup?: (orderId: string) => void;
+  onScanForCustomerPickup?: (orderId: string) => void; // New prop
 }
 
 export function OrderTrackingView({
@@ -23,7 +24,8 @@ export function OrderTrackingView({
   userRole,
   onCancelOrder,
   onAttendToOrder,
-  onMarkAsReadyForPickup, // New prop
+  onMarkAsReadyForPickup,
+  onScanForCustomerPickup, // New prop
 }: OrderTrackingViewProps) {
   if (!orders || orders.length === 0) {
     return (
@@ -60,10 +62,12 @@ export function OrderTrackingView({
             userRole={userRole}
             onCancelOrder={userRole === 'customer' ? onCancelOrder : undefined}
             onAttendToOrder={userRole === 'vendor' ? onAttendToOrder : undefined}
-            onMarkAsReadyForPickup={userRole === 'vendor' ? onMarkAsReadyForPickup : undefined} // Pass down the prop
+            onMarkAsReadyForPickup={userRole === 'vendor' ? onMarkAsReadyForPickup : undefined}
+            onScanForCustomerPickup={userRole === 'customer' ? onScanForCustomerPickup : undefined} // Pass down
           />
         ))}
       </CardContent>
     </Card>
   );
 }
+

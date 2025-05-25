@@ -15,12 +15,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Camera, ScanLine, XCircle, Loader2 } from 'lucide-react';
 
+export type ScanPurpose = 'pickup' | 'delivery' | 'customer_pickup';
+
 interface BarcodeScannerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
-  scanPurpose: 'pickup' | 'delivery';
-  onScanSuccess: (orderId: string, purpose: 'pickup' | 'delivery') => void;
+  scanPurpose: ScanPurpose;
+  onScanSuccess: (orderId: string, purpose: ScanPurpose) => void;
 }
 
 export function BarcodeScannerDialog({
@@ -103,10 +105,27 @@ export function BarcodeScannerDialog({
     }, 1000); 
   };
 
-  const dialogTitle = scanPurpose === 'pickup' ? `Scan at Pickup: Order ${orderId}` : `Scan at Delivery: Order ${orderId}`;
-  const dialogDescription = scanPurpose === 'pickup'
-    ? 'Align the order barcode with the camera to confirm pickup from the vendor.'
-    : 'Align the barcode (e.g., on the package or customer app) with the camera to confirm delivery.';
+  let dialogTitleText = '';
+  let dialogDescriptionText = '';
+
+  switch (scanPurpose) {
+    case 'pickup':
+      dialogTitleText = `Scan at Vendor Pickup: Order ${orderId}`;
+      dialogDescriptionText = 'Align the order barcode with the camera to confirm pickup from the vendor.';
+      break;
+    case 'delivery':
+      dialogTitleText = `Scan at Customer Delivery: Order ${orderId}`;
+      dialogDescriptionText = 'Align the barcode (e.g., on the package or customer app) with the camera to confirm delivery.';
+      break;
+    case 'customer_pickup':
+      dialogTitleText = `Scan to Confirm Self-Pickup: Order ${orderId}`;
+      dialogDescriptionText = 'Align the barcode provided by the vendor with the camera to confirm your pickup.';
+      break;
+    default:
+      dialogTitleText = `Scan Order ${orderId}`;
+      dialogDescriptionText = 'Align the barcode with the camera.';
+  }
+
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -117,9 +136,9 @@ export function BarcodeScannerDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ScanLine className="h-6 w-6 text-primary" />
-            {dialogTitle}
+            {dialogTitleText}
           </DialogTitle>
-          <DialogDescription>{dialogDescription}</DialogDescription>
+          <DialogDescription>{dialogDescriptionText}</DialogDescription>
         </DialogHeader>
         <div className="my-4">
           <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden border">

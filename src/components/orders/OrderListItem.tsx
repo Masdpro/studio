@@ -5,7 +5,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck } from 'lucide-react';
+import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck, ScanLine } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -20,6 +20,7 @@ interface OrderListItemProps {
   onCancelOrder?: (orderId: string) => void;
   onAttendToOrder?: (orderId: string) => void;
   onMarkAsReadyForPickup?: (orderId: string) => void;
+  onScanForCustomerPickup?: (orderId: string) => void; // New prop
 }
 
 const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -32,6 +33,7 @@ const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof 
     case 'ReadyForPickup': // For agent
     case 'ReadyForCustomerPickup': // For customer
     case 'PickedUpByAgent':
+    case 'PickedUpByCustomer':
       return 'outline';
     case 'Out for Delivery':
       return 'default';
@@ -54,6 +56,8 @@ const getStatusIcon = (status: Order['status']) => {
       return <ShoppingBag className="h-4 w-4 mr-1.5 text-orange-600" />; // Distinct icon/color
     case 'ReadyForCustomerPickup': // For customer
       return <UserCheck className="h-4 w-4 mr-1.5 text-teal-600" />; // Distinct icon/color
+    case 'PickedUpByCustomer':
+      return <PackageCheck className="h-4 w-4 mr-1.5 text-green-600" />;
     case 'AcceptedByAgent':
       return <User className="h-4 w-4 mr-1.5" />;
     case 'PickedUpByAgent':
@@ -75,6 +79,7 @@ const getStatusColorClass = (status: Order['status']): string => {
       case 'Processing': return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'ReadyForPickup': return 'bg-orange-100 text-orange-800 border-orange-300'; // For agent
       case 'ReadyForCustomerPickup': return 'bg-teal-100 text-teal-800 border-teal-300'; // For customer
+      case 'PickedUpByCustomer': return 'bg-green-100 text-green-800 border-green-300';
       case 'AcceptedByAgent': return 'bg-indigo-100 text-indigo-800 border-indigo-300';
       case 'PickedUpByAgent': return 'bg-cyan-100 text-cyan-800 border-cyan-300';
       case 'Out for Delivery': return 'bg-purple-100 text-purple-800 border-purple-300';
@@ -94,6 +99,7 @@ export function OrderListItem({
   onCancelOrder,
   onAttendToOrder,
   onMarkAsReadyForPickup,
+  onScanForCustomerPickup,
 }: OrderListItemProps) {
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
@@ -106,6 +112,7 @@ export function OrderListItem({
   const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
 
   const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
+  const canCustomerScanForPickup = userRole === 'customer' && order.status === 'ReadyForCustomerPickup' && onScanForCustomerPickup;
 
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
 
@@ -125,7 +132,7 @@ export function OrderListItem({
   const shouldShowViewDetailsButton = order.items.length > 1 || (userRole === 'vendor' && (order.status === 'Processing' || order.status === 'Pending'));
 
 
-  const canLeaveReview = userRole === 'customer' && order.status === 'Delivered';
+  const canLeaveReview = userRole === 'customer' && (order.status === 'Delivered' || order.status === 'PickedUpByCustomer');
   const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   const canCustomerCancel = userRole === 'customer' && (order.status === 'Pending' || order.status === 'Processing') && onCancelOrder;
 
@@ -283,6 +290,18 @@ export function OrderListItem({
             >
               <Ban className="h-4 w-4 mr-1 sm:mr-2" />
               Cancel Order
+            </Button>
+          )}
+
+          {canCustomerScanForPickup && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-teal-500 text-teal-600 hover:bg-teal-50 hover:text-teal-700"
+              onClick={() => onScanForCustomerPickup(order.id)}
+            >
+              <ScanLine className="h-4 w-4 mr-1 sm:mr-2" />
+              Scan to Confirm Pickup
             </Button>
           )}
 
