@@ -36,33 +36,45 @@ export default function VendorDashboardPage() {
 
 
   const handleAttendToOrder = useCallback((orderId: string) => {
-    setDisplayedVendorOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId && order.status === 'Pending'
-          ? { ...order, status: 'Processing' as Order['status'] }
-          : order
-      )
-    );
-    toast({
-      title: 'Order Status Updated',
-      description: `Order ${orderId} is now being processed.`,
-    });
-  }, [toast]);
-
-  const handleMarkAsReadyForPickup = useCallback((orderId: string) => {
+    let orderAttended: Order | undefined;
     setDisplayedVendorOrders(prevOrders =>
       prevOrders.map(order => {
-        if (order.id === orderId && order.status === 'Processing') {
-          const newStatus = order.deliveryPreference === 'delivery' ? 'ReadyForPickup' : 'ReadyForCustomerPickup';
-          toast({
-            title: 'Order Ready!',
-            description: `Order ${orderId} marked as ${newStatus === 'ReadyForPickup' ? 'ready for delivery pickup' : 'ready for customer pickup'}.`,
-          });
-          return { ...order, status: newStatus as Order['status'] };
+        if (order.id === orderId && order.status === 'Pending') {
+          orderAttended = { ...order, status: 'Processing' as Order['status'] };
+          return orderAttended;
         }
         return order;
       })
     );
+
+    if (orderAttended) {
+      toast({
+        title: 'Order Status Updated',
+        description: `Order ${orderId} is now being processed.`,
+      });
+    }
+  }, [toast]);
+
+  const handleMarkAsReadyForPickup = useCallback((orderId: string) => {
+    let orderMarkedReady: Order | undefined;
+    setDisplayedVendorOrders(prevOrders =>
+      prevOrders.map(order => {
+        if (order.id === orderId && order.status === 'Processing') {
+          const newStatus = order.deliveryPreference === 'delivery' ? 'ReadyForPickup' : 'ReadyForCustomerPickup';
+          orderMarkedReady = { ...order, status: newStatus as Order['status'] };
+          return orderMarkedReady;
+        }
+        return order;
+      })
+    );
+
+    if (orderMarkedReady) {
+      const newStatusDescription = orderMarkedReady.status === 'ReadyForPickup' ? 'ready for delivery pickup' : 'ready for customer pickup';
+      toast({
+        title: 'Order Ready!',
+        description: `Order ${orderId} marked as ${newStatusDescription}.`,
+      });
+    }
   }, [toast]);
 
   if (isLoading) {
@@ -163,3 +175,4 @@ export default function VendorDashboardPage() {
     </div>
   );
 }
+
