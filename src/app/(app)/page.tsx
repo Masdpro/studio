@@ -67,10 +67,8 @@ export default function HomePage() {
   const { toast } = useToast();
 
   const selectedLocationRef = useRef(selectedLocation);
+  const isMounted = useRef(false);
 
-  useEffect(() => {
-    selectedLocationRef.current = selectedLocation;
-  }, [selectedLocation]);
 
   // Hydrate state from sessionStorage on component mount
   useEffect(() => {
@@ -86,32 +84,48 @@ export default function HomePage() {
     const storedSelectedLocation = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedLocation);
     if (storedSelectedLocation) {
       setSelectedLocation(storedSelectedLocation);
+      // If a specific location is restored, clear any user coords/locating state.
+      // The other effect that listens to selectedLocation will handle fetching if it's USER_CURRENT_LOCATION_VALUE.
       if (storedSelectedLocation !== USER_CURRENT_LOCATION_VALUE) {
-        // If a specific location is restored, clear any user coords/locating state
         setUserCoords(null);
         setLocationError(null);
         setIsLocating(false);
       }
     }
-    // If nothing is stored for selectedLocation, it defaults to USER_CURRENT_LOCATION_VALUE from useState
-    // and the other useEffect will trigger handleFetchUserLocation
-  }, []);
+    // If no storedSelectedLocation, selectedLocation remains its default (USER_CURRENT_LOCATION_VALUE).
+    // The effect listening to selectedLocation (guarded by isMounted.current) will then trigger location fetch.
 
-  // Save state to sessionStorage whenever it changes
+    isMounted.current = true; // Signal that initial mount and hydration read attempt is complete
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  // Save state to sessionStorage whenever it changes, but only after initial mount
   useEffect(() => {
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.searchTerm, searchTerm);
+    if (isMounted.current) {
+      sessionStorage.setItem(SESSION_STORAGE_KEYS.searchTerm, searchTerm);
+    }
   }, [searchTerm]);
 
   useEffect(() => {
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedCategory, selectedCategory);
+    if (isMounted.current) {
+      sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedCategory, selectedCategory);
+    }
   }, [selectedCategory]);
 
   useEffect(() => {
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedVendorId, selectedVendorId);
+    if (isMounted.current) {
+      sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedVendorId, selectedVendorId);
+    }
   }, [selectedVendorId]);
 
   useEffect(() => {
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedLocation, selectedLocation);
+    if (isMounted.current) {
+      sessionStorage.setItem(SESSION_STORAGE_KEYS.selectedLocation, selectedLocation);
+    }
+  }, [selectedLocation]);
+
+  // Update ref for use in async callbacks
+  useEffect(() => {
+    selectedLocationRef.current = selectedLocation;
   }, [selectedLocation]);
 
 
@@ -134,6 +148,10 @@ export default function HomePage() {
       setLocationError("Geolocation is not supported by your browser.");
       toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive" });
       setIsLocating(false);
+      // Fallback if geolocation isn't even supported and current location was selected
+      if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
+          setSelectedLocation('All Locations');
+      }
       return;
     }
     setIsLocating(true);
@@ -162,24 +180,26 @@ export default function HomePage() {
         }
       }
     );
-  }, [toast]); // Dependencies: toast, (and stable setters: setUserCoords, setLocationError, setIsLocating, setSelectedLocation)
+  }, [toast]); // Dependencies: toast. Setters are stable. selectedLocationRef is a ref.
 
+  // Effect to trigger location fetching or clear location state
   useEffect(() => {
-    if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
-      handleFetchUserLocation();
+    if (isMounted.current) { // Only run after initial hydration attempt
+      if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
+        handleFetchUserLocation();
+      } else {
+        // If a specific location is chosen (or "All Locations"), clear user coords and locating state
+        setUserCoords(null);
+        setLocationError(null);
+        setIsLocating(false);
+      }
     }
   }, [selectedLocation, handleFetchUserLocation]);
 
 
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
-    if (value === USER_CURRENT_LOCATION_VALUE) {
-      // handleFetchUserLocation will be called by the useEffect listening to selectedLocation
-    } else {
-      setUserCoords(null); // Clear user coords if a specific location tag is chosen
-      setLocationError(null);
-      setIsLocating(false); 
-    }
+    // The useEffect above will handle fetching or clearing coords.
   };
 
   const vendorsForFilter = useMemo(() => {
@@ -202,8 +222,10 @@ export default function HomePage() {
   }, [selectedLocation, userCoords]);
 
   useEffect(() => {
-    if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
-      setSelectedVendorId('All');
+    if (isMounted.current) { // Ensure this also respects the mount status
+        if (selectedVendorId !== 'All' && !vendorsForFilter.find(v => v.id === selectedVendorId)) {
+          setSelectedVendorId('All');
+        }
     }
   }, [vendorsForFilter, selectedVendorId]);
 
