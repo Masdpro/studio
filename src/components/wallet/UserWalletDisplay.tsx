@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Wallet, CreditCard, Gift, CheckCircle } from 'lucide-react';
+import { Wallet, CreditCard, Gift, CheckCircle, Copy as CopyIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 // In a real app, this would come from a user context or API
 const INITIAL_BALANCE = 100.00;
-const MOCK_VOUCHER_CODE = "DAILYBUY25";
+const MOCK_VOUCHER_CODE_TO_REDEEM = "DAILYBUY25";
 const MOCK_VOUCHER_VALUE = 25.00;
 
 const formatNumberWithCommas = (value: string): string => {
@@ -35,15 +35,17 @@ const parseFormattedNumber = (value: string): string => {
 
 export function UserWalletDisplay() {
   const [balance, setBalance] = useState(INITIAL_BALANCE);
-  const [addAmount, setAddAmount] = useState(''); // Stores raw numeric string
-  const [buyVoucherAmount, setBuyVoucherAmount] = useState(''); // Stores raw numeric string for buying voucher
+  const [addAmount, setAddAmount] = useState('');
+  const [buyVoucherAmount, setBuyVoucherAmount] = useState('');
   const [redeemVoucherCode, setRedeemVoucherCode] = useState('');
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
+  const [generatedVoucherCode, setGeneratedVoucherCode] = useState<string | null>(null);
+  const [voucherDisplayMode, setVoucherDisplayMode] = useState<'buy' | 'copy'>('buy');
+
   useEffect(() => {
     setIsClient(true);
-    // Potentially load balance from localStorage here if persisting
   }, []);
 
   const handleAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +83,11 @@ export function UserWalletDisplay() {
      if (numericValue === '' || /^\d*\.?\d*$/.test(numericValue)) {
       if (numericValue.split('.').length <= 2) {
          setBuyVoucherAmount(numericValue);
+         // If user starts typing a new amount, reset to 'buy' mode
+         if (voucherDisplayMode === 'copy') {
+           setVoucherDisplayMode('buy');
+           setGeneratedVoucherCode(null);
+         }
       }
     }
   };
@@ -95,23 +102,44 @@ export function UserWalletDisplay() {
       });
       return;
     }
-    // Mock purchase
     const mockCode = `DBVC${Date.now().toString().slice(-6)}`;
+    setGeneratedVoucherCode(mockCode);
+    setVoucherDisplayMode('copy');
     toast({
       title: 'Voucher Purchased!',
-      description: `A Dailybuy Voucher for $${amount.toFixed(2)} has been (mock) purchased. Code: ${mockCode}`,
+      description: `A Dailybuy Voucher for $${amount.toFixed(2)} purchased. Code: ${mockCode}`,
     });
-    setBuyVoucherAmount('');
+    setBuyVoucherAmount(''); // Clear the amount input after purchase
+  };
+
+  const handleCopyVoucherCode = async () => {
+    if (!generatedVoucherCode) return;
+    try {
+      await navigator.clipboard.writeText(generatedVoucherCode);
+      toast({
+        title: 'Code Copied!',
+        description: 'Voucher code copied to clipboard.',
+      });
+    } catch (err) {
+      toast({
+        title: 'Copy Failed',
+        description: 'Could not copy code. Please try again or copy manually.',
+        variant: 'destructive',
+      });
+      console.error('Failed to copy code: ', err);
+    }
   };
 
   const handleRedeemVoucher = () => {
-    if (redeemVoucherCode.toUpperCase() === MOCK_VOUCHER_CODE) {
+    if (redeemVoucherCode.toUpperCase() === MOCK_VOUCHER_CODE_TO_REDEEM) {
       setBalance((prev) => prev + MOCK_VOUCHER_VALUE);
       toast({
         title: 'Voucher Redeemed!',
         description: `$${MOCK_VOUCHER_VALUE.toFixed(2)} has been added to your wallet.`,
       });
       setRedeemVoucherCode('');
+      setVoucherDisplayMode('buy'); // Reset buy voucher section if redemption happens
+      setGeneratedVoucherCode(null);
     } else {
       toast({
         title: 'Invalid Code',
@@ -120,7 +148,6 @@ export function UserWalletDisplay() {
       });
     }
   };
-
 
   if (!isClient) {
     return (
@@ -132,7 +159,14 @@ export function UserWalletDisplay() {
   }
 
   return (
-    <Popover>
+    <Popover onOpenChange={(open) => {
+      if (!open) {
+        // Reset voucher buy section when popover closes
+        setVoucherDisplayMode('buy');
+        setGeneratedVoucherCode(null);
+        setBuyVoucherAmount('');
+      }
+    }}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="flex items-center gap-2">
           <Wallet className="h-5 w-5 text-primary" />
@@ -185,19 +219,28 @@ export function UserWalletDisplay() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="buy-voucher-amount">Buy Voucher</Label>
+            <Label htmlFor="buy-voucher-input">
+              {voucherDisplayMode === 'buy' ? 'Buy Voucher' : 'Purchased Voucher Code'}
+            </Label>
             <div className="flex items-center gap-2">
               <Input
-                id="buy-voucher-amount"
+                id="buy-voucher-input"
                 type="text"
-                placeholder="Amount (e.g., 50.00)"
-                value={formatNumberWithCommas(buyVoucherAmount)}
-                onChange={handleBuyVoucherAmountChange}
+                placeholder={voucherDisplayMode === 'buy' ? "Amount (e.g., 50.00)" : ""}
+                value={voucherDisplayMode === 'buy' ? formatNumberWithCommas(buyVoucherAmount) : (generatedVoucherCode || '')}
+                onChange={voucherDisplayMode === 'buy' ? handleBuyVoucherAmountChange : undefined}
+                readOnly={voucherDisplayMode === 'copy'}
                 className="flex-1"
               />
-              <Button onClick={handleBuyVoucher} size="sm" variant="outline">
-                <Gift className="mr-2 h-4 w-4" /> Buy
-              </Button>
+              {voucherDisplayMode === 'buy' ? (
+                <Button onClick={handleBuyVoucher} size="sm" variant="outline">
+                  <Gift className="mr-2 h-4 w-4" /> Buy
+                </Button>
+              ) : (
+                <Button onClick={handleCopyVoucherCode} size="sm" variant="default">
+                  <CopyIcon className="mr-2 h-4 w-4" /> Copy
+                </Button>
+              )}
             </div>
           </div>
 
@@ -207,7 +250,7 @@ export function UserWalletDisplay() {
               <Input
                 id="redeem-voucher-code"
                 type="text"
-                placeholder="Enter code (e.g., DAILYBUY25)"
+                placeholder={`Enter code (e.g., ${MOCK_VOUCHER_CODE_TO_REDEEM})`}
                 value={redeemVoucherCode}
                 onChange={(e) => setRedeemVoucherCode(e.target.value)}
                 className="flex-1"
