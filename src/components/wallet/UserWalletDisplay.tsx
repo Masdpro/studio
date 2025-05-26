@@ -13,8 +13,8 @@ import { Separator } from '@/components/ui/separator';
 
 // In a real app, this would come from a user context or API
 const INITIAL_BALANCE = 100.00;
-const MOCK_GIFT_CARD_CODE = "DAILYBUY25";
-const MOCK_GIFT_CARD_VALUE = 25.00;
+const MOCK_VOUCHER_CODE = "DAILYBUY25";
+const MOCK_VOUCHER_VALUE = 25.00;
 
 const formatNumberWithCommas = (value: string): string => {
   if (value === null || value === undefined || value.trim() === '') return '';
@@ -36,8 +36,8 @@ const parseFormattedNumber = (value: string): string => {
 export function UserWalletDisplay() {
   const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [addAmount, setAddAmount] = useState(''); // Stores raw numeric string
-  const [buyGiftCardAmount, setBuyGiftCardAmount] = useState(''); // Stores raw numeric string for buying gift card
-  const [redeemGiftCardCode, setRedeemGiftCardCode] = useState('');
+  const [buyVoucherAmount, setBuyVoucherAmount] = useState(''); // Stores raw numeric string for buying voucher
+  const [redeemVoucherCode, setRedeemVoucherCode] = useState('');
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
@@ -75,47 +75,47 @@ export function UserWalletDisplay() {
     setAddAmount('');
   };
 
-  const handleBuyGiftCardAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBuyVoucherAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     const numericValue = parseFormattedNumber(rawValue);
      if (numericValue === '' || /^\d*\.?\d*$/.test(numericValue)) {
       if (numericValue.split('.').length <= 2) {
-         setBuyGiftCardAmount(numericValue);
+         setBuyVoucherAmount(numericValue);
       }
     }
   };
 
-  const handleBuyGiftCard = () => {
-    const amount = parseFloat(buyGiftCardAmount);
+  const handleBuyVoucher = () => {
+    const amount = parseFloat(buyVoucherAmount);
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: 'Invalid Amount',
-        description: 'Please enter a valid positive amount for the gift card.',
+        description: 'Please enter a valid positive amount for the voucher.',
         variant: 'destructive',
       });
       return;
     }
     // Mock purchase
-    const mockCode = `DBGC${Date.now().toString().slice(-6)}`;
+    const mockCode = `DBVC${Date.now().toString().slice(-6)}`;
     toast({
-      title: 'Gift Card Purchased!',
-      description: `A gift card for $${amount.toFixed(2)} has been (mock) purchased. Code: ${mockCode}`,
+      title: 'Voucher Purchased!',
+      description: `A Dailybuy Voucher for $${amount.toFixed(2)} has been (mock) purchased. Code: ${mockCode}`,
     });
-    setBuyGiftCardAmount('');
+    setBuyVoucherAmount('');
   };
 
-  const handleRedeemGiftCard = () => {
-    if (redeemGiftCardCode.toUpperCase() === MOCK_GIFT_CARD_CODE) {
-      setBalance((prev) => prev + MOCK_GIFT_CARD_VALUE);
+  const handleRedeemVoucher = () => {
+    if (redeemVoucherCode.toUpperCase() === MOCK_VOUCHER_CODE) {
+      setBalance((prev) => prev + MOCK_VOUCHER_VALUE);
       toast({
-        title: 'Gift Card Redeemed!',
-        description: `$${MOCK_GIFT_CARD_VALUE.toFixed(2)} has been added to your wallet.`,
+        title: 'Voucher Redeemed!',
+        description: `$${MOCK_VOUCHER_VALUE.toFixed(2)} has been added to your wallet.`,
       });
-      setRedeemGiftCardCode('');
+      setRedeemVoucherCode('');
     } else {
       toast({
         title: 'Invalid Code',
-        description: 'The gift card code entered is not valid.',
+        description: 'The voucher code entered is not valid.',
         variant: 'destructive',
       });
     }
@@ -177,42 +177,42 @@ export function UserWalletDisplay() {
           <div className="space-y-2">
             <h4 className="font-medium leading-none flex items-center gap-2">
                 <Gift className="h-5 w-5 text-primary" />
-                Dailybuy Gift Cards
+                Dailybuy Vouchers
             </h4>
              <p className="text-sm text-muted-foreground">
-              Buy a gift card or redeem one you have.
+              Buy a voucher or redeem one you have.
             </p>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="buy-gift-card-amount">Buy Gift Card</Label>
+            <Label htmlFor="buy-voucher-amount">Buy Voucher</Label>
             <div className="flex items-center gap-2">
               <Input
-                id="buy-gift-card-amount"
+                id="buy-voucher-amount"
                 type="text"
                 placeholder="Amount (e.g., 50.00)"
-                value={formatNumberWithCommas(buyGiftCardAmount)}
-                onChange={handleBuyGiftCardAmountChange}
+                value={formatNumberWithCommas(buyVoucherAmount)}
+                onChange={handleBuyVoucherAmountChange}
                 className="flex-1"
               />
-              <Button onClick={handleBuyGiftCard} size="sm" variant="outline">
+              <Button onClick={handleBuyVoucher} size="sm" variant="outline">
                 <Gift className="mr-2 h-4 w-4" /> Buy
               </Button>
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="redeem-gift-card-code">Redeem Gift Card</Label>
+            <Label htmlFor="redeem-voucher-code">Redeem Voucher</Label>
             <div className="flex items-center gap-2">
               <Input
-                id="redeem-gift-card-code"
+                id="redeem-voucher-code"
                 type="text"
                 placeholder="Enter code (e.g., DAILYBUY25)"
-                value={redeemGiftCardCode}
-                onChange={(e) => setRedeemGiftCardCode(e.target.value)}
+                value={redeemVoucherCode}
+                onChange={(e) => setRedeemVoucherCode(e.target.value)}
                 className="flex-1"
               />
-              <Button onClick={handleRedeemGiftCard} size="sm">
+              <Button onClick={handleRedeemVoucher} size="sm">
                 <CheckCircle className="mr-2 h-4 w-4" /> Redeem
               </Button>
             </div>
