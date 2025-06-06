@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike } from 'lucide-react'; // Removed Bell, added ListChecks
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History } from 'lucide-react'; // Added Edit3, SearchCheck, ShoppingBasket
 import {
   Sidebar,
   SidebarHeader,
@@ -14,9 +14,14 @@ import {
   SidebarGroupLabel
 } from '@/components/ui/sidebar';
 
-const navItems = [
+const customerNavItems = [
   { href: '/', label: 'Home', icon: Home, tooltip: "Browse Products" },
   { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
+];
+
+const customerErrandItems = [
+  { href: '/errands/create', label: 'Create Errand', icon: Edit3, tooltip: "Request an Errand" },
+  { href: '/errands', label: 'My Errands', icon: History, tooltip: "View Your Errand Requests" },
 ];
 
 const vendorItems = [
@@ -32,6 +37,7 @@ const commonDeliveryItems = [
 const deliveryAgentItems = [
   { href: '/auth/register/delivery-agent', label: 'Agent Registration', icon: Bike, tooltip: "Register as Delivery Agent"},
   { href: '/delivery-agent/dashboard', label: 'Agent Dashboard', icon: Truck, tooltip: "Delivery Agent Dashboard"},
+  { href: '/delivery-agent/errands/browse', label: 'Browse Errands', icon: SearchCheck, tooltip: "Find Errands to Quote"},
 ];
 
 
@@ -45,7 +51,18 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarGroup>
             <SidebarGroupLabel>Customer</SidebarGroupLabel>
-            {navItems.map((item) => (
+            {customerNavItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton asChild tooltip={item.tooltip}>
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+            <SidebarSeparator className="my-1" />
+             {customerErrandItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild tooltip={item.tooltip}>
                   <Link href={item.href}>

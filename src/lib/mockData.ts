@@ -1,6 +1,6 @@
 
 // src/lib/mockData.ts
-import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review } from '@/lib/types';
+import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review, ErrandRequest, ErrandQuote } from '@/lib/types';
 
 export const sampleProductsForMockOrders: Product[] = [
   { id: 'prod_pizza_margherita', vendorId: 'vendor001', name: 'Margherita Pizza', description: 'Classic delight with 100% real mozzarella cheese', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pizza margherita' },
@@ -221,4 +221,89 @@ export const sampleReviews: Review[] = [
   // Reviews for agent002
   { id: 'review009', orderId: 'order006', reviewerId: 'cust003', revieweeType: 'delivery_agent', revieweeId: 'agent002', rating: 'negative', comment: 'Agent seemed rushed.', createdAt: new Date(Date.now() - 3600 * 1000 * 23) },
   { id: 'review010', orderId: 'order005', reviewerId: 'cust002', revieweeType: 'delivery_agent', revieweeId: 'agent002', rating: 'positive', comment: 'Friendly and on time!', createdAt: new Date(Date.now() - 3600 * 1000 * 0.1) },
+];
+
+// Mock Errand Data
+export const sampleErrandRequests: ErrandRequest[] = [
+  {
+    id: 'errand001',
+    customerId: 'cust001', // John Doe
+    itemsDescription: '1. Gallon of Milk (2%)\n2. Loaf of Sourdough Bread\n3. Dozen Eggs (Large, Grade A)\n4. Bunch of Bananas',
+    preferredStore: 'QuickMart Groceries',
+    deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
+    status: 'PendingQuotes',
+    createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
+  },
+  {
+    id: 'errand002',
+    customerId: 'cust002', // Jane Smith
+    itemsDescription: 'Pick up dry cleaning from "Sparkle Cleaners" on Main St. Receipt #DC12345.',
+    deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
+    status: 'AgentAssigned', // Assume a quote was accepted
+    assignedAgentId: 'agent001',
+    acceptedQuoteId: 'quote001_for_errand002',
+    estimatedTotalItemCost: 15.00, // Example cost from quote
+    deliveryFee: 7.00, // Example fee from quote
+    createdAt: new Date(Date.now() - 3600 * 1000 * 3), // 3 hours ago
+  },
+  {
+    id: 'errand003',
+    customerId: 'cust003',
+    itemsDescription: 'Get 2 packs of AAA batteries and a birthday card (general, funny) from any convenience store.',
+    deliveryAddress: 'Alice Wonderland, 303 Buyer Ave, Metroburg, Tastyland',
+    status: 'Delivered',
+    assignedAgentId: 'agent002',
+    acceptedQuoteId: 'quote002_for_errand003',
+    finalTotalItemCost: 8.50,
+    deliveryFee: 5.00,
+    finalTotalCost: 13.50,
+    createdAt: new Date(Date.now() - 3600 * 1000 * 25), // 25 hours ago
+  },
+];
+
+export const sampleErrandQuotes: ErrandQuote[] = [
+  {
+    id: 'quote001_for_errand002',
+    errandRequestId: 'errand002',
+    agentId: 'agent001',
+    estimatedItemCost: 15.00, // Dry cleaning cost
+    deliveryFee: 7.00,
+    totalEstimatedCost: 22.00,
+    agentNotes: 'Can pick up within the hour.',
+    status: 'Accepted',
+    createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), // 2.5 hours ago
+  },
+  {
+    id: 'quote002_for_errand003',
+    errandRequestId: 'errand003',
+    agentId: 'agent002',
+    estimatedItemCost: 7.00,
+    deliveryFee: 5.00,
+    totalEstimatedCost: 12.00,
+    status: 'Accepted',
+    createdAt: new Date(Date.now() - 3600 * 1000 * 24.5),
+  },
+  // Example of a pending quote for errand001
+  {
+    id: 'quote003_for_errand001',
+    errandRequestId: 'errand001',
+    agentId: 'agent001',
+    estimatedItemCost: 18.50,
+    deliveryFee: 6.00,
+    totalEstimatedCost: 24.50,
+    agentNotes: 'I know QuickMart well, can get these quickly.',
+    status: 'Pending',
+    createdAt: new Date(Date.now() - 3600 * 1000 * 0.5), // 30 mins ago
+  },
+  {
+    id: 'quote004_for_errand001',
+    errandRequestId: 'errand001',
+    agentId: 'agent002',
+    estimatedItemCost: 19.00,
+    deliveryFee: 5.50,
+    totalEstimatedCost: 24.50,
+    agentNotes: 'Happy to help with your shopping!',
+    status: 'Pending',
+    createdAt: new Date(Date.now() - 3600 * 1000 * 0.4), // 24 mins ago
+  },
 ];

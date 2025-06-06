@@ -110,3 +110,43 @@ export type AppNotification = {
   category?: 'Order' | 'Account' | 'Promotion' | 'System'; // Example categories
 };
 
+export type ErrandRequestStatus =
+  | 'PendingQuotes' // Customer submitted, waiting for agent quotes
+  | 'AwaitingAcceptance' // Agent(s) submitted quotes, customer needs to accept one
+  | 'AgentAssigned' // Customer accepted a quote, agent is assigned
+  | 'InProgress' // Agent is actively working on the errand (e.g., shopping)
+  | 'OutForDelivery' // Agent has items and is delivering
+  | 'Delivered' // Errand completed
+  | 'CancelledByCustomer'
+  | 'CancelledByAgent'
+  | 'Expired'; // No agent picked it up / no quote accepted in time
+
+export type ErrandRequest = {
+  id: string;
+  customerId: string;
+  itemsDescription: string; // Detailed list of items needed
+  preferredStore?: string; // Optional: customer's preferred store
+  deliveryAddress: string;
+  status: ErrandRequestStatus;
+  createdAt: Date;
+  assignedAgentId?: string;
+  acceptedQuoteId?: string; // ID of the ErrandQuote that was accepted
+  estimatedTotalItemCost?: number; // From accepted quote
+  finalTotalItemCost?: number; // Actual cost reported by agent
+  deliveryFee?: number; // From accepted quote
+  finalTotalCost?: number; // Actual item cost + delivery fee
+};
+
+export type ErrandQuoteStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Expired' | 'Withdrawn';
+
+export type ErrandQuote = {
+  id: string;
+  errandRequestId: string;
+  agentId: string;
+  estimatedItemCost: number;
+  deliveryFee: number;
+  totalEstimatedCost: number; // Automatically calculated: estimatedItemCost + deliveryFee
+  agentNotes?: string; // Optional notes from agent to customer
+  status: ErrandQuoteStatus;
+  createdAt: Date;
+};
