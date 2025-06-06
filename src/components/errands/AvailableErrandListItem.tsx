@@ -4,12 +4,12 @@
 import type { ErrandRequest } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingBasket, MapPin, Store, Clock, ArrowRight } from 'lucide-react';
+import { ShoppingBasket, MapPin, Store, Clock, Send } from 'lucide-react'; // Changed ArrowRight to Send
 import { formatDistanceToNow } from 'date-fns';
 
 interface AvailableErrandListItemProps {
   errand: ErrandRequest;
-  onViewDetailsAndQuote?: (errandId: string) => void; // For future implementation
+  onViewDetailsAndQuote?: (errandId: string) => void;
 }
 
 export function AvailableErrandListItem({ errand, onViewDetailsAndQuote }: AvailableErrandListItemProps) {
@@ -51,9 +51,9 @@ export function AvailableErrandListItem({ errand, onViewDetailsAndQuote }: Avail
         <Button
           className="w-full"
           onClick={() => onViewDetailsAndQuote && onViewDetailsAndQuote(errand.id)}
-          disabled // Enable this when quote functionality is added
+          disabled={!onViewDetailsAndQuote} 
         >
-          View Details & Submit Quote (Soon) <ArrowRight className="ml-2 h-4 w-4" />
+          <Send className="mr-2 h-4 w-4" /> Submit Quote
         </Button>
       </CardFooter>
     </Card>

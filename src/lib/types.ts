@@ -112,7 +112,7 @@ export type AppNotification = {
 
 export type ErrandRequestStatus =
   | 'PendingQuotes' // Customer submitted, waiting for agent quotes
-  | 'AwaitingAcceptance' // Agent(s) submitted quotes, customer needs to accept one
+  | 'AwaitingAcceptance' // At least one quote submitted, customer needs to accept one
   | 'AgentAssigned' // Customer accepted a quote, agent is assigned
   | 'InProgress' // Agent is actively working on the errand (e.g., shopping)
   | 'OutForDelivery' // Agent has items and is delivering

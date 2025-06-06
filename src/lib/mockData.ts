@@ -30,7 +30,7 @@ export const sampleDeliveryAgents: DeliveryAgent[] = [
   { id: 'agent002', name: 'Sarah Connor', email: 'sarah.connor@example.com', phone: '555-0202', streetAddress: '88 Circuit Rd', city: 'Tech Hub', country: 'Agentland', vehicleDetails: 'Bike - Mountain Pro, Blue', profileManaged: true },
 ];
 
-export const masterSampleOrders: Order[] = [
+export let masterSampleOrders: Order[] = [ // Changed to let for potential in-memory updates if needed
   {
     id: 'order001',
     customerId: 'cust001', // John Doe
@@ -224,14 +224,14 @@ export const sampleReviews: Review[] = [
 ];
 
 // Mock Errand Data
-export const sampleErrandRequests: ErrandRequest[] = [
+export let sampleErrandRequests: ErrandRequest[] = [
   {
     id: 'errand001',
     customerId: 'cust001', // John Doe
     itemsDescription: '1. Gallon of Milk (2%)\n2. Loaf of Sourdough Bread\n3. Dozen Eggs (Large, Grade A)\n4. Bunch of Bananas',
     preferredStore: 'QuickMart Groceries',
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
-    status: 'PendingQuotes',
+    status: 'AwaitingAcceptance', // Changed status for testing quote viewing
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
   },
   {
@@ -239,12 +239,12 @@ export const sampleErrandRequests: ErrandRequest[] = [
     customerId: 'cust002', // Jane Smith
     itemsDescription: 'Pick up dry cleaning from "Sparkle Cleaners" on Main St. Receipt #DC12345.',
     deliveryAddress: 'Jane Smith, 202 Patron Way, Clientville, Tastyland',
-    status: 'AgentAssigned', // Assume a quote was accepted
+    status: 'AgentAssigned', 
     assignedAgentId: 'agent001',
     acceptedQuoteId: 'quote001_for_errand002',
-    estimatedTotalItemCost: 15.00, // Example cost from quote
-    deliveryFee: 7.00, // Example fee from quote
-    createdAt: new Date(Date.now() - 3600 * 1000 * 3), // 3 hours ago
+    estimatedTotalItemCost: 15.00, 
+    deliveryFee: 7.00, 
+    createdAt: new Date(Date.now() - 3600 * 1000 * 3), 
   },
   {
     id: 'errand003',
@@ -257,11 +257,20 @@ export const sampleErrandRequests: ErrandRequest[] = [
     finalTotalItemCost: 8.50,
     deliveryFee: 5.00,
     finalTotalCost: 13.50,
-    createdAt: new Date(Date.now() - 3600 * 1000 * 25), // 25 hours ago
+    createdAt: new Date(Date.now() - 3600 * 1000 * 25), 
+  },
+  {
+    id: 'errand004',
+    customerId: 'cust001',
+    itemsDescription: 'Buy a small potted plant (succulent or similar) from "Green Thumb Nursery".',
+    preferredStore: 'Green Thumb Nursery',
+    deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
+    status: 'PendingQuotes', // This one has no quotes yet for agents to bid on
+    createdAt: new Date(Date.now() - 3600 * 1000 * 0.2), // 12 mins ago
   },
 ];
 
-export const sampleErrandQuotes: ErrandQuote[] = [
+export let sampleErrandQuotes: ErrandQuote[] = [ // Changed to let
   {
     id: 'quote001_for_errand002',
     errandRequestId: 'errand002',
@@ -271,7 +280,7 @@ export const sampleErrandQuotes: ErrandQuote[] = [
     totalEstimatedCost: 22.00,
     agentNotes: 'Can pick up within the hour.',
     status: 'Accepted',
-    createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), // 2.5 hours ago
+    createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), 
   },
   {
     id: 'quote002_for_errand003',
@@ -283,27 +292,27 @@ export const sampleErrandQuotes: ErrandQuote[] = [
     status: 'Accepted',
     createdAt: new Date(Date.now() - 3600 * 1000 * 24.5),
   },
-  // Example of a pending quote for errand001
+  // Quotes for errand001 (status: AwaitingAcceptance)
   {
     id: 'quote003_for_errand001',
     errandRequestId: 'errand001',
-    agentId: 'agent001',
+    agentId: 'agent001', // Alex Rider
     estimatedItemCost: 18.50,
     deliveryFee: 6.00,
     totalEstimatedCost: 24.50,
     agentNotes: 'I know QuickMart well, can get these quickly.',
     status: 'Pending',
-    createdAt: new Date(Date.now() - 3600 * 1000 * 0.5), // 30 mins ago
+    createdAt: new Date(Date.now() - 3600 * 1000 * 0.5), 
   },
   {
     id: 'quote004_for_errand001',
     errandRequestId: 'errand001',
-    agentId: 'agent002',
+    agentId: 'agent002', // Sarah Connor
     estimatedItemCost: 19.00,
     deliveryFee: 5.50,
     totalEstimatedCost: 24.50,
     agentNotes: 'Happy to help with your shopping!',
     status: 'Pending',
-    createdAt: new Date(Date.now() - 3600 * 1000 * 0.4), // 24 mins ago
+    createdAt: new Date(Date.now() - 3600 * 1000 * 0.4), 
   },
 ];

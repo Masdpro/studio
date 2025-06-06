@@ -2,14 +2,16 @@
 // src/app/(app)/errands/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { ErrandRequest } from '@/lib/types';
+import { useState, useEffect, useCallback } from 'react';
+import type { ErrandRequest, ErrandQuote } from '@/lib/types';
 import { CustomerErrandListItem } from '@/components/errands/CustomerErrandListItem';
+import { ViewQuotesDialog } from '@/components/errands/ViewQuotesDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ShoppingBasket, PlusCircle, Loader2, Search } from 'lucide-react';
-import { sampleErrandRequests } from '@/lib/mockData'; // Using master list
+import { sampleErrandRequests, sampleErrandQuotes } from '@/lib/mockData'; 
+import { useToast } from '@/hooks/use-toast';
 
 // Simulate a logged-in customer
 const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
@@ -17,6 +19,13 @@ const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
 export default function MyErrandsPage() {
   const [errands, setErrands] = useState<ErrandRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // State for ViewQuotesDialog
+  const [isQuotesDialogOpen, setIsQuotesDialogOpen] = useState(false);
+  const [selectedErrandForQuotes, setSelectedErrandForQuotes] = useState<ErrandRequest | null>(null);
+  const [quotesForSelectedErrand, setQuotesForSelectedErrand] = useState<ErrandQuote[]>([]);
+
 
   useEffect(() => {
     setIsLoading(true);
@@ -28,7 +37,33 @@ export default function MyErrandsPage() {
     setIsLoading(false);
   }, []);
 
-  // Future: Handlers for cancelling errand, viewing quotes, etc.
+  const handleViewQuotes = (errandId: string) => {
+    const errand = errands.find(e => e.id === errandId);
+    if (errand) {
+      const quotes = sampleErrandQuotes.filter(q => q.errandRequestId === errandId && q.status === 'Pending');
+      setSelectedErrandForQuotes(errand);
+      setQuotesForSelectedErrand(quotes);
+      setIsQuotesDialogOpen(true);
+    }
+  };
+  
+  const handleAcceptQuote = (errandId: string, quoteId: string) => {
+    // This is where the full logic for accepting a quote will go.
+    // For now, just a console log and a toast.
+    console.log(`Customer accepting quote ${quoteId} for errand ${errandId}`);
+    toast({
+      title: 'Accepting Quote (Mock)',
+      description: `Acceptance logic for quote ${quoteId.substring(0,8)} on errand ${errandId.substring(0,8)} is not fully implemented yet.`,
+    });
+    // In a real app:
+    // 1. API call to update ErrandRequest status to 'AgentAssigned'
+    // 2. Update ErrandRequest with assignedAgentId, acceptedQuoteId, estimated costs from quote
+    // 3. Update accepted ErrandQuote status to 'Accepted'
+    // 4. Update other ErrandQuotes for this errand to 'Rejected' or 'Expired'
+    // 5. Update local state for 'errands' to reflect the change
+    setIsQuotesDialogOpen(false); // Close the dialog
+  };
+
 
   if (isLoading) {
     return (
@@ -77,10 +112,20 @@ export default function MyErrandsPage() {
             <CustomerErrandListItem
               key={errand.id}
               errand={errand}
-              // Pass handlers here in the future
+              onViewQuotes={handleViewQuotes}
+              onAcceptQuote={handleAcceptQuote} // Pass down
             />
           ))}
         </div>
+      )}
+      {selectedErrandForQuotes && (
+        <ViewQuotesDialog
+          errand={selectedErrandForQuotes}
+          quotes={quotesForSelectedErrand}
+          isOpen={isQuotesDialogOpen}
+          onOpenChange={setIsQuotesDialogOpen}
+          onAcceptQuote={handleAcceptQuote}
+        />
       )}
     </div>
   );
