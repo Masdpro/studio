@@ -64,12 +64,18 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     const description = searchParams.get('description');
     const category = searchParams.get('category');
     const aiHint = searchParams.get('aiHint');
-    const imageUrl = searchParams.get('imageUrl');
+
     if (name) form.setValue('name', name);
     if (description) form.setValue('description', description);
     if (category) form.setValue('category', category);
     if (aiHint) form.setValue('aiHint', aiHint);
-    if (imageUrl) form.setValue('imageUrl', imageUrl);
+
+    // Check sessionStorage for the image data URI
+    const imageDataUri = sessionStorage.getItem('newProductImageDataUri');
+    if (imageDataUri) {
+      form.setValue('imageUrl', imageDataUri);
+      sessionStorage.removeItem('newProductImageDataUri'); // Clean up after use
+    }
 
   }, [searchParams, form]);
 

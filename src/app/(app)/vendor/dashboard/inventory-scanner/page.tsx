@@ -100,12 +100,17 @@ export default function InventoryScannerPage() {
   };
 
   const handleAddProduct = (product: IdentifiedProduct) => {
+    // Store the large image data URI in sessionStorage
+    if (lastScanImage) {
+      sessionStorage.setItem('newProductImageDataUri', lastScanImage);
+    }
+    
+    // Pass other small details via URL params
     const query = new URLSearchParams({
       name: product.name,
       description: product.description,
       category: product.category,
       aiHint: product.aiHint,
-      imageUrl: lastScanImage || '',
     });
     router.push(`/vendor/dashboard/products?${query.toString()}`);
   };
