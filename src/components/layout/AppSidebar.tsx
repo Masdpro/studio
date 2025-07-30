@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History } from 'lucide-react'; // Added Edit3, SearchCheck, ShoppingBasket
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, Camera } from 'lucide-react'; // Added Camera
 import {
   Sidebar,
   SidebarHeader,
@@ -28,6 +28,7 @@ const vendorItems = [
   { href: '/auth/register/vendor', label: 'Vendor Registration', icon: UserPlus, tooltip: "Register as Vendor" },
   { href: '/vendor/dashboard', label: 'Vendor Dashboard', icon: Store, tooltip: "Manage Your Store" },
   { href: '/vendor/dashboard/products', label: 'Manage Products', icon: Settings, tooltip: "Add/Edit Products" },
+  { href: '/vendor/dashboard/inventory-scanner', label: 'AI Inventory Scanner', icon: Camera, tooltip: "Scan Products with AI" },
 ];
 
 const commonDeliveryItems = [

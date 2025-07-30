@@ -4,8 +4,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -40,6 +41,8 @@ interface ProductUploadFormProps {
 
 export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -54,6 +57,21 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Pre-fill form from URL search params if they exist
+    const name = searchParams.get('name');
+    const description = searchParams.get('description');
+    const category = searchParams.get('category');
+    const aiHint = searchParams.get('aiHint');
+    const imageUrl = searchParams.get('imageUrl');
+    if (name) form.setValue('name', name);
+    if (description) form.setValue('description', description);
+    if (category) form.setValue('category', category);
+    if (aiHint) form.setValue('aiHint', aiHint);
+    if (imageUrl) form.setValue('imageUrl', imageUrl);
+
+  }, [searchParams, form]);
 
   function onSubmit(data: ProductFormValues) {
     console.log('New product data:', data);
@@ -243,5 +261,3 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     </Form>
   );
 }
-
-    
