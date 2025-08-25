@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Trash2, Camera, ScanLine, XCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { identifyProductFromImage } from '@/ai/flows/identify-product-from-image';
+import { Separator } from '@/components/ui/separator';
 
 const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
@@ -62,6 +63,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isCameraInitializing, setIsCameraInitializing] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -72,6 +74,8 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
 
 
   const getCameraPermission = useCallback(async () => {
+    if (!isCameraActive) return;
+
     setIsCameraInitializing(true);
     setHasCameraPermission(null);
     let newStream: MediaStream | null = null;
@@ -99,20 +103,17 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
       videoRef.current.srcObject = newStream;
     }
     setIsCameraInitializing(false);
-  }, [toast]);
+  }, [isCameraActive, toast]);
+
+  // Request camera permission only when the user has activated the camera
+  useEffect(() => {
+    if (isCameraActive) {
+      getCameraPermission();
+    }
+  }, [isCameraActive, getCameraPermission]);
+
 
   useEffect(() => {
-    getCameraPermission();
-
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [getCameraPermission]);
-
-  useEffect(() => {
-    // This effect handles pre-filling from URL params, but NOT from session storage anymore.
     const name = searchParams.get('name');
     const description = searchParams.get('description');
     const category = searchParams.get('category');
@@ -122,6 +123,12 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     if (description) form.setValue('description', description);
     if (category) form.setValue('category', category);
     if (aiHint) form.setValue('aiHint', aiHint);
+
+    const imageData = sessionStorage.getItem('productImageData');
+    if (imageData) {
+        form.setValue('imageUrl', imageData);
+        sessionStorage.removeItem('productImageData');
+    }
 
   }, [searchParams, form]);
   
@@ -143,7 +150,6 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
         const result = await identifyProductFromImage({ photoDataUri });
         if (result.products.length > 0) {
             const product = result.products[0];
-            // Pre-fill the form with AI data
             form.setValue('name', product.name);
             form.setValue('description', product.description);
             form.setValue('category', product.category);
@@ -208,53 +214,72 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
   return (
     <>
       <div className="mb-6 border p-4 rounded-lg">
-        <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
             <Camera className="h-5 w-5 text-primary" />
             AI Product Scanner
-        </h3>
-        <div className="grid md:grid-cols-2 gap-4">
+          </h3>
+          {!isCameraActive && (
+            <Button type="button" variant="outline" onClick={() => setIsCameraActive(true)}>
+              Scan with Camera
+            </Button>
+          )}
+        </div>
+
+        {isCameraActive ? (
+          <div className="grid md:grid-cols-2 gap-4">
             <div>
-                 <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden border">
-                    <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                    <canvas ref={canvasRef} className="hidden" />
-                    {isCameraInitializing && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white">
-                        <Loader2 className="h-8 w-8 animate-spin" />
-                        </div>
-                    )}
-                    {hasCameraPermission === false && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/90 text-destructive-foreground p-4 text-center">
-                        <XCircle className="h-12 w-12 mb-2" />
-                        <p className="font-semibold">Camera Access Denied</p>
-                        </div>
-                    )}
-                </div>
-                 {hasCameraPermission === false && (
-                    <Alert variant="destructive" className="mt-2">
-                        <AlertTitle>Camera Access Required</AlertTitle>
-                        <AlertDescription>Enable camera permissions to use this feature.</AlertDescription>
-                    </Alert>
+              <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden border">
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                <canvas ref={canvasRef} className="hidden" />
+                {isCameraInitializing && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
                 )}
+                {hasCameraPermission === false && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/90 text-destructive-foreground p-4 text-center">
+                    <XCircle className="h-12 w-12 mb-2" />
+                    <p className="font-semibold">Camera Access Denied</p>
+                  </div>
+                )}
+              </div>
+              {hasCameraPermission === false && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTitle>Camera Access Required</AlertTitle>
+                  <AlertDescription>Enable camera permissions to use this feature.</AlertDescription>
+                </Alert>
+              )}
             </div>
             <div className="flex flex-col justify-center items-center gap-4">
-                <p className="text-sm text-muted-foreground text-center">Point your camera at a product and scan it to auto-fill the form.</p>
-                <Button
-                    type="button"
-                    onClick={handleScan}
-                    disabled={!hasCameraPermission || isScanning || isCameraInitializing}
-                    className="w-full max-w-xs"
-                    size="lg"
-                    >
-                    {isScanning ? (
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    ) : (
-                        <ScanLine className="mr-2 h-5 w-5" />
-                    )}
-                    {isScanning ? 'Analyzing Image...' : 'Scan Product & Fill Form'}
-                </Button>
+              <p className="text-sm text-muted-foreground text-center">Point your camera at a product and scan it to auto-fill the form.</p>
+              <Button
+                type="button"
+                onClick={handleScan}
+                disabled={!hasCameraPermission || isScanning || isCameraInitializing}
+                className="w-full max-w-xs"
+                size="lg"
+              >
+                {isScanning ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <ScanLine className="mr-2 h-5 w-5" />
+                )}
+                {isScanning ? 'Analyzing Image...' : 'Scan Product & Fill Form'}
+              </Button>
             </div>
-        </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Click the button to activate the camera and scan products automatically.</p>
+        )}
       </div>
+
+      <div className="flex items-center my-6">
+        <div className="flex-grow border-t border-border"></div>
+        <span className="flex-shrink mx-4 text-muted-foreground text-sm">Or Enter Manually</span>
+        <div className="flex-grow border-t border-border"></div>
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
