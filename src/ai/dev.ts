@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/optimize-delivery-route.ts';
 import '@/ai/flows/identify-product-from-image.ts';
+import '@/ai/flows/support-chat-flow.ts';

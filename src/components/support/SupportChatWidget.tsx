@@ -1,51 +1,94 @@
 // src/components/support/SupportChatWidget.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Send, X, Bot } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { supportChat, type ChatMessage as AiChatMessage } from '@/ai/flows/support-chat-flow';
 
-const YOUR_WHATSAPP_NUMBER = '+15551234567'; // Placeholder for your WhatsApp number
 
-type ChatMessage = {
+type DisplayMessage = {
   text: string;
-  sender: 'user' | 'support';
+  sender: 'user' | 'ai';
   timestamp: string;
 };
 
 export function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (inputValue.trim() === '') return;
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      // Add initial greeting message when chat opens for the first time
+      const initialMessage: DisplayMessage = {
+        text: "Hello! I'm your AI support assistant. How can I help you navigate the Dailybuy app today?",
+        sender: 'ai',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages([initialMessage]);
+    }
+  }, [isOpen]);
 
-    const userMessage: ChatMessage = {
+  useEffect(() => {
+    // Auto-scroll to the bottom when new messages are added
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
+
+
+  const handleSendMessage = async () => {
+    if (inputValue.trim() === '' || isLoading) return;
+
+    const userMessage: DisplayMessage = {
       text: inputValue,
       sender: 'user',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputValue('');
+    setIsLoading(true);
 
-    // Simulate sending to WhatsApp and receiving a reply
-    console.log(`Simulating sending message to WhatsApp (${YOUR_WHATSAPP_NUMBER}): "${userMessage.text}"`);
+    try {
+      // Convert display messages to the format expected by the AI flow
+      const chatHistory: AiChatMessage[] = newMessages.map(msg => ({
+        role: msg.sender,
+        content: [{ text: msg.text }],
+      }));
 
-    setTimeout(() => {
-      const supportReply: ChatMessage = {
-        text: `Thanks for your message! We've received it on WhatsApp and will get back to you shortly. (This is a simulated reply for: "${userMessage.text}")`,
-        sender: 'support',
+      const aiResponseText = await supportChat(chatHistory);
+
+      const aiResponseMessage: DisplayMessage = {
+        text: aiResponseText,
+        sender: 'ai',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-      setMessages((prev) => [...prev, supportReply]);
-    }, 1500);
+      setMessages(prev => [...prev, aiResponseMessage]);
+
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      const errorMessage: DisplayMessage = {
+        text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        sender: 'ai',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -63,7 +106,7 @@ export function SupportChatWidget() {
           className="rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
           onClick={() => setIsOpen(!isOpen)}
         >
-          {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+          {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
         </Button>
       </div>
 
@@ -75,8 +118,8 @@ export function SupportChatWidget() {
               <div className="flex items-center gap-3">
                 <Bot className="h-6 w-6 text-primary" />
                 <div>
-                  <CardTitle className="text-lg">Support Chat</CardTitle>
-                  <p className="text-xs text-muted-foreground">We'll reply via WhatsApp</p>
+                  <CardTitle className="text-lg">AI Support</CardTitle>
+                  <p className="text-xs text-muted-foreground">Your guide to Dailybuy</p>
                 </div>
               </div>
                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
@@ -84,13 +127,13 @@ export function SupportChatWidget() {
               </Button>
             </CardHeader>
             <CardContent className="flex-grow p-4 overflow-hidden">
-                <ScrollArea className="h-full pr-4">
+                <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
                     <div className="space-y-4">
                         {messages.map((msg, index) => (
                         <div key={index} className={cn('flex items-end gap-2', msg.sender === 'user' ? 'justify-end' : 'justify-start')}>
-                            {msg.sender === 'support' && (
+                            {msg.sender === 'ai' && (
                                  <Avatar className="h-8 w-8">
-                                    <AvatarFallback>S</AvatarFallback>
+                                    <AvatarFallback>AI</AvatarFallback>
                                 </Avatar>
                             )}
                             <div className={cn(
@@ -111,6 +154,16 @@ export function SupportChatWidget() {
                             )}
                         </div>
                         ))}
+                         {isLoading && (
+                            <div className="flex items-end gap-2 justify-start">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarFallback>AI</AvatarFallback>
+                                </Avatar>
+                                <div className="max-w-[75%] rounded-lg px-3 py-2 text-sm bg-muted flex items-center">
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </ScrollArea>
             </CardContent>
@@ -118,12 +171,13 @@ export function SupportChatWidget() {
               <div className="flex w-full items-center space-x-2">
                 <Input
                   type="text"
-                  placeholder="Type your message..."
+                  placeholder="Ask about Dailybuy..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleInputKeyPress}
+                  disabled={isLoading}
                 />
-                <Button type="submit" onClick={handleSendMessage}>
+                <Button type="submit" onClick={handleSendMessage} disabled={isLoading}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
