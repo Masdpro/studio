@@ -1,4 +1,6 @@
 
+import { z } from 'zod';
+
 export type Vendor = {
   id: string;
   businessName: string;
@@ -150,3 +152,10 @@ export type ErrandQuote = {
   status: ErrandQuoteStatus;
   createdAt: Date;
 };
+
+// Define the structure for a single message in the chat history
+export const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'ai']),
+  content: z.array(z.object({ text: z.string() })),
+});
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;

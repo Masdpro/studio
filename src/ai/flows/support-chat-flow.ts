@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,14 +9,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { ChatMessage } from '@/lib/types'; // Import the type
+import { ChatMessageSchema } from '@/lib/types'; // Import the schema
 
-
-// Define the structure for a single message in the chat history
-export const ChatMessageSchema = z.object({
-  role: z.enum(['user', 'ai']),
-  content: z.array(z.object({ text: z.string() })),
-});
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
 // The input is the entire chat history
 const SupportChatInputSchema = z.array(ChatMessageSchema);

@@ -1,3 +1,4 @@
+
 // src/components/support/SupportChatWidget.tsx
 'use client';
 
@@ -9,7 +10,8 @@ import { MessageSquare, Send, X, Bot, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { supportChat, type ChatMessage as AiChatMessage } from '@/ai/flows/support-chat-flow';
+import { supportChat } from '@/ai/flows/support-chat-flow';
+import type { ChatMessage } from '@/lib/types';
 
 
 type DisplayMessage = {
@@ -35,7 +37,7 @@ export function SupportChatWidget() {
       };
       setMessages([initialMessage]);
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
 
   useEffect(() => {
     // Auto-scroll to the bottom when new messages are added
@@ -64,7 +66,7 @@ export function SupportChatWidget() {
 
     try {
       // Convert display messages to the format expected by the AI flow
-      const chatHistory: AiChatMessage[] = newMessages.map(msg => ({
+      const chatHistory: ChatMessage[] = newMessages.map(msg => ({
         role: msg.sender,
         content: [{ text: msg.text }],
       }));
