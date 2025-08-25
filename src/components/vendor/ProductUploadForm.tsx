@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Trash2, Camera, ScanLine, XCircle, Loader2 } from 'lucide-react';
+import { UploadCloud, Trash2, Camera, ScanLine, XCircle, Loader2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { identifyProductFromImage } from '@/ai/flows/identify-product-from-image';
 import { Separator } from '@/components/ui/separator';
@@ -105,10 +105,22 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     setIsCameraInitializing(false);
   }, [isCameraActive, toast]);
 
-  // Request camera permission only when the user has activated the camera
+  // Request/cleanup camera permission when the user toggles the camera
   useEffect(() => {
     if (isCameraActive) {
       getCameraPermission();
+    } else {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    }
+    
+    // Cleanup on component unmount
+    return () => {
+       if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     }
   }, [isCameraActive, getCameraPermission]);
 
@@ -253,20 +265,29 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             </div>
             <div className="flex flex-col justify-center items-center gap-4">
               <p className="text-sm text-muted-foreground text-center">Point your camera at a product and scan it to auto-fill the form.</p>
-              <Button
-                type="button"
-                onClick={handleScan}
-                disabled={!hasCameraPermission || isScanning || isCameraInitializing}
-                className="w-full max-w-xs"
-                size="lg"
-              >
-                {isScanning ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                  <ScanLine className="mr-2 h-5 w-5" />
-                )}
-                {isScanning ? 'Analyzing Image...' : 'Scan Product & Fill Form'}
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                 <Button
+                    type="button"
+                    onClick={() => setIsCameraActive(false)}
+                    variant="outline"
+                  >
+                    <X className="mr-2 h-5 w-5" /> Cancel
+                  </Button>
+                <Button
+                  type="button"
+                  onClick={handleScan}
+                  disabled={!hasCameraPermission || isScanning || isCameraInitializing}
+                  className="w-full max-w-xs"
+                  size="lg"
+                >
+                  {isScanning ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <ScanLine className="mr-2 h-5 w-5" />
+                  )}
+                  {isScanning ? 'Analyzing Image...' : 'Scan Product & Fill Form'}
+                </Button>
+              </div>
             </div>
           </div>
         ) : (
