@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -26,25 +25,25 @@ import { sampleMarkets, sampleVendors as mockVendors } from '@/lib/mockData';
 // Enhanced sample product data with more items in all categories
 const sampleProducts: Product[] = [
   // Electronics (v1)
-  { id: '1', vendorId: 'vendor001', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'headphones wireless' },
-  { id: '2', vendorId: 'vendor001', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'smartwatch modern' },
-  { id: '11', vendorId: 'vendor001', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'speaker bluetooth' },
-  { id: '20', vendorId: 'vendor001', name: '4K Action Camera', description: 'Rugged 4K action camera for adventure recording.', price: 199.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Electronics', aiHint: 'action camera' },
+  { id: '1', vendorId: 'vendor001', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: 'https://picsum.photos/seed/1/600/400', category: 'Electronics', aiHint: 'headphones wireless' },
+  { id: '2', vendorId: 'vendor001', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: 'https://picsum.photos/seed/2/600/400', category: 'Electronics', aiHint: 'smartwatch modern' },
+  { id: '11', vendorId: 'vendor001', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://picsum.photos/seed/3/600/400', category: 'Electronics', aiHint: 'speaker bluetooth' },
+  { id: '20', vendorId: 'vendor001', name: '4K Action Camera', description: 'Rugged 4K action camera for adventure recording.', price: 199.99, imageUrl: 'https://picsum.photos/seed/4/600/400', category: 'Electronics', aiHint: 'action camera' },
 
   // Apparel (v2)
-  { id: '3', vendorId: 'vendor002', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'shirt cotton' },
-  { id: '4', vendorId: 'vendor002', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'jeans blue' },
-  { id: '15', vendorId: 'vendor002', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'scarf silk' },
-  { id: '21', vendorId: 'vendor002', name: 'Running Shoes', description: 'Lightweight and comfortable running shoes for men.', price: 75.00, imageUrl: 'https://placehold.co/600x400.png', category: 'Apparel', aiHint: 'running shoes' },
+  { id: '3', vendorId: 'vendor002', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: 'https://picsum.photos/seed/5/600/400', category: 'Apparel', aiHint: 'shirt cotton' },
+  { id: '4', vendorId: 'vendor002', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: 'https://picsum.photos/seed/6/600/400', category: 'Apparel', aiHint: 'jeans blue' },
+  { id: '15', vendorId: 'vendor002', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://picsum.photos/seed/7/600/400', category: 'Apparel', aiHint: 'scarf silk' },
+  { id: '21', vendorId: 'vendor002', name: 'Running Shoes', description: 'Lightweight and comfortable running shoes for men.', price: 75.00, imageUrl: 'https://picsum.photos/seed/8/600/400', category: 'Apparel', aiHint: 'running shoes' },
 
   // Books (v1)
-  { id: '5', vendorId: 'vendor001', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'book novel' },
-  { id: '6', vendorId: 'vendor001', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Books', aiHint: 'book science' },
+  { id: '5', vendorId: 'vendor001', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: 'https://picsum.photos/seed/9/600/400', category: 'Books', aiHint: 'book novel' },
+  { id: '6', vendorId: 'vendor001', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: 'https://picsum.photos/seed/10/600/400', category: 'Books', aiHint: 'book science' },
 
   // Groceries (v3)
-  { id: '7', vendorId: 'vendor003', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'coffee beans' },
-  { id: '8', vendorId: 'vendor003', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'bread artisan' },
-  { id: '19', vendorId: 'vendor003', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'olive oil' },
+  { id: '7', vendorId: 'vendor003', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: 'https://picsum.photos/seed/11/600/400', category: 'Groceries', aiHint: 'coffee beans' },
+  { id: '8', vendorId: 'vendor003', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: 'https://picsum.photos/seed/12/600/400', category: 'Groceries', aiHint: 'bread artisan' },
+  { id: '19', vendorId: 'vendor003', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: 'https://picsum.photos/seed/13/600/400', category: 'Groceries', aiHint: 'olive oil' },
 ];
 
 
@@ -385,175 +384,190 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container mx-auto pt-10">
-      <Tabs defaultValue="products" className="w-full">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <TabsList className="grid w-full md:w-auto grid-cols-2 h-12 p-1 bg-muted rounded-lg">
-            <TabsTrigger value="products" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <ShoppingBag className="h-4 w-4 mr-2" />
-              Browse Products
-            </TabsTrigger>
-            <TabsTrigger value="markets" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <Store className="h-4 w-4 mr-2" />
-              Local Markets
-            </TabsTrigger>
-          </TabsList>
-          
-          <div className="text-sm text-muted-foreground hidden md:block">
-            Welcome to Dailybuy, your local neighborhood companion.
+    <div className="flex flex-col h-full">
+      <Tabs defaultValue="products" className="w-full flex flex-col h-full">
+        {/* Header Partition */}
+        <div className="sticky top-0 z-20 bg-background border-b shadow-sm">
+          <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
+            <TabsList className="grid w-full max-w-sm grid-cols-2 h-10 p-1 bg-muted rounded-md shrink-0">
+              <TabsTrigger value="products" className="text-xs sm:text-sm rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <ShoppingBag className="h-3.5 w-3.5 mr-1.5 hidden sm:inline" />
+                Browse Products
+              </TabsTrigger>
+              <TabsTrigger value="markets" className="text-xs sm:text-sm rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Store className="h-3.5 w-3.5 mr-1.5 hidden sm:inline" />
+                Local Markets
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="hidden lg:block text-sm text-muted-foreground font-medium truncate">
+              Your local neighborhood companion.
+            </div>
+
+            <div className="flex items-center gap-2">
+               {/* Quick location summary or other small header widgets could go here */}
+            </div>
           </div>
         </div>
 
-        <TabsContent value="products" className="mt-0">
-          <div className="mb-10 p-6 bg-card rounded-xl shadow-xl space-y-8">
-            <div className="grid md:grid-cols-2 gap-6 items-start">
-               <div>
-                <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
-                  <MapPin className="h-6 w-6 mr-3 text-primary" />
-                  Filter by Location
-                </h3>
-                <Select onValueChange={handleLocationChange} value={selectedLocation}>
-                  <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
-                    <SelectValue placeholder="Select a location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locationsForFilter.map(location => (
-                      <SelectItem key={location} value={location}>
-                        {location === USER_CURRENT_LOCATION_VALUE ? (
-                          <span className="flex items-center gap-2">
-                            <LocateFixed className="h-4 w-4" /> My Current Location
-                          </span>
-                        ) : location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {isLocating && <p className="text-sm text-muted-foreground mt-2">Fetching your location...</p>}
-                {locationError && (
-                  <Alert variant="destructive" className="mt-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Location Error</AlertTitle>
-                    <AlertDescription>{locationError}</AlertDescription>
-                  </Alert>
-                )}
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 flex items-center text-foreground">
-                  <Store className="h-6 w-6 mr-3 text-primary" />
-                  Filter by Vendor
-                </h3>
-                 <div className="flex flex-col">
-                    <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
-                    <SelectTrigger className="w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary">
-                        <SelectValue placeholder="Select a vendor" />
+        <div className="flex-1 container mx-auto px-4 md:px-6 py-8">
+          <TabsContent value="products" className="mt-0 outline-none">
+            <div className="mb-10 p-6 bg-card rounded-xl shadow-md border space-y-8">
+              <div className="grid md:grid-cols-2 gap-6 items-start">
+                 <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
+                    <MapPin className="h-5 w-5 mr-2 text-primary" />
+                    Filter by Location
+                  </h3>
+                  <Select onValueChange={handleLocationChange} value={selectedLocation}>
+                    <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
+                      <SelectValue placeholder="Select a location" />
                     </SelectTrigger>
                     <SelectContent>
-                        {vendorsForFilter.map(vendor => (
-                        <SelectItem key={vendor.id} value={vendor.id}>
-                            {vendor.businessName}
+                      {locationsForFilter.map(location => (
+                        <SelectItem key={location} value={location}>
+                          {location === USER_CURRENT_LOCATION_VALUE ? (
+                            <span className="flex items-center gap-2">
+                              <LocateFixed className="h-4 w-4" /> My Current Location
+                            </span>
+                          ) : location}
                         </SelectItem>
-                        ))}
+                      ))}
                     </SelectContent>
-                    </Select>
-                    {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-                    <div className="mt-2">
-                        <Button variant="outline" size="sm" asChild>
-                        <Link href={`/vendor/${selectedVendorId}/store`}>
-                            Visit {selectedVendorDetails.businessName}'s Site
-                            <ExternalLink className="ml-2 h-4 w-4" />
-                        </Link>
-                        </Button>
-                    </div>
-                    )}
+                  </Select>
+                  {isLocating && <p className="text-xs text-muted-foreground mt-2">Fetching your location...</p>}
+                  {locationError && (
+                    <Alert variant="destructive" className="mt-2 py-2 px-3">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle className="text-xs">Location Error</AlertTitle>
+                      <AlertDescription className="text-xs">{locationError}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
+                    <Store className="h-5 w-5 mr-2 text-primary" />
+                    Filter by Vendor
+                  </h3>
+                   <div className="flex flex-col">
+                      <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
+                      <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
+                          <SelectValue placeholder="Select a vendor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {vendorsForFilter.map(vendor => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                              {vendor.businessName}
+                          </SelectItem>
+                          ))}
+                      </SelectContent>
+                      </Select>
+                      {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+                      <div className="mt-2">
+                          <Button variant="link" size="sm" asChild className="px-0 h-auto">
+                          <Link href={`/vendor/${selectedVendorId}/store`}>
+                              Visit {selectedVendorDetails.businessName}'s Site
+                              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                          </Link>
+                          </Button>
+                      </div>
+                      )}
+                  </div>
                 </div>
               </div>
 
-            </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-foreground">
+                  <Filter className="h-5 w-5 mr-2 text-primary" />
+                  Filter by Category
+                </h3>
+                <div className="flex flex-wrap gap-2.5">
+                  {categories.map(category => (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category)}
+                      className="rounded-full px-4"
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-            <div>
-              <h3 className="text-xl font-semibold mb-4 flex items-center text-foreground">
-                <Filter className="h-6 w-6 mr-3 text-primary" />
-                Filter by Category
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {categories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="lg"
-                    onClick={() => setSelectedCategory(category)}
-                    className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-150 ease-in-out hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  >
-                    {category}
-                  </Button>
-                ))}
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="search"
+                  placeholder="Search products, brands, or categories..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-11 w-full h-11 rounded-lg border-border focus:ring-primary"
+                />
               </div>
             </div>
 
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Search by name, description, or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 w-full h-12 text-base rounded-lg border-border focus:ring-primary focus:border-primary"
-              />
-            </div>
-          </div>
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => {
+                  const vendor = mockVendors.find(v => v.id === product.vendorId);
+                  const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
+                  const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
+                  const vendorStreetAddress = vendor?.streetAddress || '';
+                  const vendorCity = vendor?.city || '';
+                  const vendorCountry = vendor?.country || '';
 
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {filteredProducts.map((product) => {
-                const vendor = mockVendors.find(v => v.id === product.vendorId);
-                const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
-                const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
-                const vendorStreetAddress = vendor?.streetAddress || '';
-                const vendorCity = vendor?.city || '';
-                const vendorCountry = vendor?.country || '';
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      vendorName={vendorName}
+                      vendorLocation={vendorLocation}
+                      vendorStreetAddress={vendorStreetAddress}
+                      vendorCity={vendorCity}
+                      vendorCountry={vendorCountry}
+                      onViewVendorProfile={handleViewVendorProfile}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+               <div className="text-center py-20">
+                {isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE ? (
+                  <div className="flex flex-col items-center">
+                    <LocateFixed className="h-14 w-14 text-primary/40 mb-4 animate-pulse" />
+                    <p className="text-xl font-semibold mb-2">Locating you...</p>
+                    <p className="text-muted-foreground max-w-xs mx-auto">
+                      Finding the best products nearby.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <Search className="h-14 w-14 text-muted-foreground/40 mb-4" />
+                    <p className="text-xl font-semibold mb-2">No products found</p>
+                    <p className="text-muted-foreground max-w-xs mx-auto">
+                      Try adjusting your search or filters to see more results.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
 
-                return (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    vendorName={vendorName}
-                    vendorLocation={vendorLocation}
-                    vendorStreetAddress={vendorStreetAddress}
-                    vendorCity={vendorCity}
-                    vendorCountry={vendorCountry}
-                    onViewVendorProfile={handleViewVendorProfile}
-                  />
-                );
-              })}
+          <TabsContent value="markets" className="mt-0 outline-none">
+            <div className="space-y-8">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-2xl font-bold text-foreground">Explore Local Markets</h2>
+                <p className="text-muted-foreground">Discover community-driven markets and shops in your area.</p>
+              </div>
+              
+              <div className="min-h-[500px]">
+                {renderMarketContent()}
+              </div>
             </div>
-          ) : (
-             <div className="text-center py-16">
-              {isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE ? (
-                <>
-                  <LocateFixed className="h-16 w-16 text-muted-foreground mx-auto mb-4 animate-pulse" />
-                  <p className="text-2xl font-semibold text-foreground mb-2">Finding nearby products...</p>
-                  <p className="text-lg text-muted-foreground">
-                    Please wait while we fetch your location. Make sure location permissions are enabled for your browser.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-2xl font-semibold text-foreground mb-2">No Products Found</p>
-                  <p className="text-lg text-muted-foreground">
-                    Try adjusting your search or filter criteria. If filtering by current location, ensure location permissions are enabled and try again.
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="markets" className="mt-0">
-          <div className="p-6 bg-card rounded-xl shadow-xl min-h-[600px]">
-            {renderMarketContent()}
-          </div>
-        </TabsContent>
+          </TabsContent>
+        </div>
       </Tabs>
 
       <Sheet open={isVendorProfileSheetOpen} onOpenChange={setIsVendorProfileSheetOpen}>
