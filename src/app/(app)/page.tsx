@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -21,29 +22,30 @@ import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketCard } from '@/components/market/MarketCard';
 import { sampleMarkets, sampleVendors as mockVendors } from '@/lib/mockData';
+import placeholderImages from '@/app/lib/placeholder-images.json';
 
-// Enhanced sample product data with more items in all categories
+// Enhanced sample product data with centralized images
 const sampleProducts: Product[] = [
-  // Electronics (v1)
-  { id: '1', vendorId: 'vendor001', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: 'https://picsum.photos/seed/1/600/400', category: 'Electronics', aiHint: 'headphones wireless' },
-  { id: '2', vendorId: 'vendor001', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: 'https://picsum.photos/seed/2/600/400', category: 'Electronics', aiHint: 'smartwatch modern' },
-  { id: '11', vendorId: 'vendor001', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: 'https://picsum.photos/seed/3/600/400', category: 'Electronics', aiHint: 'speaker bluetooth' },
-  { id: '20', vendorId: 'vendor001', name: '4K Action Camera', description: 'Rugged 4K action camera for adventure recording.', price: 199.99, imageUrl: 'https://picsum.photos/seed/4/600/400', category: 'Electronics', aiHint: 'action camera' },
+  // Electronics
+  { id: '1', vendorId: 'vendor001', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: placeholderImages.products.headphones.url, category: 'Electronics', aiHint: placeholderImages.products.headphones.hint },
+  { id: '2', vendorId: 'vendor001', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: placeholderImages.products.smartwatch.url, category: 'Electronics', aiHint: placeholderImages.products.smartwatch.hint },
+  { id: '11', vendorId: 'vendor001', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: placeholderImages.products.speaker.url, category: 'Electronics', aiHint: placeholderImages.products.speaker.hint },
+  { id: '20', vendorId: 'vendor001', name: '4K Action Camera', description: 'Rugged 4K action camera for adventure recording.', price: 199.99, imageUrl: placeholderImages.products.camera.url, category: 'Electronics', aiHint: placeholderImages.products.camera.hint },
 
-  // Apparel (v2)
-  { id: '3', vendorId: 'vendor002', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: 'https://picsum.photos/seed/5/600/400', category: 'Apparel', aiHint: 'shirt cotton' },
-  { id: '4', vendorId: 'vendor002', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: 'https://picsum.photos/seed/6/600/400', category: 'Apparel', aiHint: 'jeans blue' },
-  { id: '15', vendorId: 'vendor002', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: 'https://picsum.photos/seed/7/600/400', category: 'Apparel', aiHint: 'scarf silk' },
-  { id: '21', vendorId: 'vendor002', name: 'Running Shoes', description: 'Lightweight and comfortable running shoes for men.', price: 75.00, imageUrl: 'https://picsum.photos/seed/8/600/400', category: 'Apparel', aiHint: 'running shoes' },
+  // Apparel
+  { id: '3', vendorId: 'vendor002', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: placeholderImages.products.tshirt.url, category: 'Apparel', aiHint: placeholderImages.products.tshirt.hint },
+  { id: '4', vendorId: 'vendor002', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: placeholderImages.products.jeans.url, category: 'Apparel', aiHint: placeholderImages.products.jeans.hint },
+  { id: '15', vendorId: 'vendor002', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: placeholderImages.products.scarf.url, category: 'Apparel', aiHint: placeholderImages.products.scarf.hint },
+  { id: '21', vendorId: 'vendor002', name: 'Running Shoes', description: 'Lightweight and comfortable running shoes for men.', price: 75.00, imageUrl: placeholderImages.products.shoes.url, category: 'Apparel', aiHint: placeholderImages.products.shoes.hint },
 
-  // Books (v1)
-  { id: '5', vendorId: 'vendor001', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: 'https://picsum.photos/seed/9/600/400', category: 'Books', aiHint: 'book novel' },
-  { id: '6', vendorId: 'vendor001', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: 'https://picsum.photos/seed/10/600/400', category: 'Books', aiHint: 'book science' },
+  // Books
+  { id: '5', vendorId: 'vendor001', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: placeholderImages.products.mysteryBook.url, category: 'Books', aiHint: placeholderImages.products.mysteryBook.hint },
+  { id: '6', vendorId: 'vendor001', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: placeholderImages.products.scienceBook.url, category: 'Books', aiHint: placeholderImages.products.scienceBook.hint },
 
-  // Groceries (v3)
-  { id: '7', vendorId: 'vendor003', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: 'https://picsum.photos/seed/11/600/400', category: 'Groceries', aiHint: 'coffee beans' },
-  { id: '8', vendorId: 'vendor003', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: 'https://picsum.photos/seed/12/600/400', category: 'Groceries', aiHint: 'bread artisan' },
-  { id: '19', vendorId: 'vendor003', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: 'https://picsum.photos/seed/13/600/400', category: 'Groceries', aiHint: 'olive oil' },
+  // Groceries
+  { id: '7', vendorId: 'vendor003', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: placeholderImages.products.coffee.url, category: 'Groceries', aiHint: placeholderImages.products.coffee.hint },
+  { id: '8', vendorId: 'vendor003', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: placeholderImages.products.bread.url, category: 'Groceries', aiHint: placeholderImages.products.bread.hint },
+  { id: '19', vendorId: 'vendor003', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: placeholderImages.products.oliveOil.url, category: 'Groceries', aiHint: placeholderImages.products.oliveOil.hint },
 ];
 
 

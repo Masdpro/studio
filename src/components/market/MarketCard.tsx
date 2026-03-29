@@ -24,7 +24,7 @@ export function MarketCard({ market, storeCount, onClick }: MarketCardProps) {
           alt={market.name} 
           fill 
           className="object-cover group-hover:scale-105 transition-transform duration-500"
-          data-ai-hint="local market"
+          data-ai-hint={market.aiHint || "local market"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
           <div className="text-white">

@@ -1,0 +1,37 @@
+
+{
+  "markets": {
+    "downtown": {
+      "url": "https://picsum.photos/seed/mkt1/800/500",
+      "hint": "downtown market"
+    },
+    "suburbia": {
+      "url": "https://picsum.photos/seed/mkt2/800/500",
+      "hint": "community hub"
+    },
+    "uptown": {
+      "url": "https://picsum.photos/seed/mkt3/800/500",
+      "hint": "gourmet plaza"
+    }
+  },
+  "products": {
+    "headphones": { "url": "https://picsum.photos/seed/hp1/600/400", "hint": "wireless headphones" },
+    "smartwatch": { "url": "https://picsum.photos/seed/sw1/600/400", "hint": "smartwatch modern" },
+    "speaker": { "url": "https://picsum.photos/seed/sp1/600/400", "hint": "bluetooth speaker" },
+    "camera": { "url": "https://picsum.photos/seed/cam1/600/400", "hint": "action camera" },
+    "tshirt": { "url": "https://picsum.photos/seed/ts1/600/400", "hint": "cotton shirt" },
+    "jeans": { "url": "https://picsum.photos/seed/jn1/600/400", "hint": "blue jeans" },
+    "scarf": { "url": "https://picsum.photos/seed/sc1/600/400", "hint": "silk scarf" },
+    "shoes": { "url": "https://picsum.photos/seed/sh1/600/400", "hint": "running shoes" },
+    "mysteryBook": { "url": "https://picsum.photos/seed/bk1/600/400", "hint": "mystery novel" },
+    "scienceBook": { "url": "https://picsum.photos/seed/bk2/600/400", "hint": "astrophysics book" },
+    "coffee": { "url": "https://picsum.photos/seed/cf1/600/400", "hint": "coffee beans" },
+    "bread": { "url": "https://picsum.photos/seed/br1/600/400", "hint": "artisan bread" },
+    "oliveOil": { "url": "https://picsum.photos/seed/oo1/600/400", "hint": "olive oil" },
+    "pizza": { "url": "https://picsum.photos/seed/pz1/600/400", "hint": "margherita pizza" },
+    "burger": { "url": "https://picsum.photos/seed/bg1/600/400", "hint": "beef burger" },
+    "salad": { "url": "https://picsum.photos/seed/sl1/600/400", "hint": "caesar salad" },
+    "pasta": { "url": "https://picsum.photos/seed/ps1/600/400", "hint": "pasta carbonara" },
+    "cola": { "url": "https://picsum.photos/seed/cl1/600/400", "hint": "cola drink" }
+  }
+}

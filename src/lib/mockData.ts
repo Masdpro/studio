@@ -1,13 +1,14 @@
 
 // src/lib/mockData.ts
 import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review, ErrandRequest, ErrandQuote, Market } from '@/lib/types';
+import placeholderImages from '@/app/lib/placeholder-images.json';
 
 export const sampleProductsForMockOrders: Product[] = [
-  { id: 'prod_pizza_margherita', vendorId: 'vendor001', name: 'Margherita Pizza', description: 'Classic delight with 100% real mozzarella cheese', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pizza margherita' },
-  { id: 'prod_burger_classic', vendorId: 'vendor002', name: 'Classic Beef Burger', description: 'A juicy beef patty with fresh lettuce, tomato, and our secret sauce.', price: 9.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'burger beef' },
-  { id: 'prod_salad_caesar', vendorId: 'vendor001', name: 'Caesar Salad', description: 'Crisp romaine lettuce, Parmesan cheese, croutons, and Caesar dressing.', price: 7.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'salad caesar' },
-  { id: 'prod_pasta_carbonara', vendorId: 'vendor002', name: 'Pasta Carbonara', description: 'Creamy pasta with pancetta and Parmesan cheese.', price: 14.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pasta carbonara' },
-  { id: 'prod_soft_drink_cola', vendorId: 'vendor001', name: 'Cola Soft Drink', description: 'Refreshing cola beverage.', price: 2.50, imageUrl: 'https://placehold.co/600x400.png', category: 'Groceries', aiHint: 'cola drink' },
+  { id: 'prod_pizza_margherita', vendorId: 'vendor001', name: 'Margherita Pizza', description: 'Classic delight with 100% real mozzarella cheese', price: 12.99, imageUrl: placeholderImages.products.pizza.url, category: 'Foods', aiHint: placeholderImages.products.pizza.hint },
+  { id: 'prod_burger_classic', vendorId: 'vendor002', name: 'Classic Beef Burger', description: 'A juicy beef patty with fresh lettuce, tomato, and our secret sauce.', price: 9.50, imageUrl: placeholderImages.products.burger.url, category: 'Foods', aiHint: placeholderImages.products.burger.hint },
+  { id: 'prod_salad_caesar', vendorId: 'vendor001', name: 'Caesar Salad', description: 'Crisp romaine lettuce, Parmesan cheese, croutons, and Caesar dressing.', price: 7.99, imageUrl: placeholderImages.products.salad.url, category: 'Foods', aiHint: placeholderImages.products.salad.hint },
+  { id: 'prod_pasta_carbonara', vendorId: 'vendor002', name: 'Pasta Carbonara', description: 'Creamy pasta with pancetta and Parmesan cheese.', price: 14.50, imageUrl: placeholderImages.products.pasta.url, category: 'Foods', aiHint: placeholderImages.products.pasta.hint },
+  { id: 'prod_soft_drink_cola', vendorId: 'vendor001', name: 'Cola Soft Drink', description: 'Refreshing cola beverage.', price: 2.50, imageUrl: placeholderImages.products.cola.url, category: 'Groceries', aiHint: placeholderImages.products.cola.hint },
 ];
 
 const mapProductToCartItem = (product: Product, quantity: number): CartItem => ({
@@ -26,9 +27,9 @@ export const sampleVendors: Vendor[] = [
 ];
 
 export const sampleMarkets: Market[] = [
-  { id: 'm1', name: 'Downtown Central Market', description: 'A historic market in the heart of the city featuring local pizzerias, artisan books, and vintage electronics.', locationTag: 'Downtown', imageUrl: 'https://placehold.co/600x400.png' },
-  { id: 'm2', name: 'Suburbia Community Hub', description: 'The go-to spot for suburban families, offering fresh apparel, home comforts, and local produce.', locationTag: 'Suburbia', imageUrl: 'https://placehold.co/600x400.png' },
-  { id: 'm3', name: 'Uptown Gourmet Plaza', description: 'A sophisticated collection of fine dining, specialty grocery stores, and premium sports retailers.', locationTag: 'Uptown', imageUrl: 'https://placehold.co/600x400.png' },
+  { id: 'm1', name: 'Downtown Central Market', description: 'A historic market in the heart of the city featuring local pizzerias, artisan books, and vintage electronics.', locationTag: 'Downtown', imageUrl: placeholderImages.markets.downtown.url, aiHint: placeholderImages.markets.downtown.hint },
+  { id: 'm2', name: 'Suburbia Community Hub', description: 'The go-to spot for suburban families, offering fresh apparel, home comforts, and local produce.', locationTag: 'Suburbia', imageUrl: placeholderImages.markets.suburbia.url, aiHint: placeholderImages.markets.suburbia.hint },
+  { id: 'm3', name: 'Uptown Gourmet Plaza', description: 'A sophisticated collection of fine dining, specialty grocery stores, and premium sports retailers.', locationTag: 'Uptown', imageUrl: placeholderImages.markets.uptown.url, aiHint: placeholderImages.markets.uptown.hint },
 ];
 
 export const sampleDeliveryAgents: DeliveryAgent[] = [

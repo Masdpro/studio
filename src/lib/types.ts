@@ -7,6 +7,7 @@ export type Market = {
   description: string;
   locationTag: string; // Links vendors to this market
   imageUrl: string;
+  aiHint?: string;
 };
 
 export type Vendor = {
