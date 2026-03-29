@@ -37,7 +37,7 @@ export const sampleDeliveryAgents: DeliveryAgent[] = [
   { id: 'agent002', name: 'Sarah Connor', email: 'sarah.connor@example.com', phone: '555-0202', streetAddress: '88 Circuit Rd', city: 'Tech Hub', country: 'Agentland', vehicleDetails: 'Bike - Mountain Pro, Blue', profileManaged: true },
 ];
 
-export let masterSampleOrders: Order[] = [ // Changed to let for potential in-memory updates if needed
+export let masterSampleOrders: Order[] = [
   {
     id: 'order001',
     customerId: 'cust001', // John Doe
@@ -202,7 +202,7 @@ export let masterSampleOrders: Order[] = [ // Changed to let for potential in-me
     vendorId: 'vendor001', // Good Eats Pizzeria
     items: [mapProductToCartItem(sampleProductsForMockOrders[2], 2)],
     totalAmount: sampleProductsForMockOrders[2].price * 2,
-    status: 'PickedUpByCustomer', // Changed to allow testing "Leave Review" for self-pickup
+    status: 'PickedUpByCustomer',
     pickupAddress: `${sampleVendors[0].streetAddress}, ${sampleVendors[0].city}, ${sampleVendors[0].country}`,
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
     deliveryFee: 0,
@@ -230,7 +230,6 @@ export const sampleReviews: Review[] = [
   { id: 'review010', orderId: 'order005', reviewerId: 'cust002', revieweeType: 'delivery_agent', revieweeId: 'agent002', rating: 'positive', comment: 'Friendly and on time!', createdAt: new Date(Date.now() - 3600 * 1000 * 0.1) },
 ];
 
-// Mock Errand Data
 export let sampleErrandRequests: ErrandRequest[] = [
   {
     id: 'errand001',
@@ -238,7 +237,7 @@ export let sampleErrandRequests: ErrandRequest[] = [
     itemsDescription: '1. Gallon of Milk (2%)\n2. Loaf of Sourdough Bread\n3. Dozen Eggs (Large, Grade A)\n4. Bunch of Bananas',
     preferredStore: 'QuickMart Groceries',
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
-    status: 'AwaitingAcceptance', // Changed status for testing quote viewing
+    status: 'AwaitingAcceptance',
     createdAt: new Date(Date.now() - 3600 * 1000 * 1), // 1 hour ago
   },
   {
@@ -272,17 +271,17 @@ export let sampleErrandRequests: ErrandRequest[] = [
     itemsDescription: 'Buy a small potted plant (succulent or similar) from "Green Thumb Nursery".',
     preferredStore: 'Green Thumb Nursery',
     deliveryAddress: 'John Doe, 101 Customer Rd, Clientville, Tastyland',
-    status: 'PendingQuotes', // This one has no quotes yet for agents to bid on
+    status: 'PendingQuotes', 
     createdAt: new Date(Date.now() - 3600 * 1000 * 0.2), // 12 mins ago
   },
 ];
 
-export let sampleErrandQuotes: ErrandQuote[] = [ // Changed to let
+export let sampleErrandQuotes: ErrandQuote[] = [
   {
     id: 'quote001_for_errand002',
     errandRequestId: 'errand002',
     agentId: 'agent001',
-    estimatedItemCost: 15.00, // Dry cleaning cost
+    estimatedItemCost: 15.00, 
     deliveryFee: 7.00,
     totalEstimatedCost: 22.00,
     agentNotes: 'Can pick up within the hour.',
@@ -299,7 +298,6 @@ export let sampleErrandQuotes: ErrandQuote[] = [ // Changed to let
     status: 'Accepted',
     createdAt: new Date(Date.now() - 3600 * 1000 * 24.5),
   },
-  // Quotes for errand001 (status: AwaitingAcceptance)
   {
     id: 'quote003_for_errand001',
     errandRequestId: 'errand001',

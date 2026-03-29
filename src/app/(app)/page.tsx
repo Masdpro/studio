@@ -51,7 +51,7 @@ const sampleProducts: Product[] = [
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
 const ALL_LOCATIONS_VALUE = "All Locations";
-const NEARBY_THRESHOLD_DEGREES = 0.1; // Approx 11km, very rough
+const NEARBY_THRESHOLD_DEGREES = 0.1; 
 
 const SESSION_STORAGE_KEYS = {
   searchTerm: 'homePageSearchTerm',
@@ -66,7 +66,6 @@ export default function HomePage() {
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
   const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE);
 
-  // Market specific state
   const [activeMarket, setActiveMarket] = useState<Market | null>(null);
   const [activeMarketStore, setActiveMarketStore] = useState<Vendor | null>(null);
 
@@ -81,7 +80,6 @@ export default function HomePage() {
   const [isVendorProfileSheetOpen, setIsVendorProfileSheetOpen] = useState(false);
   const [activeVendorForProfile, setActiveVendorForProfile] = useState<Vendor | null>(null);
 
-  // Hydrate state from sessionStorage on component mount
   useEffect(() => {
     const storedSearchTerm = sessionStorage.getItem(SESSION_STORAGE_KEYS.searchTerm);
     if (storedSearchTerm !== null) setSearchTerm(storedSearchTerm);
@@ -106,7 +104,6 @@ export default function HomePage() {
     isMounted.current = true;
   }, []);
 
-  // Save state to sessionStorage whenever it changes, but only after initial mount
   useEffect(() => {
     if (isMounted.current) {
       sessionStorage.setItem(SESSION_STORAGE_KEYS.searchTerm, searchTerm);
@@ -261,14 +258,14 @@ export default function HomePage() {
       if (selectedLocation === ALL_LOCATIONS_VALUE ) {
         matchesLocationCriteria = true;
       } else if (selectedLocation === USER_CURRENT_LOCATION_VALUE) {
-        if (userCoords) { // If we have user coords, filter by them
+        if (userCoords) { 
             matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
-        } else if (!isLocating && !locationError) { // If not locating and no error, it means location hasn't been fetched or was cleared
-            matchesLocationCriteria = true; // Show all products from all locations until location resolves or fails
-        } else { // isLocating or locationError is true, implies waiting or failed
-            matchesLocationCriteria = false; // Show no products based on location until resolved
+        } else if (!isLocating && !locationError) { 
+            matchesLocationCriteria = true; 
+        } else { 
+            matchesLocationCriteria = false; 
         }
-      } else { // A specific location tag is selected
+      } else { 
         matchesLocationCriteria = vendorIdsFromLocationFilter.has(product.vendorId);
       }
 
@@ -307,7 +304,6 @@ export default function HomePage() {
     }
   };
 
-  // Market Browsing Content
   const renderMarketContent = () => {
     if (activeMarket && activeMarketStore) {
       const storeProducts = sampleProducts.filter(p => p.vendorId === activeMarketStore.id);
@@ -431,7 +427,6 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-2">
-               {/* Quick location summary or other small header widgets could go here */}
             </div>
           </div>
         </div>
