@@ -281,6 +281,22 @@ export default function HomePage() {
     });
   }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating]);
 
+  const filteredMarkets = useMemo(() => {
+    return sampleMarkets.filter(market => {
+      let matchesLocation = true;
+      if (selectedLocation !== ALL_LOCATIONS_VALUE && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
+        matchesLocation = market.locationTag === selectedLocation;
+      }
+      
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm === '' || 
+                           market.name.toLowerCase().includes(searchLower) || 
+                           market.description.toLowerCase().includes(searchLower);
+      
+      return matchesLocation && matchesSearch;
+    });
+  }, [searchTerm, selectedLocation]);
+
   const handleViewVendorProfile = (vendorId: string) => {
     const vendor = mockVendors.find(v => v.id === vendorId);
     if (vendor) {
@@ -368,17 +384,25 @@ export default function HomePage() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {sampleMarkets.map(market => {
-          const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
-          return (
-            <MarketCard 
-              key={market.id} 
-              market={market} 
-              storeCount={storeCount} 
-              onClick={(m) => setActiveMarket(m)} 
-            />
-          );
-        })}
+        {filteredMarkets.length > 0 ? (
+          filteredMarkets.map(market => {
+            const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
+            return (
+              <MarketCard 
+                key={market.id} 
+                market={market} 
+                storeCount={storeCount} 
+                onClick={(m) => setActiveMarket(m)} 
+              />
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-20">
+            <Search className="h-14 w-14 text-muted-foreground/40 mb-4 mx-auto" />
+            <p className="text-xl font-semibold mb-2">No markets found</p>
+            <p className="text-muted-foreground">Try adjusting your filters.</p>
+          </div>
+        )}
       </div>
     );
   };
@@ -411,103 +435,104 @@ export default function HomePage() {
         </div>
 
         <div className="flex-1 container mx-auto px-4 md:px-6 py-8">
-          <TabsContent value="products" className="mt-0 outline-none">
-            <div className="mb-10 p-6 bg-card rounded-xl shadow-md border space-y-8">
-              <div className="grid md:grid-cols-2 gap-6 items-start">
-                 <div>
-                  <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
-                    <MapPin className="h-5 w-5 mr-2 text-primary" />
-                    Filter by Location
-                  </h3>
-                  <Select onValueChange={handleLocationChange} value={selectedLocation}>
+          {/* Shared Filter Block */}
+          <div className="mb-10 p-6 bg-card rounded-xl shadow-md border space-y-8">
+            <div className="grid md:grid-cols-2 gap-6 items-start">
+                <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
+                  <MapPin className="h-5 w-5 mr-2 text-primary" />
+                  Filter by Location
+                </h3>
+                <Select onValueChange={handleLocationChange} value={selectedLocation}>
+                  <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locationsForFilter.map(location => (
+                      <SelectItem key={location} value={location}>
+                        {location === USER_CURRENT_LOCATION_VALUE ? (
+                          <span className="flex items-center gap-2">
+                            <LocateFixed className="h-4 w-4" /> My Current Location
+                          </span>
+                        ) : location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isLocating && <p className="text-xs text-muted-foreground mt-2">Fetching your location...</p>}
+                {locationError && (
+                  <Alert variant="destructive" className="mt-2 py-2 px-3">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle className="text-xs">Location Error</AlertTitle>
+                    <AlertDescription className="text-xs">{locationError}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
+                  <Store className="h-5 w-5 mr-2 text-primary" />
+                  Filter by Vendor
+                </h3>
+                  <div className="flex flex-col">
+                    <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
                     <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
-                      <SelectValue placeholder="Select a location" />
+                        <SelectValue placeholder="Select a vendor" />
                     </SelectTrigger>
                     <SelectContent>
-                      {locationsForFilter.map(location => (
-                        <SelectItem key={location} value={location}>
-                          {location === USER_CURRENT_LOCATION_VALUE ? (
-                            <span className="flex items-center gap-2">
-                              <LocateFixed className="h-4 w-4" /> My Current Location
-                            </span>
-                          ) : location}
+                        {vendorsForFilter.map(vendor => (
+                        <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.businessName}
                         </SelectItem>
-                      ))}
+                        ))}
                     </SelectContent>
-                  </Select>
-                  {isLocating && <p className="text-xs text-muted-foreground mt-2">Fetching your location...</p>}
-                  {locationError && (
-                    <Alert variant="destructive" className="mt-2 py-2 px-3">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle className="text-xs">Location Error</AlertTitle>
-                      <AlertDescription className="text-xs">{locationError}</AlertDescription>
-                    </Alert>
-                  )}
+                    </Select>
+                    {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
+                    <div className="mt-2">
+                        <Button variant="link" size="sm" asChild className="px-0 h-auto">
+                        <Link href={`/vendor/${selectedVendorId}/store`}>
+                            Visit {selectedVendorDetails.businessName}'s Site
+                            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                        </Link>
+                        </Button>
+                    </div>
+                    )}
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
-                    <Store className="h-5 w-5 mr-2 text-primary" />
-                    Filter by Vendor
-                  </h3>
-                   <div className="flex flex-col">
-                      <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
-                      <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
-                          <SelectValue placeholder="Select a vendor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          {vendorsForFilter.map(vendor => (
-                          <SelectItem key={vendor.id} value={vendor.id}>
-                              {vendor.businessName}
-                          </SelectItem>
-                          ))}
-                      </SelectContent>
-                      </Select>
-                      {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-                      <div className="mt-2">
-                          <Button variant="link" size="sm" asChild className="px-0 h-auto">
-                          <Link href={`/vendor/${selectedVendorId}/store`}>
-                              Visit {selectedVendorDetails.businessName}'s Site
-                              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </Link>
-                          </Button>
-                      </div>
-                      )}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4 flex items-center text-foreground">
-                  <Filter className="h-5 w-5 mr-2 text-primary" />
-                  Filter by Category
-                </h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {categories.map(category => (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                      className="rounded-full px-4"
-                    >
-                      {category}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  type="search"
-                  placeholder="Search products, brands, or categories..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-11 w-full h-11 rounded-lg border-border focus:ring-primary"
-                />
               </div>
             </div>
 
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center text-foreground">
+                <Filter className="h-5 w-5 mr-2 text-primary" />
+                Filter by Category
+              </h3>
+              <div className="flex flex-wrap gap-2.5">
+                {categories.map(category => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className="rounded-full px-4"
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="search"
+                placeholder="Search products, brands, markets or stores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-11 w-full h-11 rounded-lg border-border focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <TabsContent value="products" className="mt-0 outline-none">
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => {
@@ -557,11 +582,6 @@ export default function HomePage() {
 
           <TabsContent value="markets" className="mt-0 outline-none">
             <div className="space-y-8">
-              <div className="flex flex-col gap-2">
-                <h2 className="text-2xl font-bold text-foreground">Explore Local Markets</h2>
-                <p className="text-muted-foreground">Discover community-driven markets and shops in your area.</p>
-              </div>
-              
               <div className="min-h-[500px]">
                 {renderMarketContent()}
               </div>
