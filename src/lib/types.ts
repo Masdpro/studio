@@ -1,6 +1,14 @@
 
 import { z } from 'zod';
 
+export type Market = {
+  id: string;
+  name: string;
+  description: string;
+  locationTag: string; // Links vendors to this market
+  imageUrl: string;
+};
+
 export type Vendor = {
   id: string;
   businessName: string;

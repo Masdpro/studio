@@ -1,6 +1,6 @@
 
 // src/lib/mockData.ts
-import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review, ErrandRequest, ErrandQuote } from '@/lib/types';
+import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review, ErrandRequest, ErrandQuote, Market } from '@/lib/types';
 
 export const sampleProductsForMockOrders: Product[] = [
   { id: 'prod_pizza_margherita', vendorId: 'vendor001', name: 'Margherita Pizza', description: 'Classic delight with 100% real mozzarella cheese', price: 12.99, imageUrl: 'https://placehold.co/600x400.png', category: 'Foods', aiHint: 'pizza margherita' },
@@ -23,6 +23,12 @@ export const sampleVendors: Vendor[] = [
   { id: 'vendor001', businessName: 'Good Eats Pizzeria', streetAddress: '123 Pizza Pl', city: 'Foodville', country: 'Tastyland', contactEmail: 'contact@goodeats.com', phone: '555-0101', status: 'Open', operatingHours: '11 AM - 10 PM, Daily', locationTag: 'Downtown', latitude: 34.0522, longitude: -118.2437 },
   { id: 'vendor002', businessName: 'Burger Central', streetAddress: '456 Burger Blvd', city: 'Grillburg', country: 'Tastyland', contactEmail: 'info@burgercentral.com', phone: '555-0102', status: 'Open', operatingHours: '10 AM - 9 PM, Daily', locationTag: 'Suburbia', latitude: 34.0000, longitude: -118.3000 },
   { id: 'vendor003', businessName: 'QuickMart Groceries', streetAddress: '789 Aisle Ave', city: 'Shopsville', country: 'Tastyland', contactEmail: 'support@quickmart.com', phone: '555-0103', status: 'Open', operatingHours: '8 AM - 11 PM, Daily', locationTag: 'Uptown', latitude: 40.7831, longitude: -73.9712 },
+];
+
+export const sampleMarkets: Market[] = [
+  { id: 'm1', name: 'Downtown Central Market', description: 'A historic market in the heart of the city featuring local pizzerias, artisan books, and vintage electronics.', locationTag: 'Downtown', imageUrl: 'https://placehold.co/600x400.png' },
+  { id: 'm2', name: 'Suburbia Community Hub', description: 'The go-to spot for suburban families, offering fresh apparel, home comforts, and local produce.', locationTag: 'Suburbia', imageUrl: 'https://placehold.co/600x400.png' },
+  { id: 'm3', name: 'Uptown Gourmet Plaza', description: 'A sophisticated collection of fine dining, specialty grocery stores, and premium sports retailers.', locationTag: 'Uptown', imageUrl: 'https://placehold.co/600x400.png' },
 ];
 
 export const sampleDeliveryAgents: DeliveryAgent[] = [
