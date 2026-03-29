@@ -2,36 +2,36 @@
 {
   "markets": {
     "downtown": {
-      "url": "https://picsum.photos/seed/88/800/500",
+      "url": "https://picsum.photos/seed/mkt1/800/500",
       "hint": "city market"
     },
     "suburbia": {
-      "url": "https://picsum.photos/seed/92/800/500",
-      "hint": "neighborhood shop"
+      "url": "https://picsum.photos/seed/mkt2/800/500",
+      "hint": "suburban shop"
     },
     "uptown": {
-      "url": "https://picsum.photos/seed/45/800/500",
+      "url": "https://picsum.photos/seed/mkt3/800/500",
       "hint": "luxury plaza"
     }
   },
   "products": {
-    "headphones": { "url": "https://picsum.photos/seed/101/600/400", "hint": "audio headphones" },
-    "smartwatch": { "url": "https://picsum.photos/seed/102/600/400", "hint": "smart watch" },
-    "speaker": { "url": "https://picsum.photos/seed/103/600/400", "hint": "bluetooth speaker" },
-    "camera": { "url": "https://picsum.photos/seed/104/600/400", "hint": "action camera" },
-    "tshirt": { "url": "https://picsum.photos/seed/105/600/400", "hint": "cotton tshirt" },
-    "jeans": { "url": "https://picsum.photos/seed/106/600/400", "hint": "denim jeans" },
-    "scarf": { "url": "https://picsum.photos/seed/107/600/400", "hint": "silk scarf" },
-    "shoes": { "url": "https://picsum.photos/seed/108/600/400", "hint": "running shoes" },
-    "mysteryBook": { "url": "https://picsum.photos/seed/109/600/400", "hint": "mystery novel" },
-    "scienceBook": { "url": "https://picsum.photos/seed/110/600/400", "hint": "science book" },
-    "coffee": { "url": "https://picsum.photos/seed/111/600/400", "hint": "coffee beans" },
-    "bread": { "url": "https://picsum.photos/seed/112/600/400", "hint": "fresh bread" },
-    "oliveOil": { "url": "https://picsum.photos/seed/113/600/400", "hint": "olive oil" },
-    "pizza": { "url": "https://picsum.photos/seed/114/600/400", "hint": "cheese pizza" },
-    "burger": { "url": "https://picsum.photos/seed/115/600/400", "hint": "beef burger" },
-    "salad": { "url": "https://picsum.photos/seed/116/600/400", "hint": "green salad" },
-    "pasta": { "url": "https://picsum.photos/seed/117/600/400", "hint": "pasta dish" },
-    "cola": { "url": "https://picsum.photos/seed/118/600/400", "hint": "soda drink" }
+    "headphones": { "url": "https://picsum.photos/seed/prd1/600/400", "hint": "wireless headphones" },
+    "smartwatch": { "url": "https://picsum.photos/seed/prd2/600/400", "hint": "smart watch" },
+    "speaker": { "url": "https://picsum.photos/seed/prd3/600/400", "hint": "bluetooth speaker" },
+    "camera": { "url": "https://picsum.photos/seed/prd4/600/400", "hint": "action camera" },
+    "tshirt": { "url": "https://picsum.photos/seed/prd5/600/400", "hint": "cotton tshirt" },
+    "jeans": { "url": "https://picsum.photos/seed/prd6/600/400", "hint": "denim jeans" },
+    "scarf": { "url": "https://picsum.photos/seed/prd7/600/400", "hint": "silk scarf" },
+    "shoes": { "url": "https://picsum.photos/seed/prd8/600/400", "hint": "running shoes" },
+    "mysteryBook": { "url": "https://picsum.photos/seed/prd9/600/400", "hint": "mystery novel" },
+    "scienceBook": { "url": "https://picsum.photos/seed/prd10/600/400", "hint": "science book" },
+    "coffee": { "url": "https://picsum.photos/seed/prd11/600/400", "hint": "coffee beans" },
+    "bread": { "url": "https://picsum.photos/seed/prd12/600/400", "hint": "fresh bread" },
+    "oliveOil": { "url": "https://picsum.photos/seed/prd13/600/400", "hint": "olive oil" },
+    "pizza": { "url": "https://picsum.photos/seed/prd14/600/400", "hint": "cheese pizza" },
+    "burger": { "url": "https://picsum.photos/seed/prd15/600/400", "hint": "beef burger" },
+    "salad": { "url": "https://picsum.photos/seed/prd16/600/400", "hint": "green salad" },
+    "pasta": { "url": "https://picsum.photos/seed/prd17/600/400", "hint": "pasta dish" },
+    "cola": { "url": "https://picsum.photos/seed/prd18/600/400", "hint": "soda drink" }
   }
 }

@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { ProductCard } from '@/components/products/ProductCard';
+import { ProductCard } from '@/components/product/ProductCard';
 import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
