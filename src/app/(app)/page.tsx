@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -385,8 +384,8 @@ export default function HomePage() {
       <Tabs defaultValue="products" className="w-full flex flex-col h-full">
         {/* Header Partition */}
         <div className="sticky top-0 z-20 bg-background border-b shadow-sm">
-          <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
-            <TabsList className="grid w-full max-w-sm grid-cols-2 h-10 p-1 bg-muted rounded-md shrink-0">
+          <div className="container mx-auto px-4 md:px-6 h-16 flex items-center">
+            <TabsList className="grid w-full grid-cols-2 h-10 p-1 bg-muted rounded-md shrink-0">
               <TabsTrigger value="products" className="text-xs sm:text-sm rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 <ShoppingBag className="h-3.5 w-3.5 mr-1.5 hidden sm:inline" />
                 Browse Products
@@ -396,13 +395,6 @@ export default function HomePage() {
                 Local Markets
               </TabsTrigger>
             </TabsList>
-            
-            <div className="hidden lg:block text-sm text-muted-foreground font-medium truncate">
-              Your neighborhood companion for Nigerian markets.
-            </div>
-
-            <div className="flex items-center gap-2">
-            </div>
           </div>
         </div>
 
