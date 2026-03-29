@@ -1,37 +1,27 @@
 
 {
   "markets": {
-    "downtown": {
-      "url": "https://picsum.photos/seed/mkt1/800/500",
-      "hint": "city market"
+    "lagos": {
+      "url": "https://picsum.photos/seed/mkt_lagos/800/500",
+      "hint": "lagos market"
     },
-    "suburbia": {
-      "url": "https://picsum.photos/seed/mkt2/800/500",
-      "hint": "suburban shop"
+    "abuja": {
+      "url": "https://picsum.photos/seed/mkt_abuja/800/500",
+      "hint": "abuja city"
     },
-    "uptown": {
-      "url": "https://picsum.photos/seed/mkt3/800/500",
-      "hint": "luxury plaza"
+    "enugu": {
+      "url": "https://picsum.photos/seed/mkt_enugu/800/500",
+      "hint": "nigeria market"
     }
   },
   "products": {
-    "headphones": { "url": "https://picsum.photos/seed/prd1/600/400", "hint": "wireless headphones" },
-    "smartwatch": { "url": "https://picsum.photos/seed/prd2/600/400", "hint": "smart watch" },
-    "speaker": { "url": "https://picsum.photos/seed/prd3/600/400", "hint": "bluetooth speaker" },
-    "camera": { "url": "https://picsum.photos/seed/prd4/600/400", "hint": "action camera" },
-    "tshirt": { "url": "https://picsum.photos/seed/prd5/600/400", "hint": "cotton tshirt" },
-    "jeans": { "url": "https://picsum.photos/seed/prd6/600/400", "hint": "denim jeans" },
-    "scarf": { "url": "https://picsum.photos/seed/prd7/600/400", "hint": "silk scarf" },
-    "shoes": { "url": "https://picsum.photos/seed/prd8/600/400", "hint": "running shoes" },
-    "mysteryBook": { "url": "https://picsum.photos/seed/prd9/600/400", "hint": "mystery novel" },
-    "scienceBook": { "url": "https://picsum.photos/seed/prd10/600/400", "hint": "science book" },
-    "coffee": { "url": "https://picsum.photos/seed/prd11/600/400", "hint": "coffee beans" },
-    "bread": { "url": "https://picsum.photos/seed/prd12/600/400", "hint": "fresh bread" },
-    "oliveOil": { "url": "https://picsum.photos/seed/prd13/600/400", "hint": "olive oil" },
-    "pizza": { "url": "https://picsum.photos/seed/prd14/600/400", "hint": "cheese pizza" },
-    "burger": { "url": "https://picsum.photos/seed/prd15/600/400", "hint": "beef burger" },
-    "salad": { "url": "https://picsum.photos/seed/prd16/600/400", "hint": "green salad" },
-    "pasta": { "url": "https://picsum.photos/seed/prd17/600/400", "hint": "pasta dish" },
-    "cola": { "url": "https://picsum.photos/seed/prd18/600/400", "hint": "soda drink" }
+    "jollof": { "url": "https://picsum.photos/seed/prd_jollof/600/400", "hint": "jollof rice" },
+    "yam": { "url": "https://picsum.photos/seed/prd_yam/600/400", "hint": "yam tubers" },
+    "ankara": { "url": "https://picsum.photos/seed/prd_ankara/600/400", "hint": "african fabric" },
+    "plantain": { "url": "https://picsum.photos/seed/prd_plantain/600/400", "hint": "fried plantain" },
+    "palmoil": { "url": "https://picsum.photos/seed/prd_palmoil/600/400", "hint": "palm oil" },
+    "electronics": { "url": "https://picsum.photos/seed/prd_phone/600/400", "hint": "smartphone android" },
+    "bread": { "url": "https://picsum.photos/seed/prd_agege/600/400", "hint": "fresh bread" },
+    "suya": { "url": "https://picsum.photos/seed/prd_suya/600/400", "hint": "grilled meat" }
   }
 }

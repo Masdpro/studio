@@ -11,7 +11,7 @@ import { BarcodeDisplay } from './BarcodeDisplay';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
 import React, { useState, useMemo } from 'react';
 import { OrderDetailsDialog } from './OrderDetailsDialog';
-import { sampleReviews } from '@/lib/mockData'; // Import sampleReviews
+import { sampleReviews } from '@/lib/mockData';
 
 interface OrderListItemProps {
   order: Order;
@@ -277,7 +277,7 @@ export function OrderListItem({
                   {canViewCustomerPhone && (
                     <div className="mt-1 flex items-center gap-1 text-xs text-primary">
                       <PhoneCall className="h-3 w-3" />
-                      <span>Contact: (Mock) 555-123-4567</span>
+                      <span>Contact: (Mock) 080-1234-5678</span>
                     </div>
                   )}
                 </div>
@@ -291,9 +291,8 @@ export function OrderListItem({
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-3 border-t gap-2">
           <div className="flex items-center">
-            <DollarSign className="h-5 w-5 text-primary mr-1" />
-            <span className="font-semibold text-md">
-               {userRole === 'delivery_agent' ? `Fee: $${order.deliveryFee.toFixed(2)}` : `Total: $${order.totalAmount.toFixed(2)}`}
+            <span className="font-semibold text-md text-primary">
+               {userRole === 'delivery_agent' ? `Fee: ₦${order.deliveryFee.toLocaleString()}` : `Total: ₦${order.totalAmount.toLocaleString()}`}
             </span>
           </div>
 
@@ -394,4 +393,3 @@ export function OrderListItem({
     </>
   );
 }
-

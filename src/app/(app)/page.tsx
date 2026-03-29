@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -20,33 +21,8 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketCard } from '@/components/market/MarketCard';
-import { sampleMarkets, sampleVendors as mockVendors } from '@/lib/mockData';
+import { sampleMarkets, sampleVendors as mockVendors, sampleProductsForMockOrders as sampleProducts } from '@/lib/mockData';
 import placeholderImages from '@/app/lib/placeholder-images.json';
-
-// Enhanced sample product data with centralized images
-const sampleProducts: Product[] = [
-  // Electronics
-  { id: '1', vendorId: 'vendor001', name: 'Wireless Headphones', description: 'High-fidelity wireless headphones with noise cancellation.', price: 149.99, imageUrl: placeholderImages.products.headphones.url, category: 'Electronics', aiHint: placeholderImages.products.headphones.hint },
-  { id: '2', vendorId: 'vendor001', name: 'Smartwatch Series X', description: 'Feature-rich smartwatch with health tracking and GPS.', price: 299.50, imageUrl: placeholderImages.products.smartwatch.url, category: 'Electronics', aiHint: placeholderImages.products.smartwatch.hint },
-  { id: '11', vendorId: 'vendor001', name: 'Portable Bluetooth Speaker', description: 'Compact and powerful Bluetooth speaker for music on the go.', price: 79.99, imageUrl: placeholderImages.products.speaker.url, category: 'Electronics', aiHint: placeholderImages.products.speaker.hint },
-  { id: '20', vendorId: 'vendor001', name: '4K Action Camera', description: 'Rugged 4K action camera for adventure recording.', price: 199.99, imageUrl: placeholderImages.products.camera.url, category: 'Electronics', aiHint: placeholderImages.products.camera.hint },
-
-  // Apparel
-  { id: '3', vendorId: 'vendor002', name: 'Organic Cotton T-Shirt', description: 'Comfortable and stylish t-shirt made from 100% organic cotton.', price: 24.99, imageUrl: placeholderImages.products.tshirt.url, category: 'Apparel', aiHint: placeholderImages.products.tshirt.hint },
-  { id: '4', vendorId: 'vendor002', name: 'Classic Blue Jeans', description: 'Durable and timeless classic blue jeans for everyday wear.', price: 59.00, imageUrl: placeholderImages.products.jeans.url, category: 'Apparel', aiHint: placeholderImages.products.jeans.hint },
-  { id: '15', vendorId: 'vendor002', name: 'Designer Silk Scarf', description: 'Elegant silk scarf with a unique artistic print.', price: 89.00, imageUrl: placeholderImages.products.scarf.url, category: 'Apparel', aiHint: placeholderImages.products.scarf.hint },
-  { id: '21', vendorId: 'vendor002', name: 'Running Shoes', description: 'Lightweight and comfortable running shoes for men.', price: 75.00, imageUrl: placeholderImages.products.shoes.url, category: 'Apparel', aiHint: placeholderImages.products.shoes.hint },
-
-  // Books
-  { id: '5', vendorId: 'vendor001', name: 'The Mystery of Blackwood Manor', description: 'A thrilling mystery novel set in a secluded English manor.', price: 12.95, imageUrl: placeholderImages.products.mysteryBook.url, category: 'Books', aiHint: placeholderImages.products.mysteryBook.hint },
-  { id: '6', vendorId: 'vendor001', name: 'Introduction to Astrophysics', description: 'An accessible guide to the wonders of the cosmos.', price: 18.75, imageUrl: placeholderImages.products.scienceBook.url, category: 'Books', aiHint: placeholderImages.products.scienceBook.hint },
-
-  // Groceries
-  { id: '7', vendorId: 'vendor003', name: 'Aromatic Coffee Beans', description: 'Premium whole coffee beans, freshly roasted for rich flavor.', price: 15.99, imageUrl: placeholderImages.products.coffee.url, category: 'Groceries', aiHint: placeholderImages.products.coffee.hint },
-  { id: '8', vendorId: 'vendor003', name: 'Artisan Bread Loaf', description: 'Handcrafted sourdough bread with a crispy crust.', price: 6.50, imageUrl: placeholderImages.products.bread.url, category: 'Groceries', aiHint: placeholderImages.products.bread.hint },
-  { id: '19', vendorId: 'vendor003', name: 'Organic Olive Oil', description: 'Extra virgin olive oil, cold-pressed, 500ml.', price: 12.75, imageUrl: placeholderImages.products.oliveOil.url, category: 'Groceries', aiHint: placeholderImages.products.oliveOil.hint },
-];
-
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
 const ALL_LOCATIONS_VALUE = "All Locations";
@@ -422,7 +398,7 @@ export default function HomePage() {
             </TabsList>
             
             <div className="hidden lg:block text-sm text-muted-foreground font-medium truncate">
-              Your local neighborhood companion.
+              Your neighborhood companion for Nigerian markets.
             </div>
 
             <div className="flex items-center gap-2">
@@ -437,7 +413,7 @@ export default function HomePage() {
                 <div>
                 <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
                   <MapPin className="h-5 w-5 mr-2 text-primary" />
-                  Filter by Location
+                  Filter by City/Area
                 </h3>
                 <Select onValueChange={handleLocationChange} value={selectedLocation}>
                   <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
@@ -520,7 +496,7 @@ export default function HomePage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="search"
-                placeholder="Search products, brands, markets or stores..."
+                placeholder="Search jollof, fabrics, tubers or local stores..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-11 w-full h-11 rounded-lg border-border focus:ring-primary"
@@ -560,13 +536,13 @@ export default function HomePage() {
                     <LocateFixed className="h-14 w-14 text-primary/40 mb-4 animate-pulse" />
                     <p className="text-xl font-semibold mb-2">Locating you...</p>
                     <p className="text-muted-foreground max-w-xs mx-auto">
-                      Finding the best products nearby.
+                      Finding the best local items nearby.
                     </p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center">
                     <Search className="h-14 w-14 text-muted-foreground/40 mb-4" />
-                    <p className="text-xl font-semibold mb-2">No products found</p>
+                    <p className="text-xl font-semibold mb-2">No items found</p>
                     <p className="text-muted-foreground max-w-xs mx-auto">
                       Try adjusting your search or filters to see more results.
                     </p>

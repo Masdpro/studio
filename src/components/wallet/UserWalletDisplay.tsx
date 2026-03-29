@@ -11,10 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
-// In a real app, this would come from a user context or API
-const INITIAL_BALANCE = 100.00;
-const MOCK_VOUCHER_CODE_TO_REDEEM = "DAILYBUY25";
-const MOCK_VOUCHER_VALUE = 25.00;
+const INITIAL_BALANCE = 50000.00;
+const MOCK_VOUCHER_CODE_TO_REDEEM = "DAILYBUYNG";
+const MOCK_VOUCHER_VALUE = 5000.00;
 
 const formatNumberWithCommas = (value: string): string => {
   if (value === null || value === undefined || value.trim() === '') return '';
@@ -72,7 +71,7 @@ export function UserWalletDisplay() {
     setBalance((prev) => prev + amount);
     toast({
       title: 'Funds Added!',
-      description: `$${amount.toFixed(2)} has been added to your wallet.`,
+      description: `₦${amount.toLocaleString()} has been added to your wallet.`,
     });
     setAddAmount('');
   };
@@ -83,7 +82,6 @@ export function UserWalletDisplay() {
      if (numericValue === '' || /^\d*\.?\d*$/.test(numericValue)) {
       if (numericValue.split('.').length <= 2) {
          setBuyVoucherAmount(numericValue);
-         // If user starts typing a new amount, reset to 'buy' mode
          if (voucherDisplayMode === 'copy') {
            setVoucherDisplayMode('buy');
            setGeneratedVoucherCode(null);
@@ -102,14 +100,14 @@ export function UserWalletDisplay() {
       });
       return;
     }
-    const mockCode = `DBVC${Date.now().toString().slice(-6)}`;
+    const mockCode = `NGVC${Date.now().toString().slice(-6)}`;
     setGeneratedVoucherCode(mockCode);
     setVoucherDisplayMode('copy');
     toast({
       title: 'Voucher Purchased!',
-      description: `A Dailybuy Voucher for $${amount.toFixed(2)} purchased. Code: ${mockCode}`,
+      description: `A Dailybuy Voucher for ₦${amount.toLocaleString()} purchased. Code: ${mockCode}`,
     });
-    setBuyVoucherAmount(''); // Clear the amount input after purchase
+    setBuyVoucherAmount('');
   };
 
   const handleCopyVoucherCode = async () => {
@@ -123,10 +121,9 @@ export function UserWalletDisplay() {
     } catch (err) {
       toast({
         title: 'Copy Failed',
-        description: 'Could not copy code. Please try again or copy manually.',
+        description: 'Could not copy code.',
         variant: 'destructive',
       });
-      console.error('Failed to copy code: ', err);
     }
   };
 
@@ -135,10 +132,10 @@ export function UserWalletDisplay() {
       setBalance((prev) => prev + MOCK_VOUCHER_VALUE);
       toast({
         title: 'Voucher Redeemed!',
-        description: `$${MOCK_VOUCHER_VALUE.toFixed(2)} has been added to your wallet.`,
+        description: `₦${MOCK_VOUCHER_VALUE.toLocaleString()} has been added to your wallet.`,
       });
       setRedeemVoucherCode('');
-      setVoucherDisplayMode('buy'); // Reset buy voucher section if redemption happens
+      setVoucherDisplayMode('buy');
       setGeneratedVoucherCode(null);
     } else {
       toast({
@@ -161,7 +158,6 @@ export function UserWalletDisplay() {
   return (
     <Popover onOpenChange={(open) => {
       if (!open) {
-        // Reset voucher buy section when popover closes
         setVoucherDisplayMode('buy');
         setGeneratedVoucherCode(null);
         setBuyVoucherAmount('');
@@ -170,20 +166,20 @@ export function UserWalletDisplay() {
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="flex items-center gap-2">
           <Wallet className="h-5 w-5 text-primary" />
-          <span className="font-semibold">${balance.toFixed(2)}</span>
+          <span className="font-semibold">₦{balance.toLocaleString()}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">My Wallet</h4>
+            <h4 className="font-medium leading-none">My Wallet (Naira)</h4>
             <p className="text-sm text-muted-foreground">
               Your current account balance.
             </p>
           </div>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-2xl">${balance.toFixed(2)}</CardTitle>
+              <CardTitle className="text-2xl">₦{balance.toLocaleString()}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">Available Funds</p>
@@ -195,7 +191,7 @@ export function UserWalletDisplay() {
               <Input
                 id="add-amount"
                 type="text"
-                placeholder="Amount (e.g., 1,000.00)"
+                placeholder="Amount (e.g., 5,000)"
                 value={formatNumberWithCommas(addAmount)}
                 onChange={handleAddAmountChange}
                 className="flex-1"
@@ -214,7 +210,7 @@ export function UserWalletDisplay() {
                 Dailybuy Vouchers
             </h4>
              <p className="text-sm text-muted-foreground">
-              Buy a voucher or redeem one you have.
+              Buy a voucher or redeem one.
             </p>
           </div>
 
@@ -226,7 +222,7 @@ export function UserWalletDisplay() {
               <Input
                 id="buy-voucher-input"
                 type="text"
-                placeholder={voucherDisplayMode === 'buy' ? "Amount (e.g., 50.00)" : ""}
+                placeholder={voucherDisplayMode === 'buy' ? "Amount (e.g., 2,000)" : ""}
                 value={voucherDisplayMode === 'buy' ? formatNumberWithCommas(buyVoucherAmount) : (generatedVoucherCode || '')}
                 onChange={voucherDisplayMode === 'buy' ? handleBuyVoucherAmountChange : undefined}
                 readOnly={voucherDisplayMode === 'copy'}

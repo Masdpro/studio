@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -108,7 +109,7 @@ export function ProductCard({
             <p>{fullAddress}</p>
           </div>
         )}
-        <p className="text-lg font-bold text-primary mt-auto">${product.price.toFixed(2)}</p>
+        <p className="text-lg font-bold text-primary mt-auto">₦{product.price.toLocaleString()}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart}>

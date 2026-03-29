@@ -11,32 +11,22 @@ import { ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-
-// Sample cart data
-const sampleCartItems: CartItemType[] = [
-  { productId: 'prod_pizza_margherita', name: 'Margherita Pizza', price: 12.99, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pizza margherita' },
-  { productId: 'prod_burger_classic', name: 'Classic Beef Burger', price: 9.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'burger beef' },
-  { productId: 'prod_salad_caesar', name: 'Caesar Salad', price: 7.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'salad caesar' },
-  { productId: 'prod_pasta_carbonara', name: 'Pasta Carbonara', price: 14.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'pasta carbonara' },
-  { productId: 'prod_soft_drink_cola', name: 'Cola Soft Drink', price: 2.50, quantity: 2, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'cola drink' },
-  { productId: 'p1', name: 'Laptop Pro 15"', price: 1299.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'laptop professional' },
-  { productId: 'p2', name: 'Men\'s Casual Shirt', price: 39.50, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'shirt casual' },
-  { productId: '7', name: 'Aromatic Coffee Beans', price: 15.99, quantity: 1, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'coffee beans' },
-  { productId: '8', name: 'Artisan Bread Loaf', price: 6.50, quantity: 3, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'bread artisan' },
-];
+import { sampleProductsForMockOrders } from '@/lib/mockData';
 
 export function ShoppingCartView() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [isDeliverySelected, setIsDeliverySelected] = useState(true); // Default to delivery
+  const [isDeliverySelected, setIsDeliverySelected] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    const processedSampleItems = sampleCartItems.map(item => ({
-        ...item,
-        productId: item.productId || (item as any).id,
-        imageUrl: item.imageUrl || 'https://placehold.co/600x400.png',
-        aiHint: item.aiHint || 'product item'
+    const processedSampleItems = sampleProductsForMockOrders.slice(0, 3).map(item => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        imageUrl: item.imageUrl,
+        aiHint: item.aiHint
     }));
     setCartItems(processedSampleItems);
     setIsClient(true);
@@ -59,11 +49,8 @@ export function ShoppingCartView() {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const taxRate = 0.08; // 8% tax
-  const taxes = subtotal * taxRate;
-  // Simulate delivery fee if delivery is selected
-  const deliveryFee = isDeliverySelected ? 5.00 : 0;
-  const total = subtotal + taxes + deliveryFee;
+  const deliveryFee = isDeliverySelected ? 1500 : 0;
+  const total = subtotal + deliveryFee;
 
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
@@ -78,7 +65,7 @@ export function ShoppingCartView() {
     const deliveryMessage = isDeliverySelected ? "Delivery option selected." : "Self-pickup selected.";
     toast({
       title: 'Order Placed!',
-      description: `Your order for $${total.toFixed(2)} has been successfully placed. ${deliveryMessage} Payment will be processed from your wallet.`,
+      description: `Your order for ₦${total.toLocaleString()} has been successfully placed. ${deliveryMessage} Payment will be processed from your wallet.`,
     });
   };
 
@@ -134,22 +121,18 @@ export function ShoppingCartView() {
           <Separator />
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Taxes ({(taxRate * 100).toFixed(0)}%)</span>
-            <span>${taxes.toFixed(2)}</span>
+            <span>₦{subtotal.toLocaleString()}</span>
           </div>
           {isDeliverySelected && (
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Delivery Fee</span>
-              <span>${deliveryFee.toFixed(2)}</span>
+              <span>₦{deliveryFee.toLocaleString()}</span>
             </div>
           )}
           <Separator />
           <div className="flex justify-between font-bold text-base mt-0.5">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>₦{total.toLocaleString()}</span>
           </div>
           <Button
             size="lg"
