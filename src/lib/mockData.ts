@@ -4,11 +4,12 @@ import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review, ErrandReq
 import placeholderImages from '@/app/lib/placeholder-images.json';
 
 export const sampleProductsForMockOrders: Product[] = [
-  { id: 'prod_jollof_party', vendorId: 'vendor001', name: 'Party Jollof Rice', description: 'Smoky Nigerian party jollof with chicken and plantain.', price: 4500, imageUrl: placeholderImages.products.jollof.url, category: 'Food', aiHint: placeholderImages.products.jollof.hint },
+  { id: 'prod_jollof_party', vendorId: 'vendor001', name: 'Party Jollof Rice', description: 'Smoky Nigerian party jollof with chicken and plantain.', price: 4500, discountPrice: 3800, isAwoof: true, imageUrl: placeholderImages.products.jollof.url, category: 'Food', aiHint: placeholderImages.products.jollof.hint },
   { id: 'prod_yam_tuber', vendorId: 'vendor003', name: 'Large Yam Tuber', description: 'Premium Abuja yam, perfect for boiling or frying.', price: 3200, imageUrl: placeholderImages.products.yam.url, category: 'Groceries', aiHint: placeholderImages.products.yam.hint },
-  { id: 'prod_ankara_wax', vendorId: 'vendor002', name: '6 Yards Ankara Wax', description: 'High-quality 100% cotton Ankara fabric with vibrant patterns.', price: 12000, imageUrl: placeholderImages.products.ankara.url, category: 'Apparel', aiHint: placeholderImages.products.ankara.hint },
+  { id: 'prod_ankara_wax', vendorId: 'vendor002', name: '6 Yards Ankara Wax', description: 'High-quality 100% cotton Ankara fabric with vibrant patterns.', price: 12000, discountPrice: 9500, isAwoof: true, imageUrl: placeholderImages.products.ankara.url, category: 'Apparel', aiHint: placeholderImages.products.ankara.hint },
   { id: 'prod_palmoil_1l', vendorId: 'vendor003', name: '1L Pure Palm Oil', description: 'Freshly pressed red palm oil from the east.', price: 2800, imageUrl: placeholderImages.products.palmoil.url, category: 'Groceries', aiHint: placeholderImages.products.palmoil.hint },
-  { id: 'prod_suya_mix', vendorId: 'vendor001', name: 'Beef Suya (Large)', description: 'Spicy grilled beef suya with cabbage and onions.', price: 3500, imageUrl: placeholderImages.products.suya.url, category: 'Food', aiHint: placeholderImages.products.suya.hint },
+  { id: 'prod_suya_mix', vendorId: 'vendor001', name: 'Beef Suya (Large)', description: 'Spicy grilled beef suya with cabbage and onions.', price: 3500, discountPrice: 2800, isAwoof: true, imageUrl: placeholderImages.products.suya.url, category: 'Food', aiHint: placeholderImages.products.suya.hint },
+  { id: 'prod_electronics_phone', vendorId: 'vendor003', name: 'Smart Android Phone', description: 'Budget friendly smartphone with high performance.', price: 85000, imageUrl: placeholderImages.products.electronics.url, category: 'Electronics', aiHint: placeholderImages.products.electronics.hint },
 ];
 
 const mapProductToCartItem = (product: Product, quantity: number): CartItem => ({
@@ -27,9 +28,9 @@ export const sampleVendors: Vendor[] = [
 ];
 
 export const sampleMarkets: Market[] = [
-  { id: 'm1', name: 'Balogun Market', description: 'West Africa\'s largest textile hub. Famous for lace, Ankara, and gold jewelry.', locationTag: 'Lagos Island', imageUrl: placeholderImages.markets.lagos.url, aiHint: placeholderImages.markets.lagos.hint },
-  { id: 'm2', name: 'Wuse Market', description: 'The primary open-air market in Abuja. Great for fresh food, clothes, and electronics.', locationTag: 'Abuja Central', imageUrl: placeholderImages.markets.abuja.url, aiHint: placeholderImages.markets.abuja.hint },
-  { id: 'm3', name: 'Ogbete Main Market', description: 'The bustling heart of Enugu. Famous for fresh palm oil and agricultural produce.', locationTag: 'Enugu East', imageUrl: placeholderImages.markets.enugu.url, aiHint: placeholderImages.markets.enugu.hint },
+  { id: 'm1', name: 'Balogun Market', description: 'West Africa\'s largest textile hub. Famous for lace, Ankara, and gold jewelry.', locationTag: 'Lagos Island', imageUrl: placeholderImages.markets.lagos.url, aiHint: placeholderImages.markets.lagos.hint, isTrending: true },
+  { id: 'm2', name: 'Wuse Market', description: 'The primary open-air market in Abuja. Great for fresh food, clothes, and electronics.', locationTag: 'Abuja Central', imageUrl: placeholderImages.markets.abuja.url, aiHint: placeholderImages.markets.abuja.hint, isTrending: true },
+  { id: 'm3', name: 'Ogbete Main Market', description: 'The bustling heart of Enugu. Famous for fresh palm oil and agricultural produce.', locationTag: 'Enugu East', imageUrl: placeholderImages.markets.enugu.url, aiHint: placeholderImages.markets.enugu.hint, isTrending: false },
 ];
 
 export const sampleDeliveryAgents: DeliveryAgent[] = [

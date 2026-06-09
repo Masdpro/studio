@@ -3,10 +3,12 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product/ProductCard';
+import { FlashDealCard } from '@/components/product/FlashDealCard';
 import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag, Zap, Flame } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,7 +23,7 @@ import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketCard } from '@/components/market/MarketCard';
 import { sampleMarkets, sampleVendors as mockVendors, sampleProductsForMockOrders as sampleProducts } from '@/lib/mockData';
-import placeholderImages from '@/app/lib/placeholder-images.json';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
 const ALL_LOCATIONS_VALUE = "All Locations";
@@ -254,6 +256,10 @@ export default function HomePage() {
     });
   }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating]);
 
+  const flashDeals = useMemo(() => {
+    return sampleProducts.filter(p => p.isAwoof);
+  }, []);
+
   const filteredMarkets = useMemo(() => {
     return sampleMarkets.filter(market => {
       let matchesLocation = true;
@@ -269,6 +275,10 @@ export default function HomePage() {
       return matchesLocation && matchesSearch;
     });
   }, [searchTerm, selectedLocation]);
+
+  const trendingMarkets = useMemo(() => {
+    return sampleMarkets.filter(m => m.isTrending);
+  }, []);
 
   const handleViewVendorProfile = (vendorId: string) => {
     const vendor = mockVendors.find(v => v.id === vendorId);
@@ -355,26 +365,57 @@ export default function HomePage() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredMarkets.length > 0 ? (
-          filteredMarkets.map(market => {
-            const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
-            return (
-              <MarketCard 
-                key={market.id} 
-                market={market} 
-                storeCount={storeCount} 
-                onClick={(m) => setActiveMarket(m)} 
-              />
-            );
-          })
-        ) : (
-          <div className="col-span-full text-center py-20">
-            <Search className="h-14 w-14 text-muted-foreground/40 mb-4 mx-auto" />
-            <p className="text-xl font-semibold mb-2">No markets found</p>
-            <p className="text-muted-foreground">Try adjusting your filters.</p>
-          </div>
+      <div className="space-y-10">
+        {/* Trending Markets Spotlight */}
+        {trendingMarkets.length > 0 && searchTerm === '' && selectedLocation === ALL_LOCATIONS_VALUE && (
+           <section>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Flame className="h-6 w-6 text-orange-500" />
+              Trending Markets
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {trendingMarkets.map(market => {
+                const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
+                return (
+                  <MarketCard 
+                    key={market.id} 
+                    market={market} 
+                    storeCount={storeCount} 
+                    onClick={(m) => setActiveMarket(m)} 
+                  />
+                );
+              })}
+            </div>
+          </section>
         )}
+
+        <section>
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <MapPin className="h-6 w-6 text-primary" />
+            {selectedLocation === ALL_LOCATIONS_VALUE ? 'All Local Markets' : `Markets in ${selectedLocation}`}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredMarkets.length > 0 ? (
+              filteredMarkets.map(market => {
+                const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
+                return (
+                  <MarketCard 
+                    key={market.id} 
+                    market={market} 
+                    storeCount={storeCount} 
+                    onClick={(m) => setActiveMarket(m)} 
+                  />
+                );
+              })
+            ) : (
+              <div className="col-span-full text-center py-20">
+                <Search className="h-14 w-14 text-muted-foreground/40 mb-4 mx-auto" />
+                <p className="text-xl font-semibold mb-2">No markets found</p>
+                <p className="text-muted-foreground">Try adjusting your filters.</p>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
     );
   };
@@ -496,31 +537,58 @@ export default function HomePage() {
             </div>
           </div>
 
-          <TabsContent value="products" className="mt-0 outline-none">
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => {
-                  const vendor = mockVendors.find(v => v.id === product.vendorId);
-                  const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
-                  const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
-                  const vendorStreetAddress = vendor?.streetAddress || '';
-                  const vendorCity = vendor?.city || '';
-                  const vendorCountry = vendor?.country || '';
+          <TabsContent value="products" className="mt-0 outline-none space-y-12">
+            {/* Awoof Deals Horizontal Scroll */}
+            {flashDeals.length > 0 && searchTerm === '' && (
+              <section className="relative">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Zap className="h-6 w-6 text-red-600 fill-current" />
+                    Awoof Deals of the Day
+                  </h2>
+                  <Badge variant="outline" className="border-red-600 text-red-600">Limited Time</Badge>
+                </div>
+                <ScrollArea className="w-full whitespace-nowrap rounded-md">
+                  <div className="flex w-max space-x-6 p-1">
+                    {flashDeals.map((product) => (
+                      <FlashDealCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </section>
+            )}
 
-                  return (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      vendorName={vendorName}
-                      vendorLocation={vendorLocation}
-                      vendorStreetAddress={vendorStreetAddress}
-                      vendorCity={vendorCity}
-                      vendorCountry={vendorCountry}
-                      onViewVendorProfile={handleViewVendorProfile}
-                    />
-                  );
-                })}
-              </div>
+            {filteredProducts.length > 0 ? (
+              <section>
+                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <ShoppingBag className="h-6 w-6 text-primary" />
+                  Explore Local Items
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {filteredProducts.map((product) => {
+                    const vendor = mockVendors.find(v => v.id === product.vendorId);
+                    const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
+                    const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
+                    const vendorStreetAddress = vendor?.streetAddress || '';
+                    const vendorCity = vendor?.city || '';
+                    const vendorCountry = vendor?.country || '';
+
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        vendorName={vendorName}
+                        vendorLocation={vendorLocation}
+                        vendorStreetAddress={vendorStreetAddress}
+                        vendorCity={vendorCity}
+                        vendorCountry={vendorCountry}
+                        onViewVendorProfile={handleViewVendorProfile}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
             ) : (
                <div className="text-center py-20">
                 {isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE ? (

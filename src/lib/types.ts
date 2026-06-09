@@ -8,6 +8,7 @@ export type Market = {
   locationTag: string; // Links vendors to this market
   imageUrl: string;
   aiHint?: string;
+  isTrending?: boolean;
 };
 
 export type Vendor = {
@@ -33,9 +34,11 @@ export type Product = {
   name: string;
   description: string;
   price: number;
+  discountPrice?: number; // Price for flash deals
   imageUrl: string;
   category?: string;
   aiHint?: string; // For more specific image hints
+  isAwoof?: boolean; // Marking it as a flash deal
 };
 
 export type CartItem = {
