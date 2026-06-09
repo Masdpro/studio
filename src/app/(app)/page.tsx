@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -8,7 +9,7 @@ import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag, Zap, Flame } from 'lucide-react';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -424,7 +425,7 @@ export default function HomePage() {
     <div className="flex flex-col h-full">
       <Tabs defaultValue="products" className="w-full flex flex-col h-full">
         {/* Header Partition */}
-        <div className="sticky top-0 z-20 bg-background border-b shadow-sm">
+        <div className="sticky top-0 z-20 bg-background border-b">
           <div className="container mx-auto px-4 md:px-6 h-16 flex items-center">
             <TabsList className="grid w-full grid-cols-2 h-10 p-1 bg-muted rounded-md shrink-0">
               <TabsTrigger value="products" className="text-xs sm:text-sm rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
@@ -619,6 +620,33 @@ export default function HomePage() {
               </div>
             </div>
           </TabsContent>
+
+          {/* Mobile App Promotion Section */}
+          <section className="mt-20 py-12 px-6 bg-gradient-to-br from-primary/10 to-accent/20 rounded-3xl border border-primary/20 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+               <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M0 100 C 20 0 50 0 100 100 Z" fill="currentColor" className="text-primary" />
+               </svg>
+            </div>
+            <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+              <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-lg mb-2">
+                <Smartphone className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">Dailybuy Mobile is Coming!</h2>
+              <p className="text-lg text-muted-foreground">
+                We're currently building our Android and iOS apps to make market errands even smoother. Get notifications, real-time GPS tracking, and one-tap checkout.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 pt-4">
+                <Button variant="outline" size="lg" className="h-14 px-8 border-2 gap-3" disabled>
+                   <Apple className="h-6 w-6" /> App Store
+                </Button>
+                <Button variant="outline" size="lg" className="h-14 px-8 border-2 gap-3" disabled>
+                   <Smartphone className="h-6 w-6" /> Play Store
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground italic">Coming soon to the Nigerian market.</p>
+            </div>
+          </section>
         </div>
       </Tabs>
 

@@ -10,6 +10,8 @@ export const sampleProductsForMockOrders: Product[] = [
   { id: 'prod_palmoil_1l', vendorId: 'vendor003', name: '1L Pure Palm Oil', description: 'Freshly pressed red palm oil from the east.', price: 2800, imageUrl: placeholderImages.products.palmoil.url, category: 'Groceries', aiHint: placeholderImages.products.palmoil.hint },
   { id: 'prod_suya_mix', vendorId: 'vendor001', name: 'Beef Suya (Large)', description: 'Spicy grilled beef suya with cabbage and onions.', price: 3500, discountPrice: 2800, isAwoof: true, imageUrl: placeholderImages.products.suya.url, category: 'Food', aiHint: placeholderImages.products.suya.hint },
   { id: 'prod_electronics_phone', vendorId: 'vendor003', name: 'Smart Android Phone', description: 'Budget friendly smartphone with high performance.', price: 85000, imageUrl: placeholderImages.products.electronics.url, category: 'Electronics', aiHint: placeholderImages.products.electronics.hint },
+  { id: 'prod_agege_bread', vendorId: 'vendor001', name: 'Agege Bread (Fresh)', description: 'Soft, fluffy, and freshly baked traditional Agege bread.', price: 800, imageUrl: placeholderImages.products.bread.url, category: 'Food', aiHint: placeholderImages.products.bread.hint },
+  { id: 'prod_plantain_chips', vendorId: 'vendor003', name: 'Sweet Plantain Chips', description: 'Crunchy and delicious locally made plantain chips.', price: 500, imageUrl: placeholderImages.products.plantain.url, category: 'Groceries', aiHint: placeholderImages.products.plantain.hint },
 ];
 
 const mapProductToCartItem = (product: Product, quantity: number): CartItem => ({
