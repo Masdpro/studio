@@ -9,7 +9,7 @@ import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag, Zap, Flame, Smartphone, Apple, Briefcase } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -644,7 +644,7 @@ export default function HomePage() {
                    <Smartphone className="h-6 w-6" /> Play Store
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground italic">Coming soon to the Nigerian market.</p>
+              <p className="text-xs text-muted-foreground italic">Interested in helping us build? <Link href="/careers" className="underline hover:text-primary inline-flex items-center gap-1">Check our Careers page <Briefcase className="h-3 w-3"/></Link></p>
             </div>
           </section>
         </div>

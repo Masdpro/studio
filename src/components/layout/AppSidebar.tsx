@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, Briefcase } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -40,6 +40,9 @@ const deliveryAgentItems = [
   { href: '/delivery-agent/errands/browse', label: 'Browse Errands', icon: SearchCheck, tooltip: "Find Errands to Quote"},
 ];
 
+const companyItems = [
+  { href: '/careers', label: 'Careers', icon: Briefcase, tooltip: "Join our team" },
+];
 
 export function AppSidebar() {
   return (
@@ -101,6 +104,20 @@ export function AppSidebar() {
               </SidebarMenuItem>
             ))}
             {deliveryAgentItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton asChild tooltip={item.tooltip}>
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarGroup>
+          <SidebarSeparator />
+          <SidebarGroup>
+             <SidebarGroupLabel>Company</SidebarGroupLabel>
+            {companyItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild tooltip={item.tooltip}>
                   <Link href={item.href}>
