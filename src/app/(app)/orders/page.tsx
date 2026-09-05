@@ -1,19 +1,17 @@
-
-// src/app/(app)/orders/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '@/lib/types';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import { Loader2 } from 'lucide-react';
-import { masterSampleOrders } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { BarcodeScannerDialog, type ScanPurpose } from '@/components/delivery/BarcodeScannerDialog';
-
-// Simulate a logged-in customer
-const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function CustomerOrdersPage() {
+  const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -23,29 +21,50 @@ export default function CustomerOrdersPage() {
   const [currentScanOrderId, setCurrentScanOrderId] = useState<string | null>(null);
   const [currentScanPurpose, setCurrentScanPurpose] = useState<ScanPurpose | null>(null);
 
-
-  useEffect(() => {
+  const fetchOrders = useCallback(async () => {
     setIsLoading(true);
-    // In a real app, fetch orders for the logged-in customer
-    const customerOrders = masterSampleOrders.filter(
-      (order) => order.customerId === MOCK_CURRENT_CUSTOMER_ID
-    ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-    setOrders(customerOrders);
-    setIsLoading(false);
+    try {
+      const res = await fetch('/api/orders');
+      if (res.ok) {
+        const { orders } = await res.json();
+        setOrders(
+          orders
+            .map((o: Order) => ({ ...o, createdAt: new Date(o.createdAt) }))
+            .sort((a: Order, b: Order) => b.createdAt.getTime() - a.createdAt.getTime())
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const handleCancelOrder = useCallback((orderId: string) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, status: 'Cancelled' as Order['status'] } : order
-      )
-    );
-    toast({
-      title: 'Order Cancelled',
-      description: `Order ${orderId} has been cancelled. A full refund will be processed (mock).`,
-      variant: 'default',
-    });
-  }, [toast]);
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchOrders();
+    } else if (!authLoading && !user) {
+      setIsLoading(false);
+    }
+  }, [authLoading, user, fetchOrders]);
+
+  const handleCancelOrder = useCallback(
+    async (orderId: string) => {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Cancelled' }),
+      });
+      if (res.ok) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'Cancelled' } : o)));
+        toast({
+          title: 'Order Cancelled',
+          description: `Order ${orderId} has been cancelled.`,
+        });
+      } else {
+        toast({ title: 'Could not cancel order', variant: 'destructive' });
+      }
+    },
+    [toast]
+  );
 
   const openCustomerScanner = (orderId: string) => {
     setCurrentScanOrderId(orderId);
@@ -53,26 +72,39 @@ export default function CustomerOrdersPage() {
     setIsScannerOpen(true);
   };
 
-  const handleCustomerScanSuccess = (orderId: string, purpose: ScanPurpose) => {
+  const handleCustomerScanSuccess = async (orderId: string, purpose: ScanPurpose) => {
     if (purpose === 'customer_pickup') {
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === orderId ? { ...order, status: 'PickedUpByCustomer' as Order['status'] } : order
-        )
-      );
-      toast({
-        title: 'Pickup Confirmed!',
-        description: `You have successfully confirmed pickup for order ${orderId}.`,
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'PickedUpByCustomer' }),
       });
+      if (res.ok) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'PickedUpByCustomer' } : o)));
+        toast({
+          title: 'Pickup Confirmed!',
+          description: `You have successfully confirmed pickup for order ${orderId}.`,
+        });
+      }
     }
   };
 
-
-  if (isLoading) {
-     return (
+  if (authLoading || isLoading) {
+    return (
       <div className="container mx-auto py-8 text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
         <p className="mt-4 text-lg text-muted-foreground">Loading your orders...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8 text-center space-y-4">
+        <p className="text-lg text-muted-foreground">Sign in to see your orders.</p>
+        <Button asChild>
+          <Link href="/auth/login">Sign In</Link>
+        </Button>
       </div>
     );
   }
@@ -99,4 +131,3 @@ export default function CustomerOrdersPage() {
     </div>
   );
 }
-

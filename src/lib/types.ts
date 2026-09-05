@@ -43,6 +43,7 @@ export type Product = {
 
 export type CartItem = {
   productId: string;
+  vendorId?: string; // which vendor this product belongs to (needed to split checkout by vendor)
   name:string;
   price: number;
   quantity: number;

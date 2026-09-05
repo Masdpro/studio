@@ -10,6 +10,7 @@ import { ShoppingCart, Store, MapPin, ChevronDown, ChevronUp } from 'lucide-reac
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
 
 interface ProductCardProps {
   product: Product;
@@ -31,10 +32,11 @@ export function ProductCard({
   onViewVendorProfile
 }: ProductCardProps) {
   const { toast } = useToast();
+  const { addItem } = useCart();
   const [isAddressExpanded, setIsAddressExpanded] = useState(false);
 
   const handleAddToCart = () => {
-    console.log(`Added ${product.name} to cart`);
+    addItem(product);
     toast({
       title: "Added to cart!",
       description: `${product.name} has been added to your cart.`,

@@ -19,10 +19,13 @@ import {
 import { ShoppingCartView } from '@/components/cart/ShoppingCartView';
 import CustomerProfilePage from '@/app/(app)/profile/page'; // Import the default export
 import { AccountMenu } from '@/components/auth/AccountMenu';
+import { useCart } from '@/context/CartContext';
+import { Badge } from '@/components/ui/badge';
 
 export function AppHeader() {
   const [isCartSheetOpen, setIsCartSheetOpen] = useState(false);
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+  const { itemCount } = useCart();
 
   return (
     <>
@@ -41,8 +44,16 @@ export function AppHeader() {
         <div className="ml-auto flex items-center gap-1 md:gap-2">
           <UserWalletDisplay />
           <NotificationBell />
-          <Button variant="ghost" size="icon" onClick={() => setIsCartSheetOpen(true)}>
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartSheetOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
+            {itemCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-4 min-w-4 justify-center rounded-full p-0 text-[10px] leading-none"
+              >
+                {itemCount}
+              </Badge>
+            )}
             <span className="sr-only">Shopping Cart</span>
           </Button>
           <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />

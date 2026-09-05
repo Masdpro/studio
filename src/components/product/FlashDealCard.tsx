@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Zap, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/context/CartContext';
 
 interface FlashDealCardProps {
   product: Product;
@@ -15,8 +16,10 @@ interface FlashDealCardProps {
 
 export function FlashDealCard({ product }: FlashDealCardProps) {
   const { toast } = useToast();
+  const { addItem } = useCart();
 
   const handleAddToCart = () => {
+    addItem(product);
     toast({
       title: "Awoof Added!",
       description: `${product.name} at a special price added to cart.`,
