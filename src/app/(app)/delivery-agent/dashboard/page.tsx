@@ -10,7 +10,7 @@ import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, Cl
 import { useToast } from '@/hooks/use-toast';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now, consider a dedicated AgentWalletWidget
 import { OrderListItem } from '@/components/orders/OrderListItem';
-import { BarcodeScannerDialog } from '@/components/delivery/BarcodeScannerDialog';
+import { BarcodeScannerDialog, type ScanPurpose } from '@/components/delivery/BarcodeScannerDialog';
 import { Separator } from '@/components/ui/separator';
 import { masterSampleOrders, sampleDeliveryAgents } from '@/lib/mockData';
 
@@ -27,7 +27,7 @@ export default function DeliveryAgentDashboardPage() {
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [currentScanOrderId, setCurrentScanOrderId] = useState<string | null>(null);
-  const [currentScanPurpose, setCurrentScanPurpose] = useState<'pickup' | 'delivery' | null>(null);
+  const [currentScanPurpose, setCurrentScanPurpose] = useState<ScanPurpose | null>(null);
 
   const { toast } = useToast();
 
@@ -66,13 +66,13 @@ export default function DeliveryAgentDashboardPage() {
     }
   };
 
-  const openScanner = (orderId: string, purpose: 'pickup' | 'delivery') => {
+  const openScanner = (orderId: string, purpose: ScanPurpose) => {
     setCurrentScanOrderId(orderId);
     setCurrentScanPurpose(purpose);
     setIsScannerOpen(true);
   };
 
-  const handleScanSuccess = (orderId: string, purpose: 'pickup' | 'delivery') => {
+  const handleScanSuccess = (orderId: string, purpose: ScanPurpose) => {
     if (purpose === 'pickup') {
       updateOrderStatus(orderId, 'PickedUpByAgent');
       toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });

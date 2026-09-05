@@ -53,10 +53,16 @@ export function RouteOptimizationForm({ onSubmit, isLoading }: RouteOptimization
     },
   });
 
-  const { fields: deliveryLocationFields, append: appendDeliveryLocation, remove: removeDeliveryLocation } = useFieldArray({
-    control: form.control,
-    name: "deliveryLocations"
-  });
+  // deliveryLocations is a plain string[] (not an array of objects), so it's
+  // managed directly via watch/setValue rather than useFieldArray.
+  const deliveryLocations = form.watch('deliveryLocations');
+  const appendDeliveryLocation = (value: string) =>
+    form.setValue('deliveryLocations', [...form.getValues('deliveryLocations'), value]);
+  const removeDeliveryLocation = (index: number) =>
+    form.setValue(
+      'deliveryLocations',
+      form.getValues('deliveryLocations').filter((_, i) => i !== index)
+    );
 
   const { fields: timeWindowFields, append: appendTimeWindow, remove: removeTimeWindow } = useFieldArray({
     control: form.control,
@@ -96,17 +102,17 @@ export function RouteOptimizationForm({ onSubmit, isLoading }: RouteOptimization
 
         <div>
           <FormLabel>Delivery Locations</FormLabel>
-          {deliveryLocationFields.map((field, index) => (
+          {deliveryLocations.map((_, index) => (
             <FormField
               control={form.control}
-              key={field.id}
+              key={index}
               name={`deliveryLocations.${index}`}
               render={({ field }) => (
                 <FormItem className="flex items-center gap-2 mt-2">
                   <FormControl>
                     <Input placeholder={`Delivery Stop ${index + 1}`} {...field} />
                   </FormControl>
-                  {deliveryLocationFields.length > 1 && (
+                  {deliveryLocations.length > 1 && (
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeDeliveryLocation(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>

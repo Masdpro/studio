@@ -67,7 +67,7 @@ export default function BrowseErrandsPage() {
     // Mock: Update errand status if it was PendingQuotes
     setAvailableErrands(prev => prev.map(errand => 
         errand.id === selectedErrandForQuote.id && errand.status === 'PendingQuotes' 
-        ? {...errand, status: 'AwaitingAcceptance'} 
+        ? {...errand, status: 'AwaitingAcceptance' as const}
         : errand
     ).filter(errand => errand.id !== selectedErrandForQuote.id)); // Remove from available if quoted
 

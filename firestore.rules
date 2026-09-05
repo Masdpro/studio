@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Public read-only catalogue data.
+    match /markets/{marketId} {
+      allow read: if true;
+      allow write: if false; // manage via Firebase console / admin scripts
+    }
+
+    match /vendors/{vendorId} {
+      allow read: if true;
+      allow write: if isOwner(vendorId);
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.vendorId;
+    }
+
+    // Per-user account/profile doc, keyed by Firebase Auth uid.
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+
+    match /deliveryAgents/{agentId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(agentId);
+    }
+
+    // Orders are only visible to the customer, the vendor, or the assigned agent.
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.customerId ||
+        request.auth.uid == resource.data.vendorId ||
+        request.auth.uid == resource.data.deliveryAgentId
+      );
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.customerId;
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.vendorId ||
+        request.auth.uid == resource.data.deliveryAgentId
+      );
+    }
+
+    match /errandRequests/{errandId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.customerId;
+      allow update: if isSignedIn();
+    }
+
+    match /errandQuotes/{quoteId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.agentId;
+      allow update: if isSignedIn();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.reviewerId;
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if isOwner(resource.data.userId);
+      allow create: if isSignedIn();
+    }
+
+    match /wallets/{walletId} {
+      allow read: if isOwner(walletId);
+      allow write: if false; // balances change only via server-side (admin) logic
+    }
+  }
+}

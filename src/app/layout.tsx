@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 // Removed Geist font imports
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from '@/context/AuthContext';
 
 // Removed geistSans and geistMono initializations
 
@@ -20,8 +21,10 @@ export default function RootLayout({
     <html lang="en">
       {/* Removed font variables from body className */}
       <body className="antialiased">
-        {children}
-        <Toaster />
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

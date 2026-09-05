@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
 import { ProductListItem } from '@/components/vendor/ProductListItem';
 import type { Product } from '@/lib/types';
@@ -19,7 +19,7 @@ export default function VendorProductManagementPage() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const { toast } = useToast();
 
-  const handleProductAdd = (newProductData: Omit<Product, 'id' | 'vendorId'>) => {
+  const handleProductAdd = (newProductData: Omit<Product, 'id' | 'vendorId' | 'imageUrl'> & { imageUrl?: string }) => {
     const newProduct: Product = {
       ...newProductData,
       id: `p${Date.now()}`, // Simple unique ID
@@ -55,7 +55,9 @@ export default function VendorProductManagementPage() {
             <CardDescription>Add products from your inventory to display them on Dailybuy.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ProductUploadForm onProductAdd={handleProductAdd} />
+            <Suspense fallback={<p className="text-muted-foreground text-sm">Loading form…</p>}>
+              <ProductUploadForm onProductAdd={handleProductAdd} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>
