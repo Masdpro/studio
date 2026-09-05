@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/sheet';
 import { ShoppingCartView } from '@/components/cart/ShoppingCartView';
 import CustomerProfilePage from '@/app/(app)/profile/page'; // Import the default export
+import { AccountMenu } from '@/components/auth/AccountMenu';
 
 export function AppHeader() {
   const [isCartSheetOpen, setIsCartSheetOpen] = useState(false);
@@ -44,10 +45,7 @@ export function AppHeader() {
             <ShoppingCart className="h-5 w-5" />
             <span className="sr-only">Shopping Cart</span>
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsProfileSheetOpen(true)}>
-            <UserCircle className="h-5 w-5" />
-            <span className="sr-only">Customer Profile</span>
-          </Button>
+          <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />
         </div>
       </header>
 

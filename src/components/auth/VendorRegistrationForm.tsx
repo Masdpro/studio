@@ -1,6 +1,8 @@
 
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -16,15 +18,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/context/AuthContext';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
 const vendorRegistrationSchema = z.object({
   businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
   contactEmail: z.string().email({ message: 'Invalid email address.' }),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
   streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
@@ -38,11 +43,17 @@ type VendorRegistrationFormValues = z.infer<typeof vendorRegistrationSchema>;
 
 export function VendorRegistrationForm() {
   const { toast } = useToast();
+  const router = useRouter();
+  const { signUp } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<VendorRegistrationFormValues>({
     resolver: zodResolver(vendorRegistrationSchema),
     defaultValues: {
       businessName: '',
       contactEmail: '',
+      password: '',
       phone: '',
       streetAddress: '',
       city: '',
@@ -53,14 +64,34 @@ export function VendorRegistrationForm() {
     },
   });
 
-  function onSubmit(data: VendorRegistrationFormValues) {
-    console.log('Vendor registration data:', data);
-    // Placeholder for actual registration logic
-    toast({
-      title: 'Registration Submitted!',
-      description: 'Your vendor registration has been received.',
-    });
-    form.reset();
+  async function onSubmit(data: VendorRegistrationFormValues) {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const { password, contactEmail, ...vendorProfile } = data;
+      await signUp(contactEmail, password, 'vendor', data.businessName);
+
+      const res = await fetch('/api/vendor/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactEmail, ...vendorProfile }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: 'Failed to save your vendor profile.' }));
+        throw new Error(error ?? 'Failed to save your vendor profile.');
+      }
+
+      toast({
+        title: 'Registration Submitted!',
+        description: 'Your vendor account and profile have been created.',
+      });
+      router.push('/vendor/dashboard');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -73,6 +104,12 @@ export function VendorRegistrationForm() {
         <CardDescription>Join Dailybuy as a vendor and start selling your products.</CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -96,6 +133,19 @@ export function VendorRegistrationForm() {
                   <FormLabel>Contact Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="contact@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="At least 8 characters" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -207,7 +257,8 @@ export function VendorRegistrationForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register
             </Button>
           </form>
