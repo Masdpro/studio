@@ -5,13 +5,15 @@ import { getOrderById, updateOrderStatus } from '@/lib/services/orders';
 import type { Order } from '@/lib/types';
 
 /** Updates an order's status. Only the customer, vendor, or assigned delivery agent may do so. */
-export async function PATCH(request: Request, { params }: { params: { orderId: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
+  const { orderId } = await params;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
   }
 
-  const order = await getOrderById(params.orderId);
+  const order = await getOrderById(orderId);
   if (!order) {
     return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
   }
@@ -28,6 +30,6 @@ export async function PATCH(request: Request, { params }: { params: { orderId: s
     return NextResponse.json({ error: 'A new status is required.' }, { status: 400 });
   }
 
-  await updateOrderStatus(params.orderId, status, extra);
+  await updateOrderStatus(orderId, status, extra);
   return NextResponse.json({ ok: true });
 }

@@ -59,7 +59,7 @@ export function AccountMenu({ onOpenProfile }: { onOpenProfile: () => void }) {
         <DropdownMenuItem
           onClick={async () => {
             await signOut();
-            router.push('/');
+            router.push('/auth/login');
             router.refresh();
           }}
         >
