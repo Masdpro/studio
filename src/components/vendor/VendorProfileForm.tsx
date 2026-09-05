@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -19,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Vendor } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -39,33 +41,65 @@ type VendorProfileFormValues = z.infer<typeof vendorProfileSchema>;
 
 interface VendorProfileFormProps {
   vendor?: Vendor; // Optional initial vendor data
+  onSaved?: () => void; // Called after a successful save (e.g. to refetch)
 }
 
-export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
+function vendorToFormValues(vendor?: Vendor): VendorProfileFormValues {
+  return {
+    businessName: vendor?.businessName || '',
+    contactEmail: vendor?.contactEmail || '',
+    phone: vendor?.phone || '',
+    streetAddress: vendor?.streetAddress || '',
+    city: vendor?.city || '',
+    country: vendor?.country || '',
+    bio: '', // Assuming bio is not part of initial Vendor type for simplicity
+    externalStoreUrl: vendor?.externalStoreUrl || '',
+    operatingHours: vendor?.operatingHours || '',
+    status: vendor?.status || 'Open',
+  };
+}
+
+export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
   const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
   const form = useForm<VendorProfileFormValues>({
     resolver: zodResolver(vendorProfileSchema),
-    defaultValues: {
-      businessName: vendor?.businessName || '',
-      contactEmail: vendor?.contactEmail || '',
-      phone: vendor?.phone || '',
-      streetAddress: vendor?.streetAddress || '',
-      city: vendor?.city || '',
-      country: vendor?.country || '',
-      bio: '', // Assuming bio is not part of initial Vendor type for simplicity
-      externalStoreUrl: vendor?.externalStoreUrl || '',
-      operatingHours: vendor?.operatingHours || '',
-      status: vendor?.status || 'Open',
-    },
+    defaultValues: vendorToFormValues(vendor),
   });
 
-  function onSubmit(data: VendorProfileFormValues) {
-    console.log('Vendor profile data:', data);
-    // Placeholder for actual profile update logic
-    toast({
-      title: 'Profile Updated!',
-      description: 'Your vendor profile has been successfully updated.',
-    });
+  // The vendor profile loads asynchronously (fetched from the API after
+  // this form first mounts), so reset the form once real data arrives.
+  useEffect(() => {
+    form.reset(vendorToFormValues(vendor));
+  }, [vendor, form]);
+
+  async function onSubmit(data: VendorProfileFormValues) {
+    setIsSaving(true);
+    try {
+      const { bio, ...vendorFields } = data;
+      const res = await fetch('/api/vendor/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vendorFields),
+      });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: 'Failed to save profile.' }));
+        throw new Error(error ?? 'Failed to save profile.');
+      }
+      toast({
+        title: 'Profile Updated!',
+        description: 'Your vendor profile has been successfully updated.',
+      });
+      onSaved?.();
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -219,7 +253,8 @@ export function VendorProfileForm({ vendor }: VendorProfileFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="bg-primary hover:bg-primary/90">
+        <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={isSaving}>
+          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save Profile
         </Button>
       </form>
