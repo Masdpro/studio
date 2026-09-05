@@ -6,45 +6,69 @@ errands, wallets, reviews, and three Genkit/Gemini AI flows (product image
 identification, delivery route optimization, support chat). All data lived
 in in-memory arrays (`src/lib/mockData.ts`) with no persistence, and no auth.
 
-This pass wires up the real backend foundation so the app can move from
-prototype to production. It intentionally stops short of migrating every
-page's UI state — see "What's left" below — because that work should happen
-against a real Firebase project rather than blind.
-
-## Stack
+## Stack (no Firebase / no external accounts required to run locally)
 
 - **Frontend**: Next.js 15 (App Router) + React 18 + Tailwind + shadcn/radix UI (unchanged)
-- **Auth**: Firebase Authentication (email/password to start; easy to add Google/phone later)
-- **Database**: Cloud Firestore
-- **File storage**: Firebase Storage (product photos, etc. — wired in `src/lib/firebase/client.ts`, not yet used by any upload flow)
-- **AI**: Genkit + Gemini (`src/ai/flows/*`) — already present, needs `GOOGLE_GENAI_API_KEY`
-- **Payments**: not yet integrated. For Nigeria, Paystack or Flutterwave are the standard choice — recommend adding this next once auth/data are live, since wallet balances (`Wallet` type) currently have no real money movement behind them.
+- **Database**: SQLite — a single file (`dev.db`) on disk, no server or account needed. Swappable for Postgres later by changing one line in `src/db/index.ts` and `drizzle.config.ts` (Drizzle supports both with almost identical code).
+- **ORM**: [Drizzle](https://orm.drizzle.team) — the database schema is plain TypeScript in `src/db/schema.ts`; queries are typed, plain functions, no code generation step and no external binary download (this is why we moved off Prisma — its CLI needs to fetch a query-engine binary from a host our build sandbox couldn't reach).
+- **Auth**: [NextAuth.js](https://next-auth.js.org) (Auth.js) with the Credentials provider — email + password, hashed with bcrypt, stored in our own `users` table. JWT session strategy (no separate sessions table needed).
+- **AI**: Genkit + Gemini (`src/ai/flows/*`) — already present, needs `GOOGLE_GENAI_API_KEY`.
+- **Payments**: not yet integrated. For Nigeria, Paystack or Flutterwave are the standard choice — needed once the `Wallet` type should hold real money, not mock balances.
+
+## How the pieces fit together
+
+```
+Browser (React components)
+   │
+   │  fetch() / server actions
+   ▼
+Next.js server (API routes in src/app/api/**, or server components)
+   │
+   ├─ src/lib/auth.ts ──────► NextAuth (Credentials provider)
+   │                                │
+   └─ src/lib/services/*.ts ───┐    │
+                                ▼    ▼
+                          src/db/index.ts (Drizzle)
+                                │
+                                ▼
+                            dev.db (SQLite file)
+```
+
+The database (`src/db`) and the auth config (`src/lib/auth.ts`) only ever
+run on the server — they use Node APIs (`better-sqlite3`) that don't exist
+in a browser. `src/context/AuthContext.tsx` is the one thing client
+components use directly: it wraps NextAuth's `SessionProvider` and exposes
+a small `useAuth()` hook (`user`, `role`, `loading`, `signIn`, `signUp`, `signOut`).
 
 ## What was added this pass
 
-- `src/lib/firebase/client.ts` — browser Firebase SDK init (auth/Firestore/storage), safe to import even with no project configured yet (`isFirebaseConfigured` flag), with an emulator-suite switch for local dev.
-- `src/lib/firebase/admin.ts` — server-only Admin SDK init, for server actions/API routes/scripts that need elevated access (e.g. adjusting wallet balances).
-- `src/context/AuthContext.tsx` — `AuthProvider`/`useAuth()` wrapping the whole app (`src/app/layout.tsx`) with sign-in/sign-up/sign-out and a `users/{uid}` profile doc holding `role: 'customer' | 'vendor' | 'delivery_agent'`.
-- `src/lib/services/{markets,vendors,products,orders}.ts` — Firestore-backed data access functions. Each one **falls back to the bundled sample data when Firebase isn't configured**, so the UI keeps working with zero setup, then switches to real Firestore reads/writes the moment env vars are set.
-- `firestore.rules` — security rules matching the data model (public read on catalogue data, owner-only writes, orders visible only to their customer/vendor/agent).
-- `scripts/seed.ts` (`npm run seed`) — pushes the sample markets/vendors/products/agents into Firestore via the Admin SDK, so a fresh project isn't empty.
-- `.env.example` — documents every required env var.
-- Fixed 5 pre-existing TypeScript errors left over from the AI-generated prototype (mismatched `ScanPurpose` type, a status-literal widening bug, an optional `imageUrl` type mismatch, and two `useFieldArray` misuses in `RouteOptimizationForm` where a plain string array was wrongly treated as a field array of objects) plus a Next.js 15 `useSearchParams` prerender error. `npm run typecheck` and `npm run build` are both clean now.
+- `src/db/schema.ts` — the full data model: users, markets, vendors, delivery agents, products, orders, reviews, errand requests/quotes, notifications, wallets.
+- `src/db/index.ts` — the Drizzle/SQLite connection.
+- `drizzle.config.ts` + `npm run db:push` — applies schema changes to `dev.db` without hand-written migration files (fine for a solo/early-stage project; can switch to `drizzle-kit generate` + versioned migrations later).
+- `src/lib/auth.ts` + `src/app/api/auth/[...nextauth]/route.ts` — NextAuth config and route handler.
+- `src/app/api/auth/register/route.ts` — a plain API route for sign-up (Credentials-only auth has no built-in registration flow).
+- `src/context/AuthContext.tsx` — `AuthProvider` (wraps `SessionProvider`) and `useAuth()`.
+- `src/lib/services/{markets,vendors,products,orders}.ts` — typed data-access functions over Drizzle. Each falls back to the bundled sample data if its table is empty, so the UI has something to show before you run `db:seed`.
+- `scripts/seed.ts` (`npm run db:seed`) — populates `dev.db` with the sample markets/vendors/products/agents, plus **one demo login per role** (password `password123` for all): `customer@dailybuy.ng`, `vendor@dailybuy.ng`, `agent@dailybuy.ng`.
+- `.env.example` — documents every required env var (just `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, and the AI key).
+- Fixed 5 pre-existing TypeScript errors and a Next.js 15 `useSearchParams` prerender error left over from the original AI-generated prototype.
 
-## Getting a real Firebase project running
+`npm run typecheck` and `npm run build` are both clean, and `npm run dev` boots and serves real pages + a working `/api/auth/*` endpoint.
 
-1. Create a project at https://console.firebase.google.com, enable **Authentication** (Email/Password), **Firestore**, and **Storage**.
-2. Copy `.env.example` to `.env.local` and fill in the `NEXT_PUBLIC_FIREBASE_*` values from Project Settings → General → Your apps → Web app.
-3. Generate a service account key (Project Settings → Service accounts) and paste the JSON as a single line into `FIREBASE_SERVICE_ACCOUNT_KEY`.
-4. Deploy `firestore.rules`: `firebase deploy --only firestore:rules` (requires `firebase-tools` and `firebase init` once to link the project).
-5. `npm run seed` to populate sample data.
-6. `npm run dev` — the app now reads/writes real Firestore data instead of the in-memory mocks.
+## Running it locally
 
-## What's left (by design, not done blind against no project)
+1. `npm install`
+2. Copy `.env.example` to `.env.local`, set `DATABASE_URL=dev.db` and generate a secret: `openssl rand -base64 32` → paste into `NEXTAUTH_SECRET`.
+3. `npm run db:push` — creates `dev.db` with the schema.
+4. `npm run db:seed` — fills it with sample data and demo logins.
+5. `npm run dev` — open http://localhost:3000 (or whatever port it prints).
+6. `npm run db:studio` any time you want a visual browser/editor for the database (Drizzle Studio, opens in your browser).
 
-- **Wire remaining pages off `mockData` onto the new services**: home page, cart, orders, vendor dashboard, delivery-agent dashboard/errands still import from `src/lib/mockData.ts` directly. The services in `src/lib/services/` are drop-in replacements (`getProducts()`, `getOrdersForCustomer()`, etc.) — swap the imports and add `useEffect`/`react-query` loading once there's a real project to test reads against.
-- **Login/register UI**: `src/context/AuthContext.tsx` has `signIn`/`signUp`, but there's no `/login` page yet — only vendor/delivery-agent *registration* pages exist, and they don't yet call `signUp`/`upsertVendor`.
-- **Product image upload → Firebase Storage**: `ProductUploadForm` currently accepts a data URI directly; swap to `uploadBytes`/`getDownloadURL` against `storage`.
-- **Wallets & payments**: `Wallet` type exists but nothing debits/credits it. Needs a payment provider (Paystack/Flutterwave for NGN) and should live in a server action or Cloud Function, never the client, since it moves money.
+## What's left
+
+- **Wire remaining pages off `mockData` onto the new services**: home page, cart, orders, vendor dashboard, delivery-agent dashboard/errands still import from `src/lib/mockData.ts` directly. The services in `src/lib/services/` are drop-in replacements (`getProducts()`, `getOrdersForCustomer()`, etc.) — this is the next real chunk of work, page by page.
+- **Login/register UI**: `useAuth()` has `signIn`/`signUp`, but there's no `/login` page yet — only vendor/delivery-agent *registration* pages exist, and they don't yet call `signUp`/`upsertVendor`.
+- **Route protection**: nothing currently redirects a signed-out user away from vendor/agent dashboards, or a customer away from a vendor's dashboard.
+- **Product image upload**: `ProductUploadForm` currently accepts a data URI directly; with no Firebase Storage, images either stay as data URIs (simplest, fine for a prototype) or get saved to `/public/uploads` via a small API route (more real, still no external account needed).
+- **Wallets & payments**: `Wallet` type exists but nothing debits/credits it. Needs a payment provider (Paystack/Flutterwave for NGN) and should live in a server-only route, never the client, since it moves money.
 - **Genkit AI flows need `GOOGLE_GENAI_API_KEY`** to actually call Gemini (they'll error without it).
-- **Role-based routing/guards**: nothing currently redirects an unauthenticated user away from vendor/agent dashboards.

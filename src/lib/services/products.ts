@@ -1,50 +1,54 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase/client';
+
+import { db } from '@/db';
+import { products as productsTable } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 import type { Product } from '@/lib/types';
 import { sampleProductsForMockOrders } from '@/lib/mockData';
 
-const COLLECTION = 'products';
-const hasFirebase = () => isFirebaseConfigured && !!db;
-
 export async function getProducts(): Promise<Product[]> {
-  if (!hasFirebase()) return sampleProductsForMockOrders;
-  const snap = await getDocs(collection(db!, COLLECTION));
-  if (snap.empty) return sampleProductsForMockOrders;
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
+  const rows = db.select().from(productsTable).all();
+  if (rows.length === 0) return sampleProductsForMockOrders;
+  return rows.map(rowToProduct);
 }
 
 export async function getProductsByVendor(vendorId: string): Promise<Product[]> {
-  if (!hasFirebase()) return sampleProductsForMockOrders.filter((p) => p.vendorId === vendorId);
-  const q = query(collection(db!, COLLECTION), where('vendorId', '==', vendorId));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
+  const rows = db.select().from(productsTable).where(eq(productsTable.vendorId, vendorId)).all();
+  if (rows.length === 0) return sampleProductsForMockOrders.filter((p) => p.vendorId === vendorId);
+  return rows.map(rowToProduct);
 }
 
 export async function getProductById(productId: string): Promise<Product | undefined> {
-  if (!hasFirebase()) return sampleProductsForMockOrders.find((p) => p.id === productId);
-  const snap = await getDoc(doc(db!, COLLECTION, productId));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Product) : undefined;
+  const row = db.select().from(productsTable).where(eq(productsTable.id, productId)).get();
+  if (row) return rowToProduct(row);
+  return sampleProductsForMockOrders.find((p) => p.id === productId);
 }
 
 export async function createProduct(data: Omit<Product, 'id'>): Promise<string> {
-  const ref = await addDoc(collection(db!, COLLECTION), data);
-  return ref.id;
+  const id = randomUUID();
+  db.insert(productsTable).values({ id, ...(data as any) }).run();
+  return id;
 }
 
 export async function updateProduct(productId: string, data: Partial<Product>): Promise<void> {
-  await updateDoc(doc(db!, COLLECTION, productId), data as any);
+  db.update(productsTable).set(data as any).where(eq(productsTable.id, productId)).run();
 }
 
 export async function deleteProduct(productId: string): Promise<void> {
-  await deleteDoc(doc(db!, COLLECTION, productId));
+  db.delete(productsTable).where(eq(productsTable.id, productId)).run();
+}
+
+function rowToProduct(row: typeof productsTable.$inferSelect): Product {
+  return {
+    id: row.id,
+    vendorId: row.vendorId,
+    name: row.name,
+    description: row.description,
+    price: row.price,
+    discountPrice: row.discountPrice ?? undefined,
+    imageUrl: row.imageUrl,
+    category: row.category ?? undefined,
+    aiHint: row.aiHint ?? undefined,
+    isAwoof: !!row.isAwoof,
+  };
 }

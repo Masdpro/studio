@@ -1,29 +1,31 @@
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/lib/firebase/client';
+
+import { db } from '@/db';
+import { markets as marketsTable } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import type { Market } from '@/lib/types';
 import { sampleMarkets } from '@/lib/mockData';
 
-const COLLECTION = 'markets';
-
-/**
- * Reads all markets from Firestore. Falls back to the bundled sample data
- * when Firebase isn't configured yet (e.g. NEXT_PUBLIC_FIREBASE_PROJECT_ID
- * missing), so the UI keeps working during local prototyping.
- */
+/** Reads all markets. Falls back to bundled sample data if the table is empty (e.g. before `npm run db:seed`). */
 export async function getMarkets(): Promise<Market[]> {
-  if (!isFirebaseConfigured || !db) return sampleMarkets;
-
-  const snap = await getDocs(collection(db!, COLLECTION));
-  if (snap.empty) return sampleMarkets;
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Market));
+  const rows = db.select().from(marketsTable).all();
+  if (rows.length === 0) return sampleMarkets;
+  return rows.map(rowToMarket);
 }
 
 export async function getMarketsByLocationTag(locationTag: string): Promise<Market[]> {
-  if (!isFirebaseConfigured || !db) {
-    return sampleMarkets.filter((m) => m.locationTag === locationTag);
-  }
+  const rows = db.select().from(marketsTable).where(eq(marketsTable.locationTag, locationTag)).all();
+  if (rows.length === 0) return sampleMarkets.filter((m) => m.locationTag === locationTag);
+  return rows.map(rowToMarket);
+}
 
-  const q = query(collection(db!, COLLECTION), where('locationTag', '==', locationTag));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Market));
+function rowToMarket(row: typeof marketsTable.$inferSelect): Market {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    locationTag: row.locationTag,
+    imageUrl: row.imageUrl,
+    aiHint: row.aiHint ?? undefined,
+    isTrending: !!row.isTrending,
+  };
 }
