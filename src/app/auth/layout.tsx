@@ -7,8 +7,8 @@ import Image from 'next/image';
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
-      <Link href="/" className="mb-8 flex items-center gap-2 text-xl font-bold text-primary">
-        <Image src="/logo-192.png" alt="" width={48} height={48} className="rounded-lg" />
+      <Link href="/" className="mb-8 flex items-center gap-1 text-xl font-bold text-primary">
+        <Image src="/logo-mark.png" alt="" width={30} height={39} className="block" />
         Closebuy
       </Link>
       {children}

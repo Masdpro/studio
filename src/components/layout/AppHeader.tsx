@@ -34,8 +34,8 @@ export function AppHeader() {
         <div className="md:hidden">
           <SidebarTrigger />
         </div>
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-          <Image src="/logo-192.png" alt="" width={48} height={48} className="rounded-lg" />
+        <Link href="/" className="flex items-center gap-1 text-lg font-semibold md:text-base">
+          <Image src="/logo-mark.png" alt="" width={30} height={39} className="block" />
           <span className="sr-only">Closebuy</span>
           <h1 className="text-xl font-bold text-primary">Closebuy</h1>
         </Link>
