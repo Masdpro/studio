@@ -4,6 +4,7 @@
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
 import { ProductListItem } from '@/components/vendor/ProductListItem';
+import { EditProductDialog } from '@/components/vendor/EditProductDialog';
 import type { Product } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackagePlus, PackageSearch, Loader2 } from 'lucide-react';
@@ -16,6 +17,8 @@ export default function VendorProductManagementPage() {
   const { user, role, loading: authLoading } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchProducts = useCallback(async () => {
@@ -59,9 +62,8 @@ export default function VendorProductManagementPage() {
   };
 
   const handleEditProduct = (productToEdit: Product) => {
-    // Placeholder for edit functionality
-    console.log('Editing product:', productToEdit);
-    toast({ title: "Edit Action", description: `Editing ${productToEdit.name}. (Feature not fully implemented)` });
+    setEditingProduct(productToEdit);
+    setIsEditDialogOpen(true);
   };
 
   const handleDeleteProduct = async (productId: string) => {
@@ -139,6 +141,13 @@ export default function VendorProductManagementPage() {
           </CardContent>
         </Card>
       </div>
+
+      <EditProductDialog
+        product={editingProduct}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSaved={fetchProducts}
+      />
     </div>
   );
 }
