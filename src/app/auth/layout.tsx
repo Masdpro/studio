@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
 
 // Deliberately outside the (app) route group: login/signup pages shouldn't
 // show the main app's sidebar, wallet balance, cart, or notifications —
@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
       <Link href="/" className="mb-8 flex items-center gap-2 text-xl font-bold text-primary">
-        <ShoppingBag className="h-6 w-6" />
+        <Image src="/logo-192.png" alt="" width={28} height={28} className="rounded-md" />
         Closebuy
       </Link>
       {children}

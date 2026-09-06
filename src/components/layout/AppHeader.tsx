@@ -2,9 +2,10 @@
 'use client'; // Ensure this is a client component for useState and event handlers
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, UserCircle, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, UserCircle } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -34,7 +35,7 @@ export function AppHeader() {
           <SidebarTrigger />
         </div>
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-          <ShoppingBag className="h-6 w-6 text-primary" />
+          <Image src="/logo-192.png" alt="" width={28} height={28} className="rounded-md" />
           <span className="sr-only">Closebuy</span>
           <h1 className="text-xl font-bold text-primary">Closebuy</h1>
         </Link>
