@@ -114,7 +114,7 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
           <DialogDescription>
@@ -122,7 +122,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
+          <div className="flex-1 min-h-0 overflow-y-auto -mr-6 pr-6">
+          <div className="space-y-4 py-1">
             <FormField
               control={form.control}
               name="name"
@@ -226,7 +228,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
                 </FormItem>
               )}
             />
-            <DialogFooter>
+          </div>
+          </div>
+            <DialogFooter className="pt-4 border-t mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
                 Cancel
               </Button>
