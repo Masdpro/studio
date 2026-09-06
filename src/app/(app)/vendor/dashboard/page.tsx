@@ -149,7 +149,7 @@ export default function VendorDashboardPage() {
                 Keep your business information up to date.
                 {vendor && (
                   <>
-                    {' '}Your status on Dailybuy for taking orders is: <span className="font-semibold">{vendor.status}</span>.
+                    {' '}Your status on Closebuy for taking orders is: <span className="font-semibold">{vendor.status}</span>.
                     Your physical store hours are: <span className="font-semibold">{vendor.operatingHours || 'Not set'}</span>.
                   </>
                 )}
@@ -203,11 +203,11 @@ export default function VendorDashboardPage() {
               <p>
                 Customers can visit your external storefront at:{' '}
                 <Link href={`/vendor/${vendor.id}/store`} className="text-primary underline hover:text-primary/80">
-                  View Your Store Page on Dailybuy
+                  View Your Store Page on Closebuy
                 </Link>
               </p>
             ) : (
-              <p>You have not set an external store URL in your profile. Add one to allow customers to visit your site via Dailybuy.</p>
+              <p>You have not set an external store URL in your profile. Add one to allow customers to visit your site via Closebuy.</p>
             )}
           </CardContent>
         </Card>

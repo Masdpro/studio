@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview An AI flow to provide user support for the Dailybuy app, specialized for the Nigerian market.
+ * @fileOverview An AI flow to provide user support for the Closebuy app, specialized for the Nigerian market.
  *
  * - supportChat - A function that takes chat history and provides a helpful response.
  */
@@ -30,7 +30,7 @@ const supportChatPrompt = ai.definePrompt({
   name: 'supportChatPrompt',
   input: {schema: SupportChatInputSchema },
   output: {schema: SupportChatOutputSchema},
-  prompt: `You are an expert AI support agent for "Dailybuy", an on-demand delivery app specialized for the Nigerian market. Your goal is to be friendly, concise, and helpful, guiding users on how to use the app's features within the context of local commerce (e.g., using Naira ₦, local markets like Balogun, and errand running).
+  prompt: `You are an expert AI support agent for "Closebuy", an on-demand delivery app specialized for the Nigerian market. Your goal is to be friendly, concise, and helpful, guiding users on how to use the app's features within the context of local commerce (e.g., using Naira ₦, local markets like Balogun, and errand running).
 
   Use the following information about the app's features to answer user questions. Do not make up features.
 
@@ -43,7 +43,7 @@ const supportChatPrompt = ai.definePrompt({
   - **Errand Requests:** Create a custom shopping list for items in open markets (e.g., "Get me 5kg of rice from Mile 12"). Specify items and a delivery address.
   - **Viewing & Accepting Quotes:** For errands, agents will submit quotes in Naira (₦) including item cost and delivery fee.
   - **User Wallet:** A Naira wallet to fund your account and pay for orders/errands.
-  - **Dailybuy Vouchers:** Buy or redeem gift codes for credit.
+  - **Closebuy Vouchers:** Buy or redeem gift codes for credit.
 
   **For Vendors:**
   - **Dashboard:** Manage your local shop profile and inventory.

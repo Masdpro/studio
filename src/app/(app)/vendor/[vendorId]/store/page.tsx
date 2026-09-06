@@ -81,7 +81,7 @@ export default function VendorExternalStorePage() {
         </CardHeader>
          <CardContent>
             <Button asChild variant="outline">
-                <Link href="/">Back to Dailybuy Products</Link>
+                <Link href="/">Back to Closebuy Products</Link>
             </Button>
         </CardContent>
       </Card>
@@ -94,8 +94,8 @@ export default function VendorExternalStorePage() {
             <AlertDescription className="text-accent-foreground/90">
               You are viewing an external website hosted by {vendor.businessName}.
               Products browsed here are for informational purposes.
-              To add items to your Dailybuy cart and complete your purchase through Dailybuy,
-              please <Link href="/" className="underline font-semibold hover:text-primary">return to the main Dailybuy product listings</Link> and find these products there.
+              To add items to your Closebuy cart and complete your purchase through Closebuy,
+              please <Link href="/" className="underline font-semibold hover:text-primary">return to the main Closebuy product listings</Link> and find these products there.
             </AlertDescription>
           </Alert>
           <div className="aspect-[16/9] w-full border rounded-lg overflow-hidden shadow-lg">
@@ -113,7 +113,7 @@ export default function VendorExternalStorePage() {
           <AlertTitle>No External Storefront</AlertTitle>
           <AlertDescription>
             {vendor.businessName} has not linked an external website.
-            You can <Link href="/" className="underline hover:text-primary">browse all products on Dailybuy</Link>.
+            You can <Link href="/" className="underline hover:text-primary">browse all products on Closebuy</Link>.
           </AlertDescription>
         </Alert>
       )}

@@ -31,7 +31,7 @@ export function SupportChatWidget() {
     if (isOpen && messages.length === 0) {
       // Add initial greeting message when chat opens for the first time
       const initialMessage: DisplayMessage = {
-        text: "Hello! I'm your AI support assistant. How can I help you navigate the Dailybuy app today?",
+        text: "Hello! I'm your AI support assistant. How can I help you navigate the Closebuy app today?",
         sender: 'ai',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -121,7 +121,7 @@ export function SupportChatWidget() {
                 <Bot className="h-6 w-6 text-primary" />
                 <div>
                   <CardTitle className="text-lg">AI Support</CardTitle>
-                  <p className="text-xs text-muted-foreground">Your guide to Dailybuy</p>
+                  <p className="text-xs text-muted-foreground">Your guide to Closebuy</p>
                 </div>
               </div>
                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
@@ -173,7 +173,7 @@ export function SupportChatWidget() {
               <div className="flex w-full items-center space-x-2">
                 <Input
                   type="text"
-                  placeholder="Ask about Dailybuy..."
+                  placeholder="Ask about Closebuy..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleInputKeyPress}

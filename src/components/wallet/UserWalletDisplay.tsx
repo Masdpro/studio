@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 const INITIAL_BALANCE = 50000.00;
-const MOCK_VOUCHER_CODE_TO_REDEEM = "DAILYBUYNG";
+const MOCK_VOUCHER_CODE_TO_REDEEM = "CLOSEBUYNG";
 const MOCK_VOUCHER_VALUE = 5000.00;
 
 const formatNumberWithCommas = (value: string): string => {
@@ -105,7 +105,7 @@ export function UserWalletDisplay() {
     setVoucherDisplayMode('copy');
     toast({
       title: 'Voucher Purchased!',
-      description: `A Dailybuy Voucher for ₦${amount.toLocaleString()} purchased. Code: ${mockCode}`,
+      description: `A Closebuy Voucher for ₦${amount.toLocaleString()} purchased. Code: ${mockCode}`,
     });
     setBuyVoucherAmount('');
   };
@@ -207,7 +207,7 @@ export function UserWalletDisplay() {
           <div className="space-y-2">
             <h4 className="font-medium leading-none flex items-center gap-2">
                 <Gift className="h-5 w-5 text-primary" />
-                Dailybuy Vouchers
+                Closebuy Vouchers
             </h4>
              <p className="text-sm text-muted-foreground">
               Buy a voucher or redeem one.

@@ -1,4 +1,4 @@
-# Dailybuy (Swiftbuy) — Full-Stack Architecture
+# Closebuy — Full-Stack Architecture
 
 This app started as a Firebase Studio (AI-generated) Next.js prototype: a
 Nigerian hyperlocal marketplace with vendors, customers, delivery agents,
@@ -49,7 +49,7 @@ a small `useAuth()` hook (`user`, `role`, `loading`, `signIn`, `signUp`, `signOu
 - `src/app/api/auth/register/route.ts` — a plain API route for sign-up (Credentials-only auth has no built-in registration flow).
 - `src/context/AuthContext.tsx` — `AuthProvider` (wraps `SessionProvider`) and `useAuth()`.
 - `src/lib/services/{markets,vendors,products,orders}.ts` — typed data-access functions over Drizzle. Each falls back to the bundled sample data if its table is empty, so the UI has something to show before you run `db:seed`.
-- `scripts/seed.ts` (`npm run db:seed`) — populates `dev.db` with the sample markets/vendors/products/agents, plus **one demo login per role** (password `password123` for all): `customer@dailybuy.ng`, `vendor@dailybuy.ng`, `agent@dailybuy.ng`.
+- `scripts/seed.ts` (`npm run db:seed`) — populates `dev.db` with the sample markets/vendors/products/agents, plus **one demo login per role** (password `password123` for all): `customer@closebuy.ng`, `vendor@closebuy.ng`, `agent@closebuy.ng`.
 - `.env.example` — documents every required env var (just `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, and the AI key).
 - Fixed 5 pre-existing TypeScript errors and a Next.js 15 `useSearchParams` prerender error left over from the original AI-generated prototype.
 

@@ -101,7 +101,7 @@ export function VendorRegistrationForm() {
           <UserPlus className="h-6 w-6 text-primary" />
           Vendor Registration
         </CardTitle>
-        <CardDescription>Join Dailybuy as a vendor and start selling your products.</CardDescription>
+        <CardDescription>Join Closebuy as a vendor and start selling your products.</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (

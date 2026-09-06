@@ -104,7 +104,7 @@ export default function VendorProductManagementPage() {
               <PackagePlus className="h-6 w-6 text-primary" />
               Add to Inventory / List Product
             </CardTitle>
-            <CardDescription>Add products from your inventory to display them on Dailybuy.</CardDescription>
+            <CardDescription>Add products from your inventory to display them on Closebuy.</CardDescription>
           </CardHeader>
           <CardContent>
             <Suspense fallback={<p className="text-muted-foreground text-sm">Loading form…</p>}>
@@ -121,7 +121,7 @@ export default function VendorProductManagementPage() {
               <PackageSearch className="h-6 w-6 text-primary" />
               Your Listed Products
             </CardTitle>
-            <CardDescription>View and manage your products listed on Dailybuy.</CardDescription>
+            <CardDescription>View and manage your products listed on Closebuy.</CardDescription>
           </CardHeader>
           <CardContent>
             {products.length === 0 ? (

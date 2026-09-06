@@ -86,8 +86,8 @@ export function NotificationBell() {
 
   const handleTestDesktopNotification = () => {
     showBrowserNotification(
-      'Dailybuy Test Notification', 
-      'This is a test desktop notification from Dailybuy!',
+      'Closebuy Test Notification', 
+      'This is a test desktop notification from Closebuy!',
       '/logo-192.png' // Placeholder icon
     );
   };

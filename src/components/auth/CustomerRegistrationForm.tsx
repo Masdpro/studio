@@ -67,7 +67,7 @@ export function CustomerRegistrationForm() {
           <UserPlus className="h-6 w-6 text-primary" />
           Create Your Account
         </CardTitle>
-        <CardDescription>Sign up to start shopping on Dailybuy.</CardDescription>
+        <CardDescription>Sign up to start shopping on Closebuy.</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (

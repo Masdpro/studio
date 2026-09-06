@@ -63,7 +63,7 @@ export function LoginForm() {
           <LogIn className="h-6 w-6 text-primary" />
           Sign In
         </CardTitle>
-        <CardDescription>Sign in to your Dailybuy account.</CardDescription>
+        <CardDescription>Sign in to your Closebuy account.</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
@@ -115,7 +115,7 @@ export function LoginForm() {
           </Link>
         </p>
         <p className="text-xs">
-          Demo logins (password: password123): customer@dailybuy.ng, vendor@dailybuy.ng, agent@dailybuy.ng
+          Demo logins (password: password123): customer@closebuy.ng, vendor@closebuy.ng, agent@closebuy.ng
         </p>
       </CardFooter>
     </Card>

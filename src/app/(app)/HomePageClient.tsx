@@ -643,7 +643,7 @@ export default function HomePageClient({
               <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-lg mb-2">
                 <Smartphone className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">Dailybuy Mobile is Coming!</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">Closebuy Mobile is Coming!</h2>
               <p className="text-lg text-muted-foreground">
                 We're currently building our Android and iOS apps to make market errands even smoother. Get notifications, real-time GPS tracking, and one-tap checkout.
               </p>

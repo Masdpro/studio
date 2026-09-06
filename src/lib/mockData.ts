@@ -36,8 +36,8 @@ export const sampleMarkets: Market[] = [
 ];
 
 export const sampleDeliveryAgents: DeliveryAgent[] = [
-  { id: 'agent001', name: 'Chinedu Okeke', email: 'chinedu.o@dailybuy.ng', phone: '07033445566', streetAddress: '22 Opebi Road', city: 'Ikeja, Lagos', country: 'Nigeria', vehicleDetails: 'Boxer Motorcycle - Black, Plate: KJA-123-AB', profileManaged: true },
-  { id: 'agent002', name: 'Amina Yusuf', email: 'amina.y@dailybuy.ng', phone: '07011223344', streetAddress: 'Garki District', city: 'Abuja', country: 'Nigeria', vehicleDetails: 'Scooter - White, Plate: ABJ-456-XY', profileManaged: true },
+  { id: 'agent001', name: 'Chinedu Okeke', email: 'chinedu.o@closebuy.ng', phone: '07033445566', streetAddress: '22 Opebi Road', city: 'Ikeja, Lagos', country: 'Nigeria', vehicleDetails: 'Boxer Motorcycle - Black, Plate: KJA-123-AB', profileManaged: true },
+  { id: 'agent002', name: 'Amina Yusuf', email: 'amina.y@closebuy.ng', phone: '07011223344', streetAddress: 'Garki District', city: 'Abuja', country: 'Nigeria', vehicleDetails: 'Scooter - White, Plate: ABJ-456-XY', profileManaged: true },
 ];
 
 export let masterSampleOrders: Order[] = [

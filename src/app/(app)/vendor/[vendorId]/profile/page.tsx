@@ -167,7 +167,7 @@ export default function VendorProfilePage() {
                 <p className="text-sm text-muted-foreground">External Store</p>
                 <Button variant="link" asChild className="p-0 h-auto font-medium">
                   <Link href={`/vendor/${vendor.id}/store`} target="_blank" rel="noopener noreferrer">
-                    Visit {vendor.businessName}'s Store on Dailybuy
+                    Visit {vendor.businessName}'s Store on Closebuy
                   </Link>
                 </Button>
               </div>

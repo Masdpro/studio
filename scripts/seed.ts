@@ -51,9 +51,9 @@ async function main() {
   // password is "password123" for all three.
   const demoPassword = await bcrypt.hash('password123', 10);
   const demoUsers = [
-    { id: 'cust001', email: 'customer@dailybuy.ng', role: 'customer' as const, displayName: 'Demo Customer' },
-    { id: 'vendor001', email: 'vendor@dailybuy.ng', role: 'vendor' as const, displayName: 'Demo Vendor (Mama Cass Kitchen)' },
-    { id: 'agent001', email: 'agent@dailybuy.ng', role: 'delivery_agent' as const, displayName: 'Demo Delivery Agent (Chinedu Okeke)' },
+    { id: 'cust001', email: 'customer@closebuy.ng', role: 'customer' as const, displayName: 'Demo Customer' },
+    { id: 'vendor001', email: 'vendor@closebuy.ng', role: 'vendor' as const, displayName: 'Demo Vendor (Mama Cass Kitchen)' },
+    { id: 'agent001', email: 'agent@closebuy.ng', role: 'delivery_agent' as const, displayName: 'Demo Delivery Agent (Chinedu Okeke)' },
   ];
   for (const u of demoUsers) {
     db.insert(users)

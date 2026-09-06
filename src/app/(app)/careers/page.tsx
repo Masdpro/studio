@@ -25,7 +25,7 @@ export default function CareersPage() {
           Help us build the future of Nigerian Commerce.
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Dailybuy is on a mission to digitize the "hustle" of local markets. We're looking for visionary developers to take our platform to the mobile world.
+          Closebuy is on a mission to digitize the "hustle" of local markets. We're looking for visionary developers to take our platform to the mobile world.
         </p>
       </section>
 
@@ -46,7 +46,7 @@ export default function CareersPage() {
                 <Rocket className="h-5 w-5 text-primary" /> The Opportunity
               </h3>
               <p className="text-muted-foreground leading-relaxed">
-                As our first Mobile Developer, you will be responsible for bringing Dailybuy to the palms of millions. You'll translate our web vision into a native mobile experience, focusing on real-time tracking, seamless payments, and offline-first market interactions.
+                As our first Mobile Developer, you will be responsible for bringing Closebuy to the palms of millions. You'll translate our web vision into a native mobile experience, focusing on real-time tracking, seamless payments, and offline-first market interactions.
               </p>
             </div>
             <div className="space-y-4">

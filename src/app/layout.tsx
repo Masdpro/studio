@@ -9,7 +9,7 @@ import { CartProvider } from '@/context/CartContext';
 // Removed geistSans and geistMono initializations
 
 export const metadata: Metadata = {
-  title: 'Dailybuy',
+  title: 'Closebuy',
   description: 'Your on-demand delivery solution.',
 };
 

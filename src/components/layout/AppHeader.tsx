@@ -35,8 +35,8 @@ export function AppHeader() {
         </div>
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
           <ShoppingBag className="h-6 w-6 text-primary" />
-          <span className="sr-only">Dailybuy</span>
-          <h1 className="text-xl font-bold text-primary">Dailybuy</h1>
+          <span className="sr-only">Closebuy</span>
+          <h1 className="text-xl font-bold text-primary">Closebuy</h1>
         </Link>
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
