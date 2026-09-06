@@ -88,15 +88,15 @@ export function ViewQuotesDialog({ errand, quotes, isOpen, onOpenChange, onAccep
                     <CardContent className="pb-4 space-y-2">
                       <div className="flex justify-between items-baseline">
                         <span className="text-sm text-muted-foreground">Estimated Item(s) Cost:</span>
-                        <span className="font-semibold text-md">${quote.estimatedItemCost.toFixed(2)}</span>
+                        <span className="font-semibold text-md">₦{quote.estimatedItemCost.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-baseline">
                         <span className="text-sm text-muted-foreground">Delivery Fee:</span>
-                        <span className="font-semibold text-md">${quote.deliveryFee.toFixed(2)}</span>
+                        <span className="font-semibold text-md">₦{quote.deliveryFee.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-baseline text-lg font-bold text-primary pt-1 border-t mt-1">
                         <span>Total Estimated Cost:</span>
-                        <span>${quote.totalEstimatedCost.toFixed(2)}</span>
+                        <span>₦{quote.totalEstimatedCost.toLocaleString()}</span>
                       </div>
                       {quote.agentNotes && (
                         <div className="pt-2">

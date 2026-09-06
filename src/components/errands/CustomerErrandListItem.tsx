@@ -123,9 +123,9 @@ export function CustomerErrandListItem({ errand, onViewQuotes, onAcceptQuote }: 
       <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-3 border-t gap-2">
         <div className="text-sm text-muted-foreground">
           {errand.status === 'Delivered' && errand.finalTotalCost ? (
-            <span>Total Paid: ${errand.finalTotalCost.toFixed(2)}</span>
+            <span>Total Paid: ₦{errand.finalTotalCost.toLocaleString()}</span>
           ) : errand.status === 'AgentAssigned' && errand.estimatedTotalItemCost && errand.deliveryFee ? (
-            <span>Est. Total (Accepted Quote): ${(errand.estimatedTotalItemCost + errand.deliveryFee).toFixed(2)}</span>
+            <span>Est. Total (Accepted Quote): ₦{(errand.estimatedTotalItemCost + errand.deliveryFee).toLocaleString()}</span>
           ) : (
             <span>Awaiting Quotes / Acceptance...</span>
           )}

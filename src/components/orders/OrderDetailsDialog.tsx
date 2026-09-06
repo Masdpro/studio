@@ -84,10 +84,10 @@ export function OrderDetailsDialog({ order, isOpen, onOpenChange }: OrderDetails
                   <div key={item.productId + index} className="p-3 bg-muted/50 rounded-md text-sm">
                     <div className="flex justify-between items-start">
                       <p className="font-medium">{item.name} (x{item.quantity})</p>
-                      <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-semibold">₦{(item.price * item.quantity).toLocaleString()}</p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      ${item.price.toFixed(2)} each
+                      ₦{item.price.toLocaleString()} each
                     </p>
                   </div>
                 ))}
@@ -134,17 +134,17 @@ export function OrderDetailsDialog({ order, isOpen, onOpenChange }: OrderDetails
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${(order.totalAmount - order.deliveryFee).toFixed(2)}</span>
+                  <span>₦{(order.totalAmount - order.deliveryFee).toLocaleString()}</span>
                 </div>
                 {order.deliveryPreference === 'delivery' && (
                     <div className="flex justify-between">
                     <span>Delivery Fee:</span>
-                    <span>${order.deliveryFee.toFixed(2)}</span>
+                    <span>₦{order.deliveryFee.toLocaleString()}</span>
                     </div>
                 )}
                 <div className="flex justify-between font-bold text-md pt-1 border-t mt-1">
                   <span>Total Amount:</span>
-                  <span>${order.totalAmount.toFixed(2)}</span>
+                  <span>₦{order.totalAmount.toLocaleString()}</span>
                 </div>
               </div>
             </div>

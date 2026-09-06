@@ -157,9 +157,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Price (₦)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="99.99" {...field} />
+                      <Input type="number" step="0.01" placeholder="4500" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -170,12 +170,12 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
                 name="discountPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Discount Price (Optional)</FormLabel>
+                    <FormLabel>Discount Price (₦, Optional)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="79.99"
+                        placeholder="3800"
                         {...field}
                         value={Number.isFinite(field.value) ? field.value : ''}
                       />

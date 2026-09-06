@@ -72,7 +72,7 @@ export function VendorWalletWidget() {
     setBalance((prev) => prev - amount);
     toast({
       title: 'Withdrawal Initiated!',
-      description: `$${amount.toFixed(2)} has been processed for withdrawal.`,
+      description: `₦${amount.toLocaleString()} has been processed for withdrawal.`,
     });
     setWithdrawAmount('');
   };
@@ -105,7 +105,7 @@ export function VendorWalletWidget() {
       <CardContent className="space-y-6">
         <div className="p-6 bg-muted rounded-lg">
           <p className="text-sm text-muted-foreground mb-1">Current Balance</p>
-          <p className="text-4xl font-bold text-primary">${balance.toFixed(2)}</p>
+          <p className="text-4xl font-bold text-primary">₦{balance.toLocaleString()}</p>
         </div>
         
         <div className="space-y-2">

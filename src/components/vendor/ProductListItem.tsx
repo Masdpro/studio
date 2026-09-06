@@ -30,7 +30,7 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
           {product.category || 'Uncategorized'}
         </CardDescription>
         <p className="text-sm line-clamp-2">{product.description}</p>
-        <p className="text-md font-bold text-primary mt-1">${product.price.toFixed(2)}</p>
+        <p className="text-md font-bold text-primary mt-1">₦{product.price.toLocaleString()}</p>
       </div>
       <div className="flex gap-2 mt-2 md:mt-0 md:flex-col">
         {onEdit && (
