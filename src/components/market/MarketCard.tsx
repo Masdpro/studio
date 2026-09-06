@@ -1,7 +1,7 @@
 
 'use client';
 
-import Image from 'next/image';
+import { SafeImage } from '@/components/ui/safe-image';
 import type { Market } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, ArrowRight } from 'lucide-react';
@@ -19,8 +19,8 @@ export function MarketCard({ market, storeCount, onClick }: MarketCardProps) {
       onClick={() => onClick(market)}
     >
       <div className="relative aspect-video w-full overflow-hidden">
-        <Image 
-          src={market.imageUrl} 
+        <SafeImage
+          src={market.imageUrl}
           alt={market.name} 
           fill 
           className="object-cover group-hover:scale-105 transition-transform duration-500"

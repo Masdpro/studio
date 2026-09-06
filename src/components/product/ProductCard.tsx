@@ -1,7 +1,7 @@
 
 'use client';
 
-import Image from 'next/image';
+import { SafeImage } from '@/components/ui/safe-image';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -55,7 +55,7 @@ export function ProductCard({
   return (
     <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <div className="relative w-full h-48 overflow-hidden bg-muted">
-        <Image
+        <SafeImage
           src={product.imageUrl || "https://placehold.co/300x200.png"}
           alt={product.name}
           fill={true}

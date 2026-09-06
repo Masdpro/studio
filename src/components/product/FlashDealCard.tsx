@@ -1,7 +1,7 @@
 
 'use client';
 
-import Image from 'next/image';
+import { SafeImage } from '@/components/ui/safe-image';
 import type { Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ export function FlashDealCard({ product }: FlashDealCardProps) {
         </Badge>
       </div>
       <div className="relative aspect-square w-full">
-        <Image
+        <SafeImage
           src={product.imageUrl}
           alt={product.name}
           fill

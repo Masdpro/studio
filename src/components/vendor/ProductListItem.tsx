@@ -1,5 +1,5 @@
 
-import Image from 'next/image';
+import { SafeImage } from '@/components/ui/safe-image';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,7 +15,7 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
   return (
     <Card className="flex flex-col md:flex-row items-center gap-4 p-4 rounded-lg shadow-sm">
       <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-md overflow-hidden shrink-0">
-        <Image
+        <SafeImage
           src={product.imageUrl || "https://placehold.co/128x128.png"}
           alt={product.name}
           fill={true}

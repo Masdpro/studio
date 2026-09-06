@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -17,6 +17,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,8 +26,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import type { Product } from '@/lib/types';
+import { SafeImage } from '@/components/ui/safe-image';
 
 const editProductSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
@@ -65,6 +67,14 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
     resolver: zodResolver(editProductSchema),
     defaultValues: productToFormValues(product),
   });
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => fieldOnChange(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   // Re-sync the form whenever a different product is opened for editing.
   useEffect(() => {
@@ -178,10 +188,27 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Product Image</FormLabel>
                   <FormControl>
-                    <Input type="url" placeholder="https://example.com/image.jpg" {...field} />
+                    <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, field.onChange)} />
                   </FormControl>
+                  {field.value && (
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="relative w-20 h-20 border rounded-md overflow-hidden shrink-0">
+                        <SafeImage src={field.value} alt="Product preview" fill style={{ objectFit: 'cover' }} sizes="80px" />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => field.onChange('')}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Remove Image
+                      </Button>
+                    </div>
+                  )}
+                  <FormDescription>Upload a photo from your device.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

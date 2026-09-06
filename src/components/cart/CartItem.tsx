@@ -1,7 +1,7 @@
 
 'use client';
 
-import Image from 'next/image';
+import { SafeImage } from '@/components/ui/safe-image';
 import type { CartItem as CartItemType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,7 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border-b">
       <div className="relative w-20 h-20 rounded-md overflow-hidden sm:shrink-0">
-        <Image
+        <SafeImage
           src={item.imageUrl || "https://placehold.co/80x80.png"}
           alt={item.name} 
           fill={true}

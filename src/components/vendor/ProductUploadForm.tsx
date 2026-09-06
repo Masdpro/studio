@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Image from 'next/image';
+import { SafeImage } from '@/components/ui/safe-image';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -362,29 +362,11 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                         Selected file: {selectedFileName}
                       </p>
                     )}
-                    <div className="relative flex items-center">
-                      <span className="absolute left-3 text-muted-foreground text-sm">URL:</span>
-                      <Input
-                          type="url"
-                          placeholder="Or paste image URL"
-                          className="pl-12"
-                          value={field.value?.startsWith('http') ? field.value : ''}
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                            setSelectedFileName(null);
-                            if (fileInputRef.current) {
-                              fileInputRef.current.value = '';
-                            }
-                          }}
-                          disabled={!!(field.value && field.value.startsWith('data:'))}
-                        />
-                    </div>
-
                   </div>
                 </FormControl>
                 {field.value && (
                   <div className="mt-4 relative w-32 h-32 border rounded-md overflow-hidden">
-                    <Image
+                    <SafeImage
                       src={field.value}
                       alt="Product Preview"
                       fill={true}
@@ -406,7 +388,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
                     </Button>
                 )}
                 <FormDescription>
-                  Upload an image file or paste a direct URL for the product image.
+                  Upload a photo from your device.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
