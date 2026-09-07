@@ -16,11 +16,11 @@
   },
   "products": {
     "jollof": { "url": "https://picsum.photos/seed/prd_jollof/600/400", "hint": "jollof rice" },
-    "yam": { "url": "https://picsum.photos/seed/prd_yam/600/400", "hint": "yam tubers" },
-    "ankara": { "url": "https://picsum.photos/seed/prd_ankara/600/400", "hint": "african fabric" },
-    "plantain": { "url": "https://picsum.photos/seed/prd_plantain/600/400", "hint": "fried plantain" },
-    "palmoil": { "url": "https://picsum.photos/seed/prd_palmoil/600/400", "hint": "palm oil" },
-    "electronics": { "url": "https://picsum.photos/seed/prd_phone/600/400", "hint": "smartphone android" },
+    "yam": { "url": "/products/yam.jpg", "hint": "yam tubers" },
+    "ankara": { "url": "/products/ankara.jpg", "hint": "african fabric" },
+    "plantain": { "url": "/products/plantain.jpg", "hint": "fried plantain" },
+    "palmoil": { "url": "/products/palmoil.jpg", "hint": "palm oil" },
+    "electronics": { "url": "/products/phone.jpg", "hint": "smartphone android" },
     "bread": { "url": "https://picsum.photos/seed/prd_agege/600/400", "hint": "fresh bread" },
     "suya": { "url": "https://picsum.photos/seed/prd_suya/600/400", "hint": "grilled meat" }
   }
