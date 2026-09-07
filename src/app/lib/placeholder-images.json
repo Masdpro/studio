@@ -15,13 +15,13 @@
     }
   },
   "products": {
-    "jollof": { "url": "https://picsum.photos/seed/prd_jollof/600/400", "hint": "jollof rice" },
+    "jollof": { "url": "/products/jollof.jpg", "hint": "jollof rice" },
     "yam": { "url": "/products/yam.jpg", "hint": "yam tubers" },
     "ankara": { "url": "/products/ankara.jpg", "hint": "african fabric" },
     "plantain": { "url": "/products/plantain.jpg", "hint": "fried plantain" },
     "palmoil": { "url": "/products/palmoil.jpg", "hint": "palm oil" },
     "electronics": { "url": "/products/phone.jpg", "hint": "smartphone android" },
-    "bread": { "url": "https://picsum.photos/seed/prd_agege/600/400", "hint": "fresh bread" },
-    "suya": { "url": "https://picsum.photos/seed/prd_suya/600/400", "hint": "grilled meat" }
+    "bread": { "url": "/products/bread.jpg", "hint": "fresh bread" },
+    "suya": { "url": "/products/suya.jpg", "hint": "grilled meat" }
   }
 }
