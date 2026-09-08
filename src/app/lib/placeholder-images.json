@@ -2,15 +2,15 @@
 {
   "markets": {
     "lagos": {
-      "url": "https://picsum.photos/seed/mkt_lagos/800/500",
+      "url": "/markets/lagos.jpg",
       "hint": "lagos market"
     },
     "abuja": {
-      "url": "https://picsum.photos/seed/mkt_abuja/800/500",
+      "url": "/markets/abuja.jpg",
       "hint": "abuja city"
     },
     "enugu": {
-      "url": "https://picsum.photos/seed/mkt_enugu/800/500",
+      "url": "/markets/enugu.jpg",
       "hint": "nigeria market"
     }
   },
