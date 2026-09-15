@@ -6,20 +6,17 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Order, DeliveryAgent } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Star, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now, consider a dedicated AgentWalletWidget
 import { OrderListItem } from '@/components/orders/OrderListItem';
 import { BarcodeScannerDialog, type ScanPurpose } from '@/components/delivery/BarcodeScannerDialog';
 import { Separator } from '@/components/ui/separator';
-import { masterSampleOrders, sampleDeliveryAgents } from '@/lib/mockData';
-
-// Use a specific agent from mockData
-const MOCK_CURRENT_AGENT_ID = 'agent001'; // Alex Rider
-const currentAgent = sampleDeliveryAgents.find(a => a.id === MOCK_CURRENT_AGENT_ID) || sampleDeliveryAgents[0];
-
+import { useAuth } from '@/context/AuthContext';
 
 export default function DeliveryAgentDashboardPage() {
+  const { user, role, loading: authLoading } = useAuth();
   const [agent, setAgent] = useState<DeliveryAgent | null>(null);
   // Store all orders and derive subsections from it
   const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -31,34 +28,49 @@ export default function DeliveryAgentDashboardPage() {
 
   const { toast } = useToast();
 
- useEffect(() => {
-    setAgent(currentAgent);
-    // Set the master list of orders. In a real app, this would be fetched.
-    // For the demo, we'll sort them initially.
-    // Ensure masterSampleOrders is properly loaded
-    if (masterSampleOrders && masterSampleOrders.length > 0) {
-        setAllOrders([...masterSampleOrders].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-    } else {
-        setAllOrders([]); // Handle case where mockData might be empty or undefined
+  const loadDashboard = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [agentRes, ordersRes] = await Promise.all([fetch('/api/delivery-agent/profile'), fetch('/api/orders')]);
+      if (agentRes.ok) {
+        const { agent } = await agentRes.json();
+        setAgent(agent);
+      }
+      if (ordersRes.ok) {
+        const { orders } = await ordersRes.json();
+        setAllOrders(
+          orders
+            .map((o: Order) => ({ ...o, createdAt: new Date(o.createdAt) }))
+            .sort((a: Order, b: Order) => b.createdAt.getTime() - a.createdAt.getTime())
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (!authLoading && user && role === 'delivery_agent') {
+      loadDashboard();
+    } else if (!authLoading) {
+      setIsLoading(false);
+    }
+  }, [authLoading, user, role, loadDashboard]);
 
-  const updateOrderStatus = useCallback((orderId: string, newStatus: Order['status'], agentIdForAssignment?: string) => {
-    setAllOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId
-          ? { ...order, status: newStatus, deliveryAgentId: agentIdForAssignment || order.deliveryAgentId }
-          : order
-      )
-    );
+  const updateOrder = useCallback(async (orderId: string, status: Order['status'], extra: Record<string, unknown> = {}) => {
+    const res = await fetch(`/api/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, ...extra }),
+    });
+    return res.ok;
   }, []);
 
-  const handleAcceptDelivery = (orderId: string) => {
-    const orderToAccept = allOrders.find(o => o.id === orderId && o.status === 'ReadyForPickup' && !o.deliveryAgentId);
-    if (orderToAccept && agent) {
-      updateOrderStatus(orderId, 'AcceptedByAgent', agent.id);
+  const handleAcceptDelivery = async (orderId: string) => {
+    if (!agent) return;
+    const ok = await updateOrder(orderId, 'AcceptedByAgent', { deliveryAgentId: agent.id });
+    if (ok) {
+      setAllOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'AcceptedByAgent', deliveryAgentId: agent.id } : o)));
       toast({
         title: 'Delivery Accepted!',
         description: `Order ${orderId} is now assigned to you.`,
@@ -72,21 +84,46 @@ export default function DeliveryAgentDashboardPage() {
     setIsScannerOpen(true);
   };
 
-  const handleScanSuccess = (orderId: string, purpose: ScanPurpose) => {
-    if (purpose === 'pickup') {
-      updateOrderStatus(orderId, 'PickedUpByAgent');
-      toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });
-    } else if (purpose === 'delivery') {
-      updateOrderStatus(orderId, 'Delivered');
-      toast({ title: 'Delivery Confirmed', description: `Order ${orderId} delivered to customer.` });
+  const handleScanSuccess = async (orderId: string, purpose: ScanPurpose) => {
+    const newStatus = purpose === 'pickup' ? 'PickedUpByAgent' : 'Delivered';
+    const ok = await updateOrder(orderId, newStatus);
+    if (ok) {
+      setAllOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+      if (purpose === 'pickup') {
+        toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });
+      } else {
+        toast({ title: 'Delivery Confirmed', description: `Order ${orderId} delivered to customer.` });
+      }
     }
   };
 
-  if (isLoading || !agent) {
+  if (authLoading || isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
         <p className="mt-4 text-lg text-muted-foreground">Loading agent dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!user || role !== 'delivery_agent') {
+    return (
+      <div className="container mx-auto py-8 text-center space-y-4">
+        <p className="text-lg text-muted-foreground">Sign in with a delivery agent account to view your dashboard.</p>
+        <Button asChild>
+          <Link href="/auth/login">Sign In</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (!agent) {
+    return (
+      <div className="container mx-auto py-8 text-center space-y-4">
+        <p className="text-lg text-muted-foreground">You haven&apos;t set up your delivery agent profile yet.</p>
+        <Button asChild>
+          <Link href="/auth/register/delivery-agent">Complete Your Profile</Link>
+        </Button>
       </div>
     );
   }

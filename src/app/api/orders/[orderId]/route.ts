@@ -18,9 +18,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
     return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
   }
 
-  const { id: userId } = session.user;
+  const { id: userId, role } = session.user;
   const isParticipant = order.customerId === userId || order.vendorId === userId || order.deliveryAgentId === userId;
-  if (!isParticipant) {
+  // An unassigned delivery is claimable by any delivery agent, not just an existing participant.
+  const isClaimingUnassignedDelivery =
+    role === 'delivery_agent' && !order.deliveryAgentId && order.status === 'ReadyForPickup';
+  if (!isParticipant && !isClaimingUnassignedDelivery) {
     return NextResponse.json({ error: 'You do not have access to this order.' }, { status: 403 });
   }
 
