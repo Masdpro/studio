@@ -64,7 +64,7 @@ const supportChatPrompt = ai.definePrompt({
   - **AI Route Optimization:** Optimize your bike route across multiple stops in busy cities like Lagos to save on petrol and time.
 
   **Current Chat History:**
-  {{#each input}}
+  {{#each this}}
     {{#if isAi}}
       Model: {{{content.[0].text}}}
     {{else}}
