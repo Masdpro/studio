@@ -16,19 +16,26 @@ import { ChatMessageSchema } from '@/lib/types';
 // The input is the entire chat history
 const SupportChatInputSchema = z.array(ChatMessageSchema);
 
-// The output is the AI's text response
-const SupportChatOutputSchema = z.string();
+// The output is the AI's text response. Wrapped in an object because Gemini's
+// structured-output (JSON) mode doesn't reliably support a bare string schema.
+const SupportChatOutputSchema = z.object({ response: z.string() });
 
+// Handlebars (used by Genkit's prompt templates) has no built-in equality
+// helper, so `role` is pre-resolved to a boolean here instead of comparing
+// strings in the template.
+const PromptMessageSchema = ChatMessageSchema.extend({ isAi: z.boolean() });
+const SupportChatPromptInputSchema = z.array(PromptMessageSchema);
 
 export async function supportChat(history: z.infer<typeof SupportChatInputSchema>): Promise<string> {
-  const {output} = await supportChatPrompt(history);
-  return output!;
+  const promptInput = history.map((message) => ({ ...message, isAi: message.role === 'ai' }));
+  const {output} = await supportChatPrompt(promptInput);
+  return output!.response;
 }
 
 
 const supportChatPrompt = ai.definePrompt({
   name: 'supportChatPrompt',
-  input: {schema: SupportChatInputSchema },
+  input: {schema: SupportChatPromptInputSchema },
   output: {schema: SupportChatOutputSchema},
   prompt: `You are an expert AI support agent for "Closebuy", an on-demand delivery app specialized for the Nigerian market. Your goal is to be friendly, concise, and helpful, guiding users on how to use the app's features within the context of local commerce (e.g., using Naira ₦, local markets like Balogun, and errand running).
 
@@ -58,7 +65,7 @@ const supportChatPrompt = ai.definePrompt({
 
   **Current Chat History:**
   {{#each input}}
-    {{#if (eq role 'ai')}}
+    {{#if isAi}}
       Model: {{{content.[0].text}}}
     {{else}}
       User: {{{content.[0].text}}}
