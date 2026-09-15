@@ -60,6 +60,7 @@ export default function HomePageClient({
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const { toast } = useToast();
 
   const selectedLocationRef = useRef(selectedLocation);
@@ -147,15 +148,19 @@ export default function HomePageClient({
     }
     setIsLocating(true);
     setLocationError(null);
+    setResolvedAddress(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setUserCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
+        const { latitude, longitude } = position.coords;
+        setUserCoords({ latitude, longitude });
         setIsLocating(false);
         toast({ title: "Location Found!", description: "Filtering by your current location."});
+
+        fetch(`/api/geocode/reverse?lat=${latitude}&lon=${longitude}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => setResolvedAddress(data?.address ?? null))
+          .catch(() => setResolvedAddress(null));
       },
       (error) => {
         let message = "Could not retrieve your location.";
@@ -164,6 +169,7 @@ export default function HomePageClient({
         }
         setLocationError(message);
         setIsLocating(false);
+        setResolvedAddress(null);
         toast({ title: "Location Error", description: message, variant: "destructive" });
         if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
           setSelectedLocation(ALL_LOCATIONS_VALUE);
@@ -180,6 +186,7 @@ export default function HomePageClient({
         setUserCoords(null);
         setLocationError(null);
         setIsLocating(false);
+        setResolvedAddress(null);
       }
     }
   }, [selectedLocation, handleFetchUserLocation]);
@@ -477,6 +484,12 @@ export default function HomePageClient({
                   </SelectContent>
                 </Select>
                 {isLocating && <p className="text-xs text-muted-foreground mt-2">Fetching your location...</p>}
+                {!isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE && (
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    {resolvedAddress ?? 'Resolving address…'}
+                  </p>
+                )}
                 {locationError && (
                   <Alert variant="destructive" className="mt-2 py-2 px-3">
                     <AlertCircle className="h-4 w-4" />
