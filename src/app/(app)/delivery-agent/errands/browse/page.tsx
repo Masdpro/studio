@@ -2,17 +2,13 @@
 // src/app/(app)/delivery-agent/errands/browse/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { ErrandRequest, ErrandQuote } from '@/lib/types';
 import { AvailableErrandListItem } from '@/components/errands/AvailableErrandListItem';
 import { SubmitQuoteDialog } from '@/components/errands/SubmitQuoteDialog'; // Import the dialog
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Search, ShoppingBasket } from 'lucide-react';
-import { sampleErrandRequests, sampleErrandQuotes, sampleDeliveryAgents } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
-
-// Simulate a logged-in delivery agent
-const MOCK_CURRENT_AGENT_ID = sampleDeliveryAgents[0].id; // Alex Rider
 
 export default function BrowseErrandsPage() {
   const [availableErrands, setAvailableErrands] = useState<ErrandRequest[]>([]);
@@ -23,19 +19,27 @@ export default function BrowseErrandsPage() {
   const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
   const [selectedErrandForQuote, setSelectedErrandForQuote] = useState<ErrandRequest | null>(null);
 
-  useEffect(() => {
+  const loadErrands = useCallback(async () => {
     setIsLoading(true);
-    // Filter errands that are 'PendingQuotes' or 'AwaitingAcceptance' and don't already have a quote from THIS agent
-    const openForQuoteErrands = sampleErrandRequests.filter((errand) => {
-      const hasAgentAlreadyQuoted = sampleErrandQuotes.some(
-        (quote) => quote.errandRequestId === errand.id && quote.agentId === MOCK_CURRENT_AGENT_ID
-      );
-      return (errand.status === 'PendingQuotes' || errand.status === 'AwaitingAcceptance') && !errand.assignedAgentId && !hasAgentAlreadyQuoted;
-    }).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-    
-    setAvailableErrands(openForQuoteErrands);
-    setIsLoading(false);
-  }, []);
+    try {
+      const res = await fetch('/api/errands');
+      if (!res.ok) throw new Error('Failed to load available errands.');
+      const { errands } = (await res.json()) as { errands: ErrandRequest[] };
+      setAvailableErrands(errands);
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Failed to load available errands.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    loadErrands();
+  }, [loadErrands]);
 
   const handleOpenQuoteDialog = (errandId: string) => {
     const errandToQuote = availableErrands.find(e => e.id === errandId);
@@ -45,33 +49,31 @@ export default function BrowseErrandsPage() {
     }
   };
 
-  const handleSubmitQuote = (
+  const handleSubmitQuote = async (
     quoteData: Omit<ErrandQuote, 'id' | 'errandRequestId' | 'agentId' | 'totalEstimatedCost' | 'status' | 'createdAt'>
   ) => {
     if (!selectedErrandForQuote) return;
 
-    const newQuote: ErrandQuote = {
-      ...quoteData,
-      id: `quote${Date.now()}`,
-      errandRequestId: selectedErrandForQuote.id,
-      agentId: MOCK_CURRENT_AGENT_ID,
-      totalEstimatedCost: quoteData.estimatedItemCost + quoteData.deliveryFee,
-      status: 'Pending',
-      createdAt: new Date(),
-    };
-
-    // Mock: Add to sampleErrandQuotes (in a real app, this would be an API call)
-    sampleErrandQuotes.push(newQuote);
-    console.log("New quote submitted:", newQuote);
-
-    // Mock: Update errand status if it was PendingQuotes
-    setAvailableErrands(prev => prev.map(errand => 
-        errand.id === selectedErrandForQuote.id && errand.status === 'PendingQuotes' 
-        ? {...errand, status: 'AwaitingAcceptance' as const}
-        : errand
-    ).filter(errand => errand.id !== selectedErrandForQuote.id)); // Remove from available if quoted
-
-    setSelectedErrandForQuote(null); // Reset
+    try {
+      const res = await fetch(`/api/errands/${selectedErrandForQuote.id}/quotes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quoteData),
+      });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: 'Failed to submit quote.' }));
+        throw new Error(error ?? 'Failed to submit quote.');
+      }
+      setAvailableErrands(prev => prev.filter(errand => errand.id !== selectedErrandForQuote.id));
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Failed to submit quote.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSelectedErrandForQuote(null);
+    }
   };
 
 

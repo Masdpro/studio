@@ -7,13 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShoppingBasket, Clock, CheckCircle, XCircle, Hourglass, AlertTriangle, Truck, UserCheck, FileText, Handshake } from 'lucide-react';
 import { format } from 'date-fns';
-import { sampleErrandQuotes } from '@/lib/mockData'; // For checking if quotes exist
 
 interface CustomerErrandListItemProps {
   errand: ErrandRequest;
+  pendingQuoteCount?: number;
   onViewQuotes?: (errandId: string) => void;
   onAcceptQuote?: (errandId: string, quoteId: string) => void; // Placeholder for now
-  // onCancelErrand?: (errandId: string) => void; 
+  // onCancelErrand?: (errandId: string) => void;
 }
 
 const getStatusVariant = (status: ErrandRequest['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -53,7 +53,7 @@ const getStatusIcon = (status: ErrandRequest['status']) => {
   }
 };
 
-export function CustomerErrandListItem({ errand, onViewQuotes, onAcceptQuote }: CustomerErrandListItemProps) {
+export function CustomerErrandListItem({ errand, pendingQuoteCount = 0, onViewQuotes, onAcceptQuote }: CustomerErrandListItemProps) {
   const displayDate = format(new Date(errand.createdAt), 'PPpp');
 
   const getDisplayStatusText = (status: ErrandRequest['status']) => {
@@ -71,8 +71,7 @@ export function CustomerErrandListItem({ errand, onViewQuotes, onAcceptQuote }: 
     return map[status] || status;
   };
 
-  const quotesForThisErrand = sampleErrandQuotes.filter(q => q.errandRequestId === errand.id && q.status === 'Pending');
-  const canViewQuotes = (errand.status === 'PendingQuotes' || errand.status === 'AwaitingAcceptance') && quotesForThisErrand.length > 0 && onViewQuotes;
+  const canViewQuotes = (errand.status === 'PendingQuotes' || errand.status === 'AwaitingAcceptance') && pendingQuoteCount > 0 && onViewQuotes;
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
@@ -114,9 +113,9 @@ export function CustomerErrandListItem({ errand, onViewQuotes, onAcceptQuote }: 
             <p className="text-sm">{/* Consider fetching agent name based on ID in real app */}Agent ID: {errand.assignedAgentId.substring(0,8)}...</p>
           </div>
         )}
-         {quotesForThisErrand.length > 0 && errand.status === 'AwaitingAcceptance' && (
+         {pendingQuoteCount > 0 && errand.status === 'AwaitingAcceptance' && (
           <div className="text-sm text-green-600 font-medium">
-            {quotesForThisErrand.length} new quote(s) received!
+            {pendingQuoteCount} new quote(s) received!
           </div>
         )}
       </CardContent>
@@ -138,7 +137,7 @@ export function CustomerErrandListItem({ errand, onViewQuotes, onAcceptQuote }: 
               onClick={() => onViewQuotes && onViewQuotes(errand.id)}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-              <FileText className="mr-2 h-4 w-4" /> View Quotes ({quotesForThisErrand.length})
+              <FileText className="mr-2 h-4 w-4" /> View Quotes ({pendingQuoteCount})
             </Button>
           )}
            {/* Future: Add more actions here based on status like Cancel Errand */}

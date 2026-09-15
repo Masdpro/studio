@@ -18,8 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBasket, Send } from 'lucide-react';
+import { ShoppingBasket, Send, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const errandRequestSchema = z.object({
   itemsDescription: z.string().min(10, { message: 'Please describe the items you need (at least 10 characters).' }).max(1000, { message: 'Description is too long (max 1000 characters).' }),
@@ -32,6 +33,7 @@ type ErrandRequestFormValues = z.infer<typeof errandRequestSchema>;
 export function CreateErrandRequestForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<ErrandRequestFormValues>({
     resolver: zodResolver(errandRequestSchema),
     defaultValues: {
@@ -41,18 +43,32 @@ export function CreateErrandRequestForm() {
     },
   });
 
-  function onSubmit(data: ErrandRequestFormValues) {
-    console.log('Errand request data:', data);
-    // Placeholder for actual submission logic
-    // In a real app, this would create an ErrandRequest in the DB
-    // and update the local state or redirect.
-    toast({
-      title: 'Errand Request Submitted!',
-      description: 'Your errand request has been posted. Agents will now be able to quote on it.',
-    });
-    form.reset();
-    // Optionally, redirect to the "My Errands" page
-    router.push('/errands');
+  async function onSubmit(data: ErrandRequestFormValues) {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/errands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: 'Failed to submit errand request.' }));
+        throw new Error(error ?? 'Failed to submit errand request.');
+      }
+      toast({
+        title: 'Errand Request Submitted!',
+        description: 'Your errand request has been posted. Agents will now be able to quote on it.',
+      });
+      router.push('/errands');
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -119,8 +135,9 @@ export function CreateErrandRequestForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-              <Send className="mr-2 h-4 w-4" /> Post Errand Request
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Post Errand Request
             </Button>
           </form>
         </Form>

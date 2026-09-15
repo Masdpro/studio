@@ -10,58 +10,95 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ShoppingBasket, PlusCircle, Loader2, Search } from 'lucide-react';
-import { sampleErrandRequests, sampleErrandQuotes } from '@/lib/mockData'; 
 import { useToast } from '@/hooks/use-toast';
 
-// Simulate a logged-in customer
-const MOCK_CURRENT_CUSTOMER_ID = 'cust001'; // John Doe
+type QuoteWithAgentName = ErrandQuote & { agentName: string };
 
 export default function MyErrandsPage() {
   const [errands, setErrands] = useState<ErrandRequest[]>([]);
+  const [pendingQuoteCounts, setPendingQuoteCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   // State for ViewQuotesDialog
   const [isQuotesDialogOpen, setIsQuotesDialogOpen] = useState(false);
   const [selectedErrandForQuotes, setSelectedErrandForQuotes] = useState<ErrandRequest | null>(null);
-  const [quotesForSelectedErrand, setQuotesForSelectedErrand] = useState<ErrandQuote[]>([]);
+  const [quotesForSelectedErrand, setQuotesForSelectedErrand] = useState<QuoteWithAgentName[]>([]);
 
+  const loadErrands = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/errands');
+      if (!res.ok) throw new Error('Failed to load errands.');
+      const { errands: fetchedErrands } = (await res.json()) as { errands: ErrandRequest[] };
+      setErrands(fetchedErrands);
+
+      const awaitingAcceptance = fetchedErrands.filter((e) => e.status === 'AwaitingAcceptance');
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        awaitingAcceptance.map(async (errand) => {
+          const quotesRes = await fetch(`/api/errands/${errand.id}/quotes`);
+          if (!quotesRes.ok) return;
+          const { quotes } = (await quotesRes.json()) as { quotes: QuoteWithAgentName[] };
+          counts[errand.id] = quotes.filter((q) => q.status === 'Pending').length;
+        })
+      );
+      setPendingQuoteCounts(counts);
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Failed to load your errands.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    setIsLoading(true);
-    // In a real app, fetch errand requests for the logged-in customer
-    const customerErrands = sampleErrandRequests.filter(
-      (errand) => errand.customerId === MOCK_CURRENT_CUSTOMER_ID
-    ).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-    setErrands(customerErrands);
-    setIsLoading(false);
-  }, []);
+    loadErrands();
+  }, [loadErrands]);
 
-  const handleViewQuotes = (errandId: string) => {
-    const errand = errands.find(e => e.id === errandId);
-    if (errand) {
-      const quotes = sampleErrandQuotes.filter(q => q.errandRequestId === errandId && q.status === 'Pending');
+  const handleViewQuotes = async (errandId: string) => {
+    const errand = errands.find((e) => e.id === errandId);
+    if (!errand) return;
+    try {
+      const res = await fetch(`/api/errands/${errandId}/quotes`);
+      if (!res.ok) throw new Error('Failed to load quotes.');
+      const { quotes } = (await res.json()) as { quotes: QuoteWithAgentName[] };
       setSelectedErrandForQuotes(errand);
-      setQuotesForSelectedErrand(quotes);
+      setQuotesForSelectedErrand(quotes.filter((q) => q.status === 'Pending'));
       setIsQuotesDialogOpen(true);
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Failed to load quotes.',
+        variant: 'destructive',
+      });
     }
   };
-  
-  const handleAcceptQuote = (errandId: string, quoteId: string) => {
-    // This is where the full logic for accepting a quote will go.
-    // For now, just a console log and a toast.
-    console.log(`Customer accepting quote ${quoteId} for errand ${errandId}`);
-    toast({
-      title: 'Accepting Quote (Mock)',
-      description: `Acceptance logic for quote ${quoteId.substring(0,8)} on errand ${errandId.substring(0,8)} is not fully implemented yet.`,
-    });
-    // In a real app:
-    // 1. API call to update ErrandRequest status to 'AgentAssigned'
-    // 2. Update ErrandRequest with assignedAgentId, acceptedQuoteId, estimated costs from quote
-    // 3. Update accepted ErrandQuote status to 'Accepted'
-    // 4. Update other ErrandQuotes for this errand to 'Rejected' or 'Expired'
-    // 5. Update local state for 'errands' to reflect the change
-    setIsQuotesDialogOpen(false); // Close the dialog
+
+  const handleAcceptQuote = async (errandId: string, quoteId: string) => {
+    try {
+      const res = await fetch(`/api/errands/${errandId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acceptedQuoteId: quoteId }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: 'Failed to accept quote.' }));
+        throw new Error(error ?? 'Failed to accept quote.');
+      }
+      toast({ title: 'Quote Accepted!', description: 'An agent has been assigned to your errand.' });
+      setIsQuotesDialogOpen(false);
+      await loadErrands();
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Failed to accept quote.',
+        variant: 'destructive',
+      });
+    }
   };
 
 
@@ -112,6 +149,7 @@ export default function MyErrandsPage() {
             <CustomerErrandListItem
               key={errand.id}
               errand={errand}
+              pendingQuoteCount={pendingQuoteCounts[errand.id] ?? 0}
               onViewQuotes={handleViewQuotes}
               onAcceptQuote={handleAcceptQuote} // Pass down
             />

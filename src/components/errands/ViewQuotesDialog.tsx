@@ -16,13 +16,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { ErrandRequest, ErrandQuote } from '@/lib/types';
-import { sampleDeliveryAgents } from '@/lib/mockData'; // To get agent names
 import { User, DollarSign, MessageSquare, CheckCircle, FileText, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
+type QuoteWithAgentName = ErrandQuote & { agentName: string };
+
 interface ViewQuotesDialogProps {
   errand: ErrandRequest | null;
-  quotes: ErrandQuote[];
+  quotes: QuoteWithAgentName[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onAcceptQuote: (errandId: string, quoteId: string) => void; // Will be fully implemented later
@@ -31,11 +32,6 @@ interface ViewQuotesDialogProps {
 export function ViewQuotesDialog({ errand, quotes, isOpen, onOpenChange, onAcceptQuote }: ViewQuotesDialogProps) {
   if (!errand) return null;
 
-  const getAgentName = (agentId: string) => {
-    const agent = sampleDeliveryAgents.find(a => a.id === agentId);
-    return agent ? agent.name : `Agent ${agentId.substring(0,6)}...`;
-  };
-  
   // Mock agent reviews for display - in real app, this would be fetched
   const getMockAgentReviewCounts = (agentId: string) => {
     // Simple mock: alternate positive/negative counts for demo
@@ -65,7 +61,7 @@ export function ViewQuotesDialog({ errand, quotes, isOpen, onOpenChange, onAccep
           ) : (
             <div className="space-y-4">
               {quotes.map((quote) => {
-                const agentName = getAgentName(quote.agentId);
+                const agentName = quote.agentName;
                 const agentReviewCounts = getMockAgentReviewCounts(quote.agentId); // Mock reviews
                 const quoteTimeAgo = formatDistanceToNow(new Date(quote.createdAt), { addSuffix: true });
                 
@@ -113,7 +109,7 @@ export function ViewQuotesDialog({ errand, quotes, isOpen, onOpenChange, onAccep
                         onClick={() => onAcceptQuote(errand.id, quote.id)}
                         disabled={quote.status !== 'Pending' || errand.status !== 'AwaitingAcceptance'} // Basic condition
                       >
-                        <CheckCircle className="mr-2 h-4 w-4" /> Accept This Quote (Logic Coming Soon)
+                        <CheckCircle className="mr-2 h-4 w-4" /> Accept This Quote
                       </Button>
                     </CardFooter>
                   </Card>
