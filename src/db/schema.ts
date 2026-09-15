@@ -79,6 +79,9 @@ export const orders = sqliteTable('orders', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   deliveryAgentId: text('delivery_agent_id'),
   deliveryPreference: text('delivery_preference', { enum: ['delivery', 'pickup'] }).notNull(),
+  agentLatitude: real('agent_latitude'),
+  agentLongitude: real('agent_longitude'),
+  agentLocationUpdatedAt: integer('agent_location_updated_at', { mode: 'timestamp' }),
 });
 
 export const reviews = sqliteTable('reviews', {

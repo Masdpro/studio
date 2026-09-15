@@ -75,6 +75,9 @@ export type Order = {
   createdAt: Date;
   deliveryAgentId?: string; // Who took the delivery - should be present if agent involved and order delivered
   deliveryPreference: 'delivery' | 'pickup'; // Customer's preference
+  agentLatitude?: number; // Agent's live position while status is PickedUpByAgent
+  agentLongitude?: number;
+  agentLocationUpdatedAt?: Date;
 };
 
 export type TimeWindow = {

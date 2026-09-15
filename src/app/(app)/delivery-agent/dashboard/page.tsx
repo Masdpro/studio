@@ -97,6 +97,36 @@ export default function DeliveryAgentDashboardPage() {
     }
   };
 
+  // Share live location for any order this agent has picked up and is out delivering,
+  // so the customer's tracker map has something to follow.
+  const outForDeliveryIds = agent
+    ? allOrders.filter((o) => o.deliveryAgentId === agent.id && o.status === 'PickedUpByAgent').map((o) => o.id)
+    : [];
+  const outForDeliveryKey = outForDeliveryIds.join(',');
+
+  useEffect(() => {
+    if (!outForDeliveryKey || !navigator.geolocation) return;
+    const orderIds = outForDeliveryKey.split(',');
+
+    const pingLocation = () => {
+      navigator.geolocation.getCurrentPosition(({ coords }) => {
+        for (const orderId of orderIds) {
+          fetch(`/api/orders/${orderId}/location`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude }),
+          }).catch(() => {
+            // A missed ping isn't worth surfacing to the agent — the next tick will retry.
+          });
+        }
+      });
+    };
+
+    pingLocation();
+    const interval = setInterval(pingLocation, 10000);
+    return () => clearInterval(interval);
+  }, [outForDeliveryKey]);
+
   if (authLoading || isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">

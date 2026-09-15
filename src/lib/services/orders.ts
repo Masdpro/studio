@@ -1,7 +1,7 @@
 
 import { db } from '@/db';
 import { orders as ordersTable } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, isNull } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { Order, CartItem } from '@/lib/types';
 import { masterSampleOrders } from '@/lib/mockData';
@@ -21,6 +21,16 @@ export async function getOrdersForVendor(vendorId: string): Promise<Order[]> {
 export async function getOrdersForDeliveryAgent(agentId: string): Promise<Order[]> {
   const rows = db.select().from(ordersTable).where(eq(ordersTable.deliveryAgentId, agentId)).all();
   if (rows.length === 0) return masterSampleOrders.filter((o) => o.deliveryAgentId === agentId);
+  return rows.map(rowToOrder);
+}
+
+/** Unassigned orders any delivery agent can claim: vendor has them ready, no agent attached yet. */
+export async function getUnassignedReadyForPickupOrders(): Promise<Order[]> {
+  const rows = db
+    .select()
+    .from(ordersTable)
+    .where(and(eq(ordersTable.status, 'ReadyForPickup'), isNull(ordersTable.deliveryAgentId)))
+    .all();
   return rows.map(rowToOrder);
 }
 
@@ -59,6 +69,14 @@ export async function updateOrderStatus(orderId: string, status: Order['status']
     .run();
 }
 
+/** Records the delivery agent's live position for this order, e.g. from a periodic geolocation ping. */
+export async function updateOrderLocation(orderId: string, latitude: number, longitude: number): Promise<void> {
+  db.update(ordersTable)
+    .set({ agentLatitude: latitude, agentLongitude: longitude, agentLocationUpdatedAt: new Date() })
+    .where(eq(ordersTable.id, orderId))
+    .run();
+}
+
 function rowToOrder(row: typeof ordersTable.$inferSelect): Order {
   return {
     id: row.id,
@@ -74,5 +92,8 @@ function rowToOrder(row: typeof ordersTable.$inferSelect): Order {
     createdAt: row.createdAt,
     deliveryAgentId: row.deliveryAgentId ?? undefined,
     deliveryPreference: row.deliveryPreference as Order['deliveryPreference'],
+    agentLatitude: row.agentLatitude ?? undefined,
+    agentLongitude: row.agentLongitude ?? undefined,
+    agentLocationUpdatedAt: row.agentLocationUpdatedAt ?? undefined,
   };
 }

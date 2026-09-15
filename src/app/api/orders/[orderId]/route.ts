@@ -4,6 +4,29 @@ import { authOptions } from '@/lib/auth';
 import { getOrderById, updateOrderStatus } from '@/lib/services/orders';
 import type { Order } from '@/lib/types';
 
+/** Returns a single order. Only its customer, vendor, or assigned delivery agent may view it. */
+export async function GET(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
+  const { orderId } = await params;
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
+  }
+
+  const order = await getOrderById(orderId);
+  if (!order) {
+    return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+  }
+
+  const { id: userId } = session.user;
+  const isParticipant = order.customerId === userId || order.vendorId === userId || order.deliveryAgentId === userId;
+  if (!isParticipant) {
+    return NextResponse.json({ error: 'You do not have access to this order.' }, { status: 403 });
+  }
+
+  return NextResponse.json({ order });
+}
+
 /** Updates an order's status. Only the customer, vendor, or assigned delivery agent may do so. */
 export async function PATCH(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;

@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { createOrder, getOrdersForCustomer, getOrdersForVendor, getOrdersForDeliveryAgent } from '@/lib/services/orders';
+import {
+  createOrder,
+  getOrdersForCustomer,
+  getOrdersForVendor,
+  getOrdersForDeliveryAgent,
+  getUnassignedReadyForPickupOrders,
+} from '@/lib/services/orders';
 import { getVendorById } from '@/lib/services/vendors';
 import type { CartItem } from '@/lib/types';
 
@@ -17,7 +23,7 @@ export async function GET() {
     role === 'vendor'
       ? await getOrdersForVendor(id)
       : role === 'delivery_agent'
-        ? await getOrdersForDeliveryAgent(id)
+        ? [...(await getOrdersForDeliveryAgent(id)), ...(await getUnassignedReadyForPickupOrders())]
         : await getOrdersForCustomer(id);
 
   return NextResponse.json({ orders });

@@ -151,7 +151,10 @@ export function OrderListItem({
     }
   }
 
-  const shouldShowViewDetailsButton = order.items.length > 1 || (userRole === 'vendor' && (order.status === 'Processing' || order.status === 'Pending'));
+  const shouldShowViewDetailsButton =
+    order.items.length > 1 ||
+    (userRole === 'vendor' && (order.status === 'Processing' || order.status === 'Pending')) ||
+    (userRole === 'customer' && order.status === 'PickedUpByAgent' && order.deliveryPreference === 'delivery');
 
 
   const canLeaveReview = userRole === 'customer' && (order.status === 'Delivered' || order.status === 'PickedUpByCustomer');

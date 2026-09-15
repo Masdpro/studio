@@ -2,7 +2,14 @@
 // src/components/orders/OrderDetailsDialog.tsx
 'use client';
 
+import dynamic from 'next/dynamic';
 import type { Order } from '@/lib/types';
+
+// Leaflet touches `window` at load time, so this can only ever run client-side.
+const DeliveryMapTracker = dynamic(
+  () => import('./DeliveryMapTracker').then((mod) => mod.DeliveryMapTracker),
+  { ssr: false, loading: () => <div className="h-48 rounded-md border bg-muted/30 animate-pulse" /> }
+);
 import {
   Dialog,
   DialogContent,
@@ -120,7 +127,10 @@ export function OrderDetailsDialog({ order, isOpen, onOpenChange }: OrderDetails
                   <h4 className="font-semibold text-md mb-2 flex items-center gap-2">
                     <Truck className="h-5 w-5 text-primary" /> Delivery Agent
                   </h4>
-                  <p className="text-sm">Agent ID: {order.deliveryAgentId}</p>
+                  <p className="text-sm mb-3">Agent ID: {order.deliveryAgentId}</p>
+                  {order.status === 'PickedUpByAgent' && order.deliveryPreference === 'delivery' && (
+                    <DeliveryMapTracker orderId={order.id} deliveryAddress={order.deliveryAddress} />
+                  )}
                 </div>
               </>
             )}
