@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   }
 
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`,
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`,
     { headers: { 'User-Agent': 'Closebuy-Demo-App (contact: no-reply@closebuy.ng)' } }
   );
 
@@ -26,11 +26,14 @@ export async function GET(request: Request) {
 
   const data = await res.json();
   const a = data.address ?? {};
-  const neighborhood = a.suburb || a.neighbourhood || a.city_district || a.road;
+  // Street-level detail first (house number + road, or the named building/amenity
+  // GPS landed on), then the neighborhood/city/state for context.
+  const street = [a.house_number, a.road].filter(Boolean).join(' ') || a.amenity || a.building;
+  const neighborhood = a.suburb || a.neighbourhood || a.city_district;
   const city = a.city || a.town || a.village || a.county;
   const state = a.state;
 
-  const address = [neighborhood, city, state].filter(Boolean).join(', ') || data.display_name || 'your area';
+  const address = [street, neighborhood, city, state].filter(Boolean).join(', ') || data.display_name || 'your area';
 
   return NextResponse.json({ address });
 }
