@@ -9,6 +9,7 @@ import {
   getUnassignedReadyForPickupOrders,
 } from '@/lib/services/orders';
 import { getVendorById } from '@/lib/services/vendors';
+import { debitWallet } from '@/lib/services/wallets';
 import type { CartItem } from '@/lib/types';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
@@ -61,23 +62,47 @@ export async function POST(request: Request) {
     itemsByVendor.get(vendorId)!.push(item);
   }
 
-  const orderIds: string[] = [];
-  for (const [vendorId, vendorItems] of itemsByVendor) {
-    const vendor = await getVendorById(vendorId);
-    const itemsTotal = vendorItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const deliveryFee = deliveryPreference === 'delivery' ? 1500 : 0;
+  // Resolve each vendor sub-order's total up front so we know the grand total
+  // to charge the wallet before creating anything.
+  const vendorOrders = await Promise.all(
+    Array.from(itemsByVendor.entries()).map(async ([vendorId, vendorItems]) => {
+      const vendor = await getVendorById(vendorId);
+      const itemsTotal = vendorItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const deliveryFee = deliveryPreference === 'delivery' ? 1500 : 0;
+      return {
+        vendorId,
+        vendorItems,
+        totalAmount: itemsTotal + deliveryFee,
+        deliveryFee,
+        pickupAddress: vendor
+          ? `${vendor.businessName}, ${vendor.streetAddress}, ${vendor.city}`
+          : 'Vendor address unavailable',
+      };
+    })
+  );
 
+  const grandTotal = vendorOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+  try {
+    await debitWallet(session.user.id, grandTotal);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Payment failed.' },
+      { status: 402 }
+    );
+  }
+
+  const orderIds: string[] = [];
+  for (const order of vendorOrders) {
     const orderId = await createOrder({
       customerId: session.user.id,
-      vendorId,
-      items: vendorItems,
-      totalAmount: itemsTotal + deliveryFee,
+      vendorId: order.vendorId,
+      items: order.vendorItems,
+      totalAmount: order.totalAmount,
       status: 'Pending',
-      pickupAddress: vendor
-        ? `${vendor.businessName}, ${vendor.streetAddress}, ${vendor.city}`
-        : 'Vendor address unavailable',
+      pickupAddress: order.pickupAddress,
       deliveryAddress,
-      deliveryFee,
+      deliveryFee: order.deliveryFee,
       deliveryPreference,
     });
     orderIds.push(orderId);

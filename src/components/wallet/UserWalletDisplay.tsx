@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Wallet, CreditCard, Gift, CheckCircle, Copy as CopyIcon } from 'lucide-react';
+import { Wallet, CreditCard, Gift, CheckCircle, Copy as CopyIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
-const INITIAL_BALANCE = 50000.00;
 const MOCK_VOUCHER_CODE_TO_REDEEM = "CLOSEBUYNG";
 const MOCK_VOUCHER_VALUE = 5000.00;
 
@@ -33,8 +32,9 @@ const parseFormattedNumber = (value: string): string => {
 };
 
 export function UserWalletDisplay() {
-  const [balance, setBalance] = useState(INITIAL_BALANCE);
+  const [balance, setBalance] = useState(0);
   const [addAmount, setAddAmount] = useState('');
+  const [isFundingWallet, setIsFundingWallet] = useState(false);
   const [buyVoucherAmount, setBuyVoucherAmount] = useState('');
   const [redeemVoucherCode, setRedeemVoucherCode] = useState('');
   const [isClient, setIsClient] = useState(false);
@@ -45,6 +45,12 @@ export function UserWalletDisplay() {
 
   useEffect(() => {
     setIsClient(true);
+    fetch('/api/wallet')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.wallet) setBalance(data.wallet.balance);
+      })
+      .catch(() => {});
   }, []);
 
   const handleAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,7 +64,7 @@ export function UserWalletDisplay() {
     }
   };
 
-  const handleAddFunds = () => {
+  const handleAddFunds = async () => {
     const amount = parseFloat(addAmount);
     if (isNaN(amount) || amount <= 0) {
       toast({
@@ -68,12 +74,24 @@ export function UserWalletDisplay() {
       });
       return;
     }
-    setBalance((prev) => prev + amount);
-    toast({
-      title: 'Funds Added!',
-      description: `₦${amount.toLocaleString()} has been added to your wallet.`,
-    });
-    setAddAmount('');
+    setIsFundingWallet(true);
+    try {
+      const res = await fetch('/api/payments/wallet/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to start payment.');
+      window.location.href = data.authorizationUrl;
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Failed to start payment.',
+        variant: 'destructive',
+      });
+      setIsFundingWallet(false);
+    }
   };
 
   const handleBuyVoucherAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +146,8 @@ export function UserWalletDisplay() {
   };
 
   const handleRedeemVoucher = () => {
+    // Vouchers are still a local-only mock (not wired to Paystack or the DB),
+    // unlike the balance above and "Add Funds" below — reloading loses this.
     if (redeemVoucherCode.toUpperCase() === MOCK_VOUCHER_CODE_TO_REDEEM) {
       setBalance((prev) => prev + MOCK_VOUCHER_VALUE);
       toast({
@@ -196,8 +216,8 @@ export function UserWalletDisplay() {
                 onChange={handleAddAmountChange}
                 className="flex-1"
               />
-              <Button onClick={handleAddFunds} size="icon" aria-label="Add Funds">
-                <CreditCard className="h-4 w-4" />
+              <Button onClick={handleAddFunds} size="icon" aria-label="Add Funds" disabled={isFundingWallet}>
+                {isFundingWallet ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
               </Button>
             </div>
           </div>

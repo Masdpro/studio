@@ -140,3 +140,16 @@ export const wallets = sqliteTable('wallets', {
   balance: real('balance').notNull().default(0),
   currency: text('currency').notNull().default('NGN'),
 });
+
+// One row per Paystack transaction we initialize. Lets the verify step be
+// idempotent (Paystack's redirect can fire more than once for one payment)
+// and gives an audit trail of what was actually paid for.
+export const paymentTransactions = sqliteTable('payment_transactions', {
+  id: text('id').primaryKey(), // the Paystack transaction reference
+  userId: text('user_id').notNull(),
+  purpose: text('purpose', { enum: ['wallet_funding'] }).notNull(),
+  amount: real('amount').notNull(), // Naira
+  status: text('status', { enum: ['pending', 'success', 'failed'] }).notNull().default('pending'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+});
