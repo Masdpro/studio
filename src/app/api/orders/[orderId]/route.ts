@@ -51,10 +51,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   }
 
   const body = await request.json();
-  const { status, ...extra } = body as { status: Order['status'] } & Partial<Order>;
+  const { status } = body as { status: Order['status'] };
   if (!status) {
     return NextResponse.json({ error: 'A new status is required.' }, { status: 400 });
   }
+
+  // The only field besides status any transition ever needs to set is which
+  // agent is claiming an unassigned delivery — and that must always be the
+  // caller themselves, never a client-supplied id. Every other field on the
+  // order (totalAmount, vendorId, customerId, ...) is server-computed and
+  // must never be settable from this endpoint.
+  const extra = isClaimingUnassignedDelivery ? { deliveryAgentId: userId } : {};
 
   await updateOrderStatus(orderId, status, extra);
   return NextResponse.json({ ok: true });
