@@ -82,9 +82,10 @@ export function ShoppingCartView() {
       }
 
       clear();
-      // This just debited the wallet — tell the header's already-mounted
-      // balance display to refetch instead of showing the pre-checkout amount.
+      // This just debited the wallet and created a notification — tell the
+      // header's already-mounted displays to refetch instead of going stale.
       window.dispatchEvent(new Event('wallet:updated'));
+      window.dispatchEvent(new Event('notifications:updated'));
       toast({
         title: 'Order Placed!',
         description: `Your order for ₦${total.toLocaleString()} has been successfully placed.`,

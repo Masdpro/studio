@@ -3,6 +3,7 @@ import { errandRequests as errandRequestsTable, errandQuotes as errandQuotesTabl
 import { eq, and, desc, isNull, ne } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { ErrandRequest, ErrandQuote } from '@/lib/types';
+import { createNotification } from '@/lib/services/notifications';
 
 export async function getErrandRequestsForCustomer(customerId: string): Promise<ErrandRequest[]> {
   const rows = db
@@ -99,6 +100,17 @@ export async function createErrandQuote(data: {
     .where(and(eq(errandRequestsTable.id, data.errandRequestId), eq(errandRequestsTable.status, 'PendingQuotes')))
     .run();
 
+  const errand = db.select().from(errandRequestsTable).where(eq(errandRequestsTable.id, data.errandRequestId)).get();
+  if (errand) {
+    await createNotification({
+      userId: errand.customerId,
+      message: 'You received a new quote for your errand request.',
+      category: 'Activity',
+      link: '/errands',
+      iconName: 'FileText',
+    });
+  }
+
   return id;
 }
 
@@ -125,6 +137,14 @@ export async function acceptErrandQuote(errandId: string, quoteId: string): Prom
     .set({ status: 'Rejected' })
     .where(and(eq(errandQuotesTable.errandRequestId, errandId), ne(errandQuotesTable.id, quoteId)))
     .run();
+
+  await createNotification({
+    userId: quote.agentId,
+    message: 'Your quote was accepted! You have been assigned to an errand.',
+    category: 'Activity',
+    link: '/delivery-agent/dashboard',
+    iconName: 'CheckCircle',
+  });
 }
 
 function rowToErrandRequest(row: typeof errandRequestsTable.$inferSelect): ErrandRequest {

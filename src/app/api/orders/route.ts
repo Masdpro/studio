@@ -10,6 +10,7 @@ import {
 } from '@/lib/services/orders';
 import { getVendorById } from '@/lib/services/vendors';
 import { debitWallet } from '@/lib/services/wallets';
+import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
@@ -106,6 +107,21 @@ export async function POST(request: Request) {
       deliveryPreference,
     });
     orderIds.push(orderId);
+
+    await createNotification({
+      userId: session.user.id,
+      message: `Your order for ₦${order.totalAmount.toLocaleString()} has been placed.`,
+      category: 'Transaction',
+      link: '/orders',
+      iconName: 'ShoppingBag',
+    });
+    await createNotification({
+      userId: order.vendorId,
+      message: `You have a new order for ₦${order.totalAmount.toLocaleString()}.`,
+      category: 'Activity',
+      link: '/vendor/dashboard',
+      iconName: 'PackageCheck',
+    });
   }
 
   return NextResponse.json({ orderIds }, { status: 201 });

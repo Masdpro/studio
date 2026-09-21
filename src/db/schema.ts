@@ -131,7 +131,7 @@ export const notifications = sqliteTable('notifications', {
   read: integer('read', { mode: 'boolean' }).default(false),
   link: text('link'),
   iconName: text('icon_name'),
-  category: text('category', { enum: ['Order', 'Account', 'Promotion', 'System'] }),
+  category: text('category', { enum: ['Transaction', 'Activity', 'Promotion'] }),
 });
 
 export const wallets = sqliteTable('wallets', {

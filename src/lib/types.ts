@@ -125,7 +125,7 @@ export type AppNotification = {
   read: boolean;
   link?: string; // Optional: Path to navigate to on click
   iconName?: keyof typeof import('lucide-react'); // Optional: lucide-react icon name
-  category?: 'Order' | 'Account' | 'Promotion' | 'System'; // Example categories
+  category?: 'Transaction' | 'Activity' | 'Promotion';
 };
 
 export type ErrandRequestStatus =

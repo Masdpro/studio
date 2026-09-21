@@ -3,6 +3,7 @@ import { wallets as walletsTable, paymentTransactions as paymentTransactionsTabl
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { Wallet } from '@/lib/types';
+import { createNotification } from '@/lib/services/notifications';
 
 export async function getOrCreateWallet(userId: string): Promise<Wallet> {
   const existing = db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).get();
@@ -59,6 +60,14 @@ export async function completeWalletFunding(reference: string): Promise<{ alread
     .set({ status: 'success', completedAt: new Date() })
     .where(eq(paymentTransactionsTable.id, reference))
     .run();
+
+  await createNotification({
+    userId: transaction.userId,
+    message: `₦${transaction.amount.toLocaleString()} was added to your wallet. New balance: ₦${newBalance.toLocaleString()}.`,
+    category: 'Transaction',
+    iconName: 'Wallet',
+  });
+
   return { alreadyProcessed: false, newBalance };
 }
 

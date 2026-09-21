@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Bell, CheckCheck, Settings2, X, Zap } from 'lucide-react'; // Added Zap
+import { Bell, CheckCheck, X, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -12,26 +12,30 @@ import type { AppNotification } from '@/lib/types';
 import { NotificationItem } from './NotificationItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast'; // Added useToast
-
-const generateMockNotifications = (): AppNotification[] => [
-  { id: '1', userId: 'user1', message: 'Your order #ORD123 has been placed.', createdAt: new Date(Date.now() - 1000 * 60 * 5), read: false, link: '/orders', iconName: 'ShoppingBag', category: 'Order' },
-  { id: '2', userId: 'user1', message: 'Vendor "Pizza Place" has confirmed your order.', createdAt: new Date(Date.now() - 1000 * 60 * 30), read: false, link: '/orders', iconName: 'PackageCheck', category: 'Order' },
-  { id: '3', userId: 'user1', message: 'Delivery agent Alex is on the way with your order!', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), read: true, link: '/orders', iconName: 'Truck', category: 'Order' },
-  { id: '4', userId: 'user1', message: 'Weekly Special: 20% off all burgers today!', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), read: false, iconName: 'Percent', category: 'Promotion' },
-  { id: '5', userId: 'user1', message: 'Your profile information was updated.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), read: true, link: '/profile', iconName: 'UserCircle', category: 'Account' },
-];
-
+import { useToast } from '@/hooks/use-toast';
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const { toast } = useToast(); // Initialize toast
+  const { toast } = useToast();
+
+  const fetchNotifications = () => {
+    fetch('/api/notifications')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.notifications) {
+          setNotifications(data.notifications.map((n: AppNotification) => ({ ...n, createdAt: new Date(n.createdAt) })));
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
-    setNotifications(generateMockNotifications().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     setIsClient(true);
+    fetchNotifications();
+    window.addEventListener('notifications:updated', fetchNotifications);
+    return () => window.removeEventListener('notifications:updated', fetchNotifications);
   }, []);
 
   const unreadCount = useMemo(() => {
@@ -39,15 +43,15 @@ export function NotificationBell() {
   }, [notifications]);
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    fetch(`/api/notifications/${id}`, { method: 'PATCH' }).catch(() => {});
   };
 
   const handleMarkAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    fetch('/api/notifications', { method: 'PATCH' }).catch(() => {});
   };
-  
+
   const handleNotificationClick = (notification: AppNotification) => {
     if (!notification.link) {
         setIsOpen(false);
@@ -65,7 +69,7 @@ export function NotificationBell() {
       notification.onclick = () => {
         window.focus(); // Bring window to focus
         // Optionally navigate to a specific link or close popover
-        setIsOpen(false); 
+        setIsOpen(false);
       };
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission().then(permission => {
@@ -86,7 +90,7 @@ export function NotificationBell() {
 
   const handleTestDesktopNotification = () => {
     showBrowserNotification(
-      'Closebuy Test Notification', 
+      'Closebuy Test Notification',
       'This is a test desktop notification from Closebuy!',
       '/logo-192.png' // Placeholder icon
     );
@@ -102,7 +106,7 @@ export function NotificationBell() {
   }
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (open) fetchNotifications(); }}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
@@ -152,10 +156,10 @@ export function NotificationBell() {
         </ScrollArea>
         <Separator />
         <div className="p-3 space-y-2">
-           <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full" 
+           <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
             onClick={handleTestDesktopNotification}
           >
             <Zap className="mr-2 h-4 w-4" /> Test Desktop Notification

@@ -2,7 +2,28 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getOrderById, updateOrderStatus } from '@/lib/services/orders';
+import { createNotification } from '@/lib/services/notifications';
 import type { Order } from '@/lib/types';
+
+const STATUS_MESSAGES: Partial<Record<Order['status'], string>> = {
+  Processing: 'Your order is being processed.',
+  ReadyForPickup: 'Your order is ready and waiting for a delivery agent.',
+  ReadyForCustomerPickup: 'Your order is ready for pickup.',
+  AcceptedByAgent: 'A delivery agent has been assigned to your order.',
+  PickedUpByAgent: 'Your order is out for delivery.',
+  Delivered: 'Your order has been delivered.',
+  Cancelled: 'Your order was cancelled.',
+};
+
+const IconByStatus: Partial<Record<Order['status'], string>> = {
+  Processing: 'Loader',
+  ReadyForPickup: 'PackageCheck',
+  ReadyForCustomerPickup: 'PackageCheck',
+  AcceptedByAgent: 'Bike',
+  PickedUpByAgent: 'Truck',
+  Delivered: 'CheckCircle',
+  Cancelled: 'XCircle',
+};
 
 /** Returns a single order. Only its customer, vendor, or assigned delivery agent may view it. */
 export async function GET(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
@@ -64,5 +85,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   const extra = isClaimingUnassignedDelivery ? { deliveryAgentId: userId } : {};
 
   await updateOrderStatus(orderId, status, extra);
+
+  // Notify the customer when someone else (vendor/agent) moves their order
+  // along — not when they triggered the change themselves (e.g. cancelling).
+  if (order.customerId !== userId) {
+    const message = STATUS_MESSAGES[status];
+    if (message) {
+      await createNotification({
+        userId: order.customerId,
+        message,
+        category: 'Activity',
+        link: '/orders',
+        iconName: IconByStatus[status] ?? 'Package',
+      });
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

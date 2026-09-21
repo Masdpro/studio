@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react'; // Import all icons
-import { AlertCircle, CheckCircle, Info, ShoppingBag } from 'lucide-react'; // Default icons
+import { Wallet, Sparkles, Info, ShoppingBag } from 'lucide-react'; // Default icons
 
 interface NotificationItemProps {
   notification: AppNotification;
@@ -26,12 +26,11 @@ export function NotificationItem({ notification, onMarkAsRead, onNotificationCli
       IconComponent = SpecificIcon;
     } else {
       console.warn(`Icon ${notification.iconName} not found in lucide-react. Falling back to default.`);
-      // Fallback based on category or type if needed
+      // Fallback based on category if needed
       switch (notification.category) {
-        case 'Order': IconComponent = ShoppingBag; break;
-        case 'Account': IconComponent = CheckCircle; break;
-        case 'Promotion': IconComponent = Info; break;
-        case 'System': IconComponent = AlertCircle; break;
+        case 'Transaction': IconComponent = Wallet; break;
+        case 'Activity': IconComponent = ShoppingBag; break;
+        case 'Promotion': IconComponent = Sparkles; break;
         default: IconComponent = Info;
       }
     }

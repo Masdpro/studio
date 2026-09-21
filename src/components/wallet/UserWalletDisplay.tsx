@@ -78,6 +78,7 @@ export function UserWalletDisplay() {
         if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to verify payment.');
         if (data.success) {
           setBalance(data.newBalance);
+          window.dispatchEvent(new Event('notifications:updated'));
           toast({
             title: 'Wallet Funded!',
             description: `₦${data.amount.toLocaleString()} was added. New balance: ₦${data.newBalance.toLocaleString()}.`,

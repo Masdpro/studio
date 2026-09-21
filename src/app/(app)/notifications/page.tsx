@@ -2,52 +2,59 @@
 // src/app/(app)/notifications/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { AppNotification } from '@/lib/types';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BellRing, CheckCheck, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BellRing, CheckCheck, Trash2, ArrowLeft, Loader2, Receipt, Activity, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
-// Re-using mockNotifications from NotificationBell for consistency
-const generateMockNotificationsPageData = (): AppNotification[] => [
-  { id: '1', userId: 'user1', message: 'Your order #ORD123 has been placed.', createdAt: new Date(Date.now() - 1000 * 60 * 5), read: false, link: '/orders', iconName: 'ShoppingBag', category: 'Order' },
-  { id: '2', userId: 'user1', message: 'Vendor "Pizza Place" has confirmed your order.', createdAt: new Date(Date.now() - 1000 * 60 * 30), read: false, link: '/orders', iconName: 'PackageCheck', category: 'Order' },
-  { id: '3', userId: 'user1', message: 'Delivery agent Alex is on the way with your order!', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), read: true, link: '/orders', iconName: 'Truck', category: 'Order' },
-  { id: '4', userId: 'user1', message: 'Weekly Special: 20% off all burgers today!', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), read: false, iconName: 'Percent', category: 'Promotion' },
-  { id: '5', userId: 'user1', message: 'Your profile information was updated.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), read: true, link: '/profile', iconName: 'UserCircle', category: 'Account' },
-  { id: '6', userId: 'user1', message: 'System maintenance scheduled for tomorrow at 2 AM.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72), read: true, iconName: 'Settings2', category: 'System' },
-  { id: '7', userId: 'user1', message: 'Your review for order #ORD007 has been published.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 96), read: true, link: '/orders', iconName: 'Star', category: 'Account' },
-];
+type Category = NonNullable<AppNotification['category']>;
 
+const TABS: { value: Category; label: string; icon: typeof Receipt }[] = [
+  { value: 'Transaction', label: 'Transactions', icon: Receipt },
+  { value: 'Activity', label: 'Activities', icon: Activity },
+  { value: 'Promotion', label: 'Promotions', icon: Sparkles },
+];
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate fetching all notifications
-    setNotifications(generateMockNotificationsPageData().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
-    setIsLoading(false);
+  const loadNotifications = useCallback(() => {
+    setIsLoading(true);
+    fetch('/api/notifications')
+      .then((res) => (res.ok ? res.json() : { notifications: [] }))
+      .then((data) => {
+        setNotifications((data.notifications ?? []).map((n: AppNotification) => ({ ...n, createdAt: new Date(n.createdAt) })));
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
   const handleMarkAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    fetch(`/api/notifications/${id}`, { method: 'PATCH' }).catch(() => {});
   };
 
   const handleMarkAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    fetch('/api/notifications', { method: 'PATCH' }).catch(() => {});
   };
 
   const handleDeleteNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+    fetch(`/api/notifications/${id}`, { method: 'DELETE' }).catch(() => {});
   };
-  
+
   const handleDeleteAllNotifications = () => {
     setNotifications([]);
+    fetch('/api/notifications', { method: 'DELETE' }).catch(() => {});
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -60,6 +67,28 @@ export default function NotificationsPage() {
       </div>
     );
   }
+
+  const renderList = (items: AppNotification[]) =>
+    items.length === 0 ? (
+      <p className="text-center text-muted-foreground py-10">Nothing here yet.</p>
+    ) : (
+      <div className="space-y-1">
+        {items.map(notification => (
+          <div key={notification.id} className="group relative pr-10">
+            <NotificationItem notification={notification} onMarkAsRead={handleMarkAsRead} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+              onClick={() => handleDeleteNotification(notification.id)}
+              aria-label="Delete notification"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
 
   return (
     <div className="container mx-auto py-8">
@@ -94,29 +123,20 @@ export default function NotificationsPage() {
             </div>
           </div>
 
-          {notifications.length === 0 ? (
-            <p className="text-center text-muted-foreground py-10">You have no notifications.</p>
-          ) : (
-            <div className="space-y-1">
-              {notifications.map(notification => (
-                <div key={notification.id} className="group relative pr-10">
-                    <NotificationItem
-                    notification={notification}
-                    onMarkAsRead={handleMarkAsRead}
-                    />
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteNotification(notification.id)}
-                        aria-label="Delete notification"
-                    >
-                        <Trash2 className="h-4 w-4"/>
-                    </Button>
-                </div>
+          <Tabs defaultValue="Transaction" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              {TABS.map(({ value, label, icon: Icon }) => (
+                <TabsTrigger key={value} value={value} className="flex items-center gap-2">
+                  <Icon className="h-4 w-4" /> {label}
+                </TabsTrigger>
               ))}
-            </div>
-          )}
+            </TabsList>
+            {TABS.map(({ value }) => (
+              <TabsContent key={value} value={value}>
+                {renderList(notifications.filter((n) => n.category === value))}
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
     </div>
