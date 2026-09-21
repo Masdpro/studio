@@ -65,9 +65,31 @@ export function UserWalletDisplay() {
     return () => window.removeEventListener('wallet:updated', fetchBalance);
   }, []);
 
+  // Shared by both the same-tab redirect-back path below and the new-tab
+  // polling path in handleAddFunds — whichever one actually observes the
+  // payment finish is the one that updates the UI.
+  const applyVerifyResult = (data: { success: boolean; pending?: boolean; error?: string; newBalance?: number; amount?: number }) => {
+    if (data.success) {
+      setBalance(data.newBalance!);
+      window.dispatchEvent(new Event('notifications:updated'));
+      toast({
+        title: 'Wallet Funded!',
+        description: `₦${data.amount!.toLocaleString()} was added. New balance: ₦${data.newBalance!.toLocaleString()}.`,
+      });
+    } else if (!data.pending) {
+      toast({
+        title: 'Payment Not Completed',
+        description: data.error ?? 'Your payment was not successful.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Paystack redirects back to the homepage with ?reference=... after a wallet
-  // top-up. Verify it here (a toast, not a dedicated confirmation page) and
-  // strip the param so a refresh doesn't re-trigger it.
+  // top-up (this fires in whichever tab Paystack actually redirects — the
+  // popup opened in handleAddFunds, if it wasn't blocked). Verify it here (a
+  // toast, not a dedicated confirmation page) and strip the param so a
+  // refresh doesn't re-trigger it.
   useEffect(() => {
     const reference = searchParams.get('reference') ?? searchParams.get('trxref');
     if (!reference) return;
@@ -76,20 +98,7 @@ export function UserWalletDisplay() {
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to verify payment.');
-        if (data.success) {
-          setBalance(data.newBalance);
-          window.dispatchEvent(new Event('notifications:updated'));
-          toast({
-            title: 'Wallet Funded!',
-            description: `₦${data.amount.toLocaleString()} was added. New balance: ₦${data.newBalance.toLocaleString()}.`,
-          });
-        } else {
-          toast({
-            title: 'Payment Not Completed',
-            description: data.error ?? 'Your payment was not successful.',
-            variant: 'destructive',
-          });
-        }
+        applyVerifyResult(data);
       })
       .catch((err) => {
         toast({
@@ -104,6 +113,44 @@ export function UserWalletDisplay() {
     // Only ever check the reference present on the very first load after the redirect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Polls from the ORIGINAL tab, since Paystack opens in a new one and can't
+  // reach back into this component directly. Stops on a definitive result,
+  // when the popup is closed, or after ~5 minutes either way.
+  const pollForPaymentResult = (reference: string, popup: Window) => {
+    let attempts = 0;
+    const maxAttempts = 100;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      let data: { success: boolean; pending?: boolean; error?: string; newBalance?: number; amount?: number } | null = null;
+      try {
+        const res = await fetch(`/api/payments/wallet/verify?reference=${encodeURIComponent(reference)}`);
+        data = await res.json();
+      } catch {
+        // Transient network hiccup — just try again next tick.
+      }
+
+      const isDone = data && (data.success || !data.pending);
+      if (isDone) {
+        clearInterval(interval);
+        setIsFundingWallet(false);
+        applyVerifyResult(data!);
+        return;
+      }
+
+      if (popup.closed || attempts >= maxAttempts) {
+        clearInterval(interval);
+        setIsFundingWallet(false);
+        if (attempts >= maxAttempts) {
+          toast({
+            title: "Couldn't confirm payment",
+            description: 'This is taking longer than expected. Check back shortly, or contact support if you were charged.',
+            variant: 'destructive',
+          });
+        }
+      }
+    }, 3000);
+  };
 
   const handleAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
@@ -135,7 +182,21 @@ export function UserWalletDisplay() {
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to start payment.');
-      window.location.href = data.authorizationUrl;
+
+      // Open Paystack in its own tab rather than navigating Closebuy away —
+      // this tab stays put and polls for the result instead.
+      const popup = window.open(data.authorizationUrl, '_blank');
+      if (!popup) {
+        toast({
+          title: 'Pop-up blocked',
+          description: "Your browser blocked the payment tab — opening it here instead. Allow pop-ups for a smoother experience next time.",
+        });
+        window.location.href = data.authorizationUrl;
+        return;
+      }
+
+      setAddAmount('');
+      pollForPaymentResult(data.reference, popup);
     } catch (err) {
       toast({
         title: 'Something went wrong',

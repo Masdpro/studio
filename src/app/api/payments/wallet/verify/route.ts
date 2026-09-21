@@ -29,7 +29,12 @@ export async function GET(request: Request) {
 
   try {
     const result = await verifyPaystackTransaction(reference);
-    if (!result.success) {
+    if (result.status === 'pending') {
+      // Not a failure — the customer may still be entering card details.
+      // Callers that poll this should keep waiting, not give up.
+      return NextResponse.json({ success: false, pending: true });
+    }
+    if (result.status === 'failed') {
       await markWalletFundingFailed(reference);
       return NextResponse.json({ success: false, error: 'Payment was not successful.' });
     }

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       // the ?reference= param itself and shows a toast, no dedicated page.
       callbackUrl: new URL('/', request.url).toString(),
     });
-    return NextResponse.json({ authorizationUrl });
+    return NextResponse.json({ authorizationUrl, reference });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to start payment.' },

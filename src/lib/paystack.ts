@@ -36,8 +36,13 @@ export async function initializePaystackTransaction(params: {
   return { authorizationUrl: data.data.authorization_url, reference: data.data.reference };
 }
 
+const TERMINAL_FAILURE_STATUSES = new Set(['failed', 'abandoned', 'reversed']);
+
 export async function verifyPaystackTransaction(reference: string): Promise<{
-  success: boolean;
+  // 'pending' means Paystack hasn't reached a final answer yet (the customer
+  // may still be filling in card details) — distinct from a confirmed
+  // failure, so callers that poll this don't give up on an in-progress payment.
+  status: 'success' | 'failed' | 'pending';
   amountNaira: number;
 }> {
   const res = await fetch(`${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`, {
@@ -47,5 +52,7 @@ export async function verifyPaystackTransaction(reference: string): Promise<{
   if (!res.ok || !data.status) {
     throw new Error(data.message ?? 'Failed to verify payment.');
   }
-  return { success: data.data.status === 'success', amountNaira: data.data.amount / 100 };
+  const paystackStatus = data.data.status as string;
+  const status = paystackStatus === 'success' ? 'success' : TERMINAL_FAILURE_STATUSES.has(paystackStatus) ? 'failed' : 'pending';
+  return { status, amountNaira: data.data.amount / 100 };
 }
