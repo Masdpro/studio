@@ -43,14 +43,23 @@ export function UserWalletDisplay() {
   const [generatedVoucherCode, setGeneratedVoucherCode] = useState<string | null>(null);
   const [voucherDisplayMode, setVoucherDisplayMode] = useState<'buy' | 'copy'>('buy');
 
-  useEffect(() => {
-    setIsClient(true);
+  const fetchBalance = () => {
     fetch('/api/wallet')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.wallet) setBalance(data.wallet.balance);
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    setIsClient(true);
+    fetchBalance();
+    // Funding the wallet happens on Paystack's site, then redirects back into
+    // an already-mounted app shell — the wallet:updated event is how that
+    // callback page (and checkout, after a debit) tells us to refetch.
+    window.addEventListener('wallet:updated', fetchBalance);
+    return () => window.removeEventListener('wallet:updated', fetchBalance);
   }, []);
 
   const handleAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,7 +186,9 @@ export function UserWalletDisplay() {
 
   return (
     <Popover onOpenChange={(open) => {
-      if (!open) {
+      if (open) {
+        fetchBalance();
+      } else {
         setVoucherDisplayMode('buy');
         setGeneratedVoucherCode(null);
         setBuyVoucherAmount('');

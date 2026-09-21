@@ -25,6 +25,10 @@ export default function WalletCallbackPage() {
         if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to verify payment.');
         if (data.success) {
           setState({ status: 'success', newBalance: data.newBalance });
+          // The header's wallet display already mounted before this payment
+          // happened (Paystack's redirect lands back in the same app shell),
+          // so it has no way to know the balance just changed — tell it.
+          window.dispatchEvent(new Event('wallet:updated'));
         } else {
           setState({ status: 'failed', error: data.error ?? 'Payment was not successful.' });
         }
