@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   if (transaction.status === 'success') {
     const { newBalance } = await completeWalletFunding(reference);
-    return NextResponse.json({ success: true, newBalance });
+    return NextResponse.json({ success: true, newBalance, amount: transaction.amount });
   }
 
   try {
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: 'Payment was not successful.' });
     }
     const { newBalance } = await completeWalletFunding(reference);
-    return NextResponse.json({ success: true, newBalance });
+    return NextResponse.json({ success: true, newBalance, amount: transaction.amount });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to verify payment.' },

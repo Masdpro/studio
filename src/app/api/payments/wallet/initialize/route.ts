@@ -23,7 +23,9 @@ export async function POST(request: Request) {
       email: session.user.email,
       amountNaira: amount,
       reference,
-      callbackUrl: new URL('/wallet/callback', request.url).toString(),
+      // Land back on the homepage — the wallet display in the header picks up
+      // the ?reference= param itself and shows a toast, no dedicated page.
+      callbackUrl: new URL('/', request.url).toString(),
     });
     return NextResponse.json({ authorizationUrl });
   } catch (err) {

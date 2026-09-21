@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Wallet, CreditCard, Gift, CheckCircle, Copy as CopyIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,8 @@ const parseFormattedNumber = (value: string): string => {
 };
 
 export function UserWalletDisplay() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [balance, setBalance] = useState(0);
   const [addAmount, setAddAmount] = useState('');
   const [isFundingWallet, setIsFundingWallet] = useState(false);
@@ -60,6 +63,45 @@ export function UserWalletDisplay() {
     // callback page (and checkout, after a debit) tells us to refetch.
     window.addEventListener('wallet:updated', fetchBalance);
     return () => window.removeEventListener('wallet:updated', fetchBalance);
+  }, []);
+
+  // Paystack redirects back to the homepage with ?reference=... after a wallet
+  // top-up. Verify it here (a toast, not a dedicated confirmation page) and
+  // strip the param so a refresh doesn't re-trigger it.
+  useEffect(() => {
+    const reference = searchParams.get('reference') ?? searchParams.get('trxref');
+    if (!reference) return;
+
+    fetch(`/api/payments/wallet/verify?reference=${encodeURIComponent(reference)}`)
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to verify payment.');
+        if (data.success) {
+          setBalance(data.newBalance);
+          toast({
+            title: 'Wallet Funded!',
+            description: `₦${data.amount.toLocaleString()} was added. New balance: ₦${data.newBalance.toLocaleString()}.`,
+          });
+        } else {
+          toast({
+            title: 'Payment Not Completed',
+            description: data.error ?? 'Your payment was not successful.',
+            variant: 'destructive',
+          });
+        }
+      })
+      .catch((err) => {
+        toast({
+          title: 'Payment Not Completed',
+          description: err instanceof Error ? err.message : 'Failed to verify payment.',
+          variant: 'destructive',
+        });
+      })
+      .finally(() => {
+        router.replace('/', { scroll: false });
+      });
+    // Only ever check the reference present on the very first load after the redirect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
