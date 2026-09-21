@@ -101,27 +101,27 @@ export default function NotificationsPage() {
         </Button>
       </div>
       <Card className="w-full max-w-2xl mx-auto shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold flex items-center gap-2">
-            <BellRing className="h-8 w-8 text-primary" />
-            All Notifications
-          </CardTitle>
-          <CardDescription>View and manage all your notifications.</CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-3xl font-bold flex items-center gap-2">
+              <BellRing className="h-8 w-8 text-primary" />
+              All Notifications
+            </CardTitle>
+            <CardDescription>View and manage all your notifications.</CardDescription>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
+              <CheckCheck className="mr-2 h-4 w-4" /> Mark All Read
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleDeleteAllNotifications} disabled={notifications.length === 0}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete All
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 pb-4 border-b">
-            <p className="text-sm text-muted-foreground">
-              You have {unreadCount} unread notification{unreadCount === 1 ? '' : 's'}.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-                <CheckCheck className="mr-2 h-4 w-4" /> Mark All Read
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleDeleteAllNotifications} disabled={notifications.length === 0}>
-                <Trash2 className="mr-2 h-4 w-4" /> Delete All
-              </Button>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground mb-6 pb-4 border-b">
+            You have {unreadCount} unread notification{unreadCount === 1 ? '' : 's'}.
+          </p>
 
           <Tabs defaultValue="Transaction" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
