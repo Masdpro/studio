@@ -85,31 +85,39 @@ export function UserWalletDisplay() {
     }
   };
 
-  // Paystack redirects back to the homepage with ?reference=... after a wallet
-  // top-up (this fires in whichever tab Paystack actually redirects — the
-  // popup opened in handleAddFunds, if it wasn't blocked). Verify it here (a
-  // toast, not a dedicated confirmation page) and strip the param so a
-  // refresh doesn't re-trigger it.
+  // Paystack redirects back to "/" with ?reference=... after a wallet top-up.
+  // Normally that's the popup tab handleAddFunds opened — its only job is to
+  // close itself, since the original tab is already polling and will show
+  // the toast/balance update there. window.close() silently no-ops on a tab
+  // the browser didn't open via script (e.g. the pop-up-blocked fallback, or
+  // someone just refreshing this URL), so if we're still here shortly after,
+  // this tab does the verify-and-toast itself instead.
   useEffect(() => {
     const reference = searchParams.get('reference') ?? searchParams.get('trxref');
     if (!reference) return;
 
-    fetch(`/api/payments/wallet/verify?reference=${encodeURIComponent(reference)}`)
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to verify payment.');
-        applyVerifyResult(data);
-      })
-      .catch((err) => {
-        toast({
-          title: 'Payment Not Completed',
-          description: err instanceof Error ? err.message : 'Failed to verify payment.',
-          variant: 'destructive',
+    window.close();
+
+    const fallbackTimer = setTimeout(() => {
+      fetch(`/api/payments/wallet/verify?reference=${encodeURIComponent(reference)}`)
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to verify payment.');
+          applyVerifyResult(data);
+        })
+        .catch((err) => {
+          toast({
+            title: 'Payment Not Completed',
+            description: err instanceof Error ? err.message : 'Failed to verify payment.',
+            variant: 'destructive',
+          });
+        })
+        .finally(() => {
+          router.replace('/', { scroll: false });
         });
-      })
-      .finally(() => {
-        router.replace('/', { scroll: false });
-      });
+    }, 300);
+
+    return () => clearTimeout(fallbackTimer);
     // Only ever check the reference present on the very first load after the redirect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
