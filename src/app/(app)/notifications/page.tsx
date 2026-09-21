@@ -125,11 +125,17 @@ export default function NotificationsPage() {
 
           <Tabs defaultValue="Transaction" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
-              {TABS.map(({ value, label, icon: Icon }) => (
-                <TabsTrigger key={value} value={value} className="flex items-center gap-2">
-                  <Icon className="h-4 w-4" /> {label}
-                </TabsTrigger>
-              ))}
+              {TABS.map(({ value, label, icon: Icon }) => {
+                const hasUnread = notifications.some((n) => n.category === value && !n.read);
+                return (
+                  <TabsTrigger key={value} value={value} className="flex items-center gap-2">
+                    <Icon className="h-4 w-4" /> {label}
+                    {hasUnread && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" aria-label="Unread notifications" />
+                    )}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
             {TABS.map(({ value }) => (
               <TabsContent key={value} value={value}>
