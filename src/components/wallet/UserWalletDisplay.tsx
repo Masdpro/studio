@@ -123,9 +123,16 @@ export function UserWalletDisplay() {
   }, []);
 
   // Polls from the ORIGINAL tab, since Paystack opens in a new one and can't
-  // reach back into this component directly. Stops on a definitive result,
-  // when the popup is closed, or after ~5 minutes either way.
-  const pollForPaymentResult = (reference: string, popup: Window) => {
+  // reach back into this component directly. Stops on a definitive result or
+  // after ~5 minutes — NOT when the popup closes (which now happens
+  // automatically, within milliseconds of a successful payment): confirmed
+  // live that Paystack's own test-mode settlement can take over a minute
+  // after redirect before /transaction/verify actually reports success, so
+  // treating "popup closed" as a reason to give up early caused real
+  // successful payments to be reported as failed. The popup closing has no
+  // special handling here anymore; a genuinely abandoned payment just quietly
+  // polls until the same ~5 minute ceiling and then gives up.
+  const pollForPaymentResult = (reference: string) => {
     let attempts = 0;
     const maxAttempts = 100;
     const interval = setInterval(async () => {
@@ -133,7 +140,10 @@ export function UserWalletDisplay() {
       let data: { success: boolean; pending?: boolean; error?: string; newBalance?: number; amount?: number } | null = null;
       try {
         const res = await fetch(`/api/payments/wallet/verify?reference=${encodeURIComponent(reference)}`);
-        data = await res.json();
+        // A non-2xx here means our own route failed to reach Paystack (e.g. a
+        // transient network blip) — that's not a payment failure, just try
+        // again next tick rather than reporting it as one.
+        if (res.ok) data = await res.json();
       } catch {
         // Transient network hiccup — just try again next tick.
       }
@@ -146,16 +156,14 @@ export function UserWalletDisplay() {
         return;
       }
 
-      if (popup.closed || attempts >= maxAttempts) {
+      if (attempts >= maxAttempts) {
         clearInterval(interval);
         setIsFundingWallet(false);
-        if (attempts >= maxAttempts) {
-          toast({
-            title: "Couldn't confirm payment",
-            description: 'This is taking longer than expected. Check back shortly, or contact support if you were charged.',
-            variant: 'destructive',
-          });
-        }
+        toast({
+          title: "Couldn't confirm payment",
+          description: 'This is taking longer than expected. Check back shortly, or contact support if you were charged.',
+          variant: 'destructive',
+        });
       }
     }, 3000);
   };
@@ -204,7 +212,7 @@ export function UserWalletDisplay() {
       }
 
       setAddAmount('');
-      pollForPaymentResult(data.reference, popup);
+      pollForPaymentResult(data.reference);
     } catch (err) {
       toast({
         title: 'Something went wrong',

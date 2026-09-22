@@ -36,12 +36,19 @@ export async function initializePaystackTransaction(params: {
   return { authorizationUrl: data.data.authorization_url, reference: data.data.reference };
 }
 
-const TERMINAL_FAILURE_STATUSES = new Set(['failed', 'abandoned', 'reversed']);
+// Paystack's own docs conflate these: "abandoned" is what a totally
+// untouched, still-on-the-checkout-page transaction reports too — confirmed
+// directly against their API (a freshly initialized, never-opened
+// transaction verifies as "abandoned"). It is NOT a reliable "the customer
+// gave up" signal, only a genuine "failed" (e.g. a declined card) is. Treat
+// anything else, "abandoned" included, as still-pending so polling callers
+// don't kill a payment the customer is actively completing.
+const TERMINAL_FAILURE_STATUSES = new Set(['failed', 'reversed']);
 
 export async function verifyPaystackTransaction(reference: string): Promise<{
-  // 'pending' means Paystack hasn't reached a final answer yet (the customer
-  // may still be filling in card details) — distinct from a confirmed
-  // failure, so callers that poll this don't give up on an in-progress payment.
+  // 'pending' covers both "still in progress" and Paystack's ambiguous
+  // "abandoned" — distinct from a confirmed failure, so callers that poll
+  // this don't give up on an in-progress payment.
   status: 'success' | 'failed' | 'pending';
   amountNaira: number;
 }> {
