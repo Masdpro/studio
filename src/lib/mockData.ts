@@ -3,7 +3,7 @@
 import type { Order, Vendor, DeliveryAgent, Product, CartItem, Review, ErrandRequest, ErrandQuote, Market } from '@/lib/types';
 import placeholderImages from '@/app/lib/placeholder-images.json';
 
-// Real product photos don't exist yet for every Lagos market stall, so new
+// Real product photos don't exist yet for every market stall, so new
 // items fall back to a labeled placeholder (SafeImage already degrades to
 // this same host on a broken/missing image, so it fits the existing look).
 const ph = (label: string) => `https://placehold.co/600x400.png?text=${encodeURIComponent(label)}`;
@@ -60,6 +60,38 @@ export const sampleProductsForMockOrders: Product[] = [
   { id: 'prod_guipure_lace', vendorId: 'vendor051', name: 'Guipure Lace Fabric (5 Yards)', description: 'French guipure lace, ideal for blouses and wrappers.', price: 28000, imageUrl: ph('Guipure Lace'), category: 'Apparel', aiHint: 'guipure lace fabric' },
   { id: 'prod_zipper_pack', vendorId: 'vendor051', name: 'Assorted Zipper & Thread Pack', description: 'Tailoring essentials pack: zippers, thread spools, and buttons.', price: 3500, imageUrl: ph('Zipper Pack'), category: 'Apparel', aiHint: 'tailoring supplies' },
   { id: 'prod_tailoring_consult', vendorId: 'vendor051', name: 'Custom Tailoring Consultation', description: 'Book a fitting session for a custom-made outfit.', price: 5000, imageUrl: ph('Tailoring Consult'), category: 'Apparel', aiHint: 'tailor measuring fabric' },
+
+  // --- Wuse Market (Abuja) — additional stalls ---
+  { id: 'prod_ankara_boubou', vendorId: 'vendor060', name: 'Ankara Boubou Set', description: 'Flowing Ankara boubou set, ready to wear for special occasions.', price: 20000, discountPrice: 17000, isAwoof: true, imageUrl: ph('Ankara Boubou'), category: 'Apparel', aiHint: 'ankara boubou' },
+  { id: 'prod_senator_kaftan', vendorId: 'vendor060', name: "Men's Senator Kaftan", description: 'Classic senator kaftan, tailored fit, available in multiple colors.', price: 18000, imageUrl: ph('Senator Kaftan'), category: 'Apparel', aiHint: 'senator kaftan' },
+  { id: 'prod_silk_scarf', vendorId: 'vendor060', name: 'Silk Head Scarf', description: 'Soft silk head scarf, great for everyday wear or gele styling.', price: 4500, imageUrl: ph('Silk Scarf'), category: 'Apparel', aiHint: 'silk head scarf' },
+  { id: 'prod_party_speaker', vendorId: 'vendor061', name: 'Bluetooth Party Speaker', description: 'Loud portable Bluetooth speaker with bass boost, rechargeable.', price: 35000, discountPrice: 29000, isAwoof: true, imageUrl: ph('Party Speaker'), category: 'Electronics', aiHint: 'bluetooth party speaker' },
+  { id: 'prod_pressing_iron', vendorId: 'vendor061', name: 'Electric Pressing Iron', description: 'Dry iron with non-stick soleplate, 1200W.', price: 9000, imageUrl: ph('Pressing Iron'), category: 'Electronics', aiHint: 'electric pressing iron' },
+  { id: 'prod_extension_socket', vendorId: 'vendor061', name: '6-Way Extension Socket', description: 'Surge-protected extension socket with 6 outlets.', price: 4000, imageUrl: ph('Extension Socket'), category: 'Electronics', aiHint: 'extension socket' },
+
+  // --- Garki Market (Abuja) ---
+  { id: 'prod_garki_rice', vendorId: 'vendor070', name: '25kg Bag of Rice', description: 'Well-milled long grain rice, sold in a 25kg bag.', price: 36000, imageUrl: ph('Rice 25kg'), category: 'Groceries', aiHint: 'bag of rice' },
+  { id: 'prod_garki_tomatoes', vendorId: 'vendor070', name: 'Crate of Fresh Tomatoes', description: 'A full crate of ripe, farm-fresh tomatoes.', price: 9000, discountPrice: 7500, isAwoof: true, imageUrl: ph('Tomato Crate'), category: 'Groceries', aiHint: 'crate of tomatoes' },
+  { id: 'prod_garki_spices', vendorId: 'vendor070', name: 'Assorted Spice Basket', description: 'A basket of local spices — curry, thyme, ginger, and more.', price: 6000, imageUrl: ph('Spice Basket'), category: 'Groceries', aiHint: 'spice basket' },
+  { id: 'prod_garki_kettle', vendorId: 'vendor071', name: 'Electric Kettle', description: '1.8L stainless steel electric kettle with auto shut-off.', price: 8500, imageUrl: ph('Electric Kettle'), category: 'Appliances', aiHint: 'electric kettle' },
+  { id: 'prod_garki_gas', vendorId: 'vendor071', name: '6kg Cooking Gas Cylinder (Refill)', description: 'Refill service for a standard 6kg cooking gas cylinder.', price: 7000, imageUrl: ph('Gas Refill'), category: 'Appliances', aiHint: 'cooking gas cylinder' },
+  { id: 'prod_garki_mat', vendorId: 'vendor071', name: 'Foam Prayer/Floor Mat', description: 'Comfortable padded foam mat for prayer or general home use.', price: 5000, imageUrl: ph('Floor Mat'), category: 'Appliances', aiHint: 'foam floor mat' },
+
+  // --- Ogbete Main Market (Enugu) — additional stalls ---
+  { id: 'prod_ogbete_palmoil', vendorId: 'vendor080', name: '5L Pure Palm Oil', description: 'Freshly pressed red palm oil, sold by the 5-litre jerrycan.', price: 9500, discountPrice: 8000, isAwoof: true, imageUrl: ph('Palm Oil 5L'), category: 'Groceries', aiHint: 'palm oil jerrycan' },
+  { id: 'prod_ogbete_yam', vendorId: 'vendor080', name: 'Bunch of Fresh Yam Tubers', description: 'A bunch of premium eastern yam tubers.', price: 15000, imageUrl: ph('Yam Tubers'), category: 'Groceries', aiHint: 'yam tubers bunch' },
+  { id: 'prod_ogbete_ukazi', vendorId: 'vendor080', name: 'Bundle of Ukazi Leaves', description: 'Fresh sliced ukazi (afang-style) leaves for soup.', price: 3000, imageUrl: ph('Ukazi Leaves'), category: 'Groceries', aiHint: 'ukazi leaves bundle' },
+  { id: 'prod_ogbete_wrapper', vendorId: 'vendor081', name: 'George Wrapper (2 Yards)', description: 'Premium George wrapper fabric, 2-yard cut, for traditional attire.', price: 16000, imageUrl: ph('George Wrapper'), category: 'Apparel', aiHint: 'george wrapper fabric' },
+  { id: 'prod_ogbete_bag', vendorId: 'vendor081', name: 'Ankara Tote Bag', description: 'Handmade Ankara print tote bag with leather trim.', price: 6500, discountPrice: 5500, isAwoof: true, imageUrl: ph('Ankara Tote Bag'), category: 'Apparel', aiHint: 'ankara tote bag' },
+  { id: 'prod_ogbete_slippers', vendorId: 'vendor081', name: 'Traditional Slippers', description: 'Handcrafted leather slippers in traditional patterns.', price: 4000, imageUrl: ph('Traditional Slippers'), category: 'Apparel', aiHint: 'traditional leather slippers' },
+
+  // --- Timber & Iron Market (Enugu) ---
+  { id: 'prod_plywood_sheet', vendorId: 'vendor090', name: '4x8 Plywood Sheet', description: 'Standard 4x8 ft plywood sheet for furniture and construction.', price: 14000, imageUrl: ph('Plywood Sheet'), category: 'Hardware', aiHint: 'plywood sheet' },
+  { id: 'prod_nails_pack', vendorId: 'vendor090', name: 'Assorted Nails Pack (5kg)', description: 'Mixed sizes of construction nails, 5kg pack.', price: 6000, imageUrl: ph('Nails Pack'), category: 'Hardware', aiHint: 'pack of nails' },
+  { id: 'prod_emulsion_paint', vendorId: 'vendor090', name: '20L Bucket of Emulsion Paint', description: 'Washable emulsion paint, 20-litre bucket, multiple colors.', price: 22000, discountPrice: 19000, isAwoof: true, imageUrl: ph('Emulsion Paint'), category: 'Hardware', aiHint: 'bucket of paint' },
+  { id: 'prod_toolbox_set', vendorId: 'vendor091', name: '32-Piece Tool Box Set', description: 'Complete home/workshop tool box with wrenches, pliers, and screwdrivers.', price: 25000, imageUrl: ph('Tool Box Set'), category: 'Hardware', aiHint: 'tool box set' },
+  { id: 'prod_heavy_padlock', vendorId: 'vendor091', name: 'Heavy Duty Padlock', description: 'Weatherproof heavy-duty padlock with 3 keys.', price: 3500, imageUrl: ph('Heavy Padlock'), category: 'Hardware', aiHint: 'heavy duty padlock' },
+  { id: 'prod_binding_wire', vendorId: 'vendor091', name: 'Roll of Binding Wire', description: 'Galvanized binding wire roll for construction and fencing.', price: 5000, imageUrl: ph('Binding Wire'), category: 'Hardware', aiHint: 'roll of wire' },
 ];
 
 const mapProductToCartItem = (product: Product, quantity: number): CartItem => ({
@@ -74,7 +106,7 @@ const mapProductToCartItem = (product: Product, quantity: number): CartItem => (
 export const sampleVendors: Vendor[] = [
   { id: 'vendor001', businessName: 'Mama Cass Kitchen', streetAddress: '15 Adeniran Ogunsanya St', city: 'Surulere, Lagos', country: 'Nigeria', contactEmail: 'info@mamacass.com', phone: '08012345678', status: 'Open', operatingHours: '8 AM - 9 PM, Daily', locationTag: 'Lagos Mainland', latitude: 6.5059, longitude: 3.3615 },
   { id: 'vendor002', businessName: 'Balogun Fabrics Hub', streetAddress: 'Balogun Market, Idumota', city: 'Lagos Island, Lagos', country: 'Nigeria', contactEmail: 'sales@balogunfabrics.com', phone: '08098765432', status: 'Open', operatingHours: '9 AM - 6 PM, Mon-Sat', locationTag: 'Lagos Island', marketId: 'm1', latitude: 6.4550, longitude: 3.3841 },
-  { id: 'vendor003', businessName: 'Wuse Grocery Store', streetAddress: 'Wuse Zone 5', city: 'Abuja', country: 'Nigeria', contactEmail: 'support@wusegrocery.com', phone: '09011223344', status: 'Open', operatingHours: '7 AM - 10 PM, Daily', locationTag: 'Abuja Central', latitude: 9.0667, longitude: 7.4833 },
+  { id: 'vendor003', businessName: 'Wuse Grocery Store', streetAddress: 'Wuse Zone 5', city: 'Abuja', country: 'Nigeria', contactEmail: 'support@wusegrocery.com', phone: '09011223344', status: 'Open', operatingHours: '7 AM - 10 PM, Daily', locationTag: 'Abuja Central', marketId: 'm2', latitude: 9.0667, longitude: 7.4833 },
 
   // --- Balogun Market (m1) — additional stalls ---
   { id: 'vendor010', businessName: 'Alhaja Kudirat Lace & Aso-Oke', streetAddress: 'Balogun Market, Martins Street', city: 'Lagos Island, Lagos', country: 'Nigeria', contactEmail: 'sales@kudiratlace.ng', phone: '08023456789', status: 'Open', operatingHours: '9 AM - 6 PM, Mon-Sat', locationTag: 'Lagos Island', marketId: 'm1', latitude: 6.4552, longitude: 3.3845 },
@@ -96,6 +128,22 @@ export const sampleVendors: Vendor[] = [
   // --- Tejuosho Market (m7) ---
   { id: 'vendor050', businessName: 'Tejuosho Trendy Fashion House', streetAddress: 'Tejuosho Market Complex', city: 'Yaba, Lagos', country: 'Nigeria', contactEmail: 'hello@tejuoshofashion.ng', phone: '08012349876', status: 'Open', operatingHours: '9 AM - 7 PM, Mon-Sat', locationTag: 'Lagos Mainland', marketId: 'm7', latitude: 6.5117, longitude: 3.3707 },
   { id: 'vendor051', businessName: 'Yaba Fabric & Tailoring Corner', streetAddress: 'Tejuosho Market Complex', city: 'Yaba, Lagos', country: 'Nigeria', contactEmail: 'orders@yabafabric.ng', phone: '08023459876', status: 'Open', operatingHours: '9 AM - 7 PM, Mon-Sat', locationTag: 'Lagos Mainland', marketId: 'm7', latitude: 6.5120, longitude: 3.3711 },
+
+  // --- Wuse Market (m2) — additional stalls ---
+  { id: 'vendor060', businessName: 'Wuse Fashion & Textiles', streetAddress: 'Wuse Market, Zone 5', city: 'Abuja', country: 'Nigeria', contactEmail: 'sales@wusefashion.ng', phone: '08034561234', status: 'Open', operatingHours: '9 AM - 7 PM, Mon-Sat', locationTag: 'Abuja Central', marketId: 'm2', latitude: 9.0670, longitude: 7.4835 },
+  { id: 'vendor061', businessName: 'Aso Electronics Hub', streetAddress: 'Wuse Market, Zone 5', city: 'Abuja', country: 'Nigeria', contactEmail: 'info@asoelectronics.ng', phone: '08045672345', status: 'Open', operatingHours: '9 AM - 7 PM, Mon-Sat', locationTag: 'Abuja Central', marketId: 'm2', latitude: 9.0665, longitude: 7.4830 },
+
+  // --- Garki Market (m8) ---
+  { id: 'vendor070', businessName: 'Garki Fresh Foods', streetAddress: 'Garki Market, Area 10', city: 'Garki, Abuja', country: 'Nigeria', contactEmail: 'orders@garkifresh.ng', phone: '08056783456', status: 'Open', operatingHours: '6 AM - 8 PM, Daily', locationTag: 'Abuja Central', marketId: 'm8', latitude: 9.0333, longitude: 7.4833 },
+  { id: 'vendor071', businessName: 'Garki Household Essentials', streetAddress: 'Garki Market, Area 10', city: 'Garki, Abuja', country: 'Nigeria', contactEmail: 'sales@garkihousehold.ng', phone: '08067894567', status: 'Open', operatingHours: '8 AM - 7 PM, Mon-Sat', locationTag: 'Abuja Central', marketId: 'm8', latitude: 9.0330, longitude: 7.4829 },
+
+  // --- Ogbete Main Market (m3) — additional stalls ---
+  { id: 'vendor080', businessName: 'Ogbete Palm Produce Traders', streetAddress: 'Ogbete Main Market', city: 'Enugu', country: 'Nigeria', contactEmail: 'sales@ogbeteproduce.ng', phone: '08078905678', status: 'Open', operatingHours: '6 AM - 7 PM, Daily', locationTag: 'Enugu East', marketId: 'm3', latitude: 6.4483, longitude: 7.4940 },
+  { id: 'vendor081', businessName: 'Ogbete Fashion Corner', streetAddress: 'Ogbete Main Market', city: 'Enugu', country: 'Nigeria', contactEmail: 'info@ogbetefashion.ng', phone: '08089016789', status: 'Open', operatingHours: '9 AM - 6 PM, Mon-Sat', locationTag: 'Enugu East', marketId: 'm3', latitude: 6.4487, longitude: 7.4944 },
+
+  // --- Timber & Iron Market (m9) ---
+  { id: 'vendor090', businessName: 'Enugu Timber & Hardware Supplies', streetAddress: 'Timber & Iron Market, Abakpa Road', city: 'Enugu', country: 'Nigeria', contactEmail: 'sales@enugutimber.ng', phone: '08090127890', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Enugu East', marketId: 'm9', latitude: 6.4520, longitude: 7.5060 },
+  { id: 'vendor091', businessName: 'Iron Market Tools & Fittings', streetAddress: 'Timber & Iron Market, Abakpa Road', city: 'Enugu', country: 'Nigeria', contactEmail: 'info@ironmarkettools.ng', phone: '08001238901', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Enugu East', marketId: 'm9', latitude: 6.4524, longitude: 7.5064 },
 ];
 
 export const sampleMarkets: Market[] = [
@@ -105,7 +153,9 @@ export const sampleMarkets: Market[] = [
   { id: 'm6', name: 'Alaba International Market', description: 'West Africa\'s biggest electronics and home appliance market, known for wholesale TVs, sound systems, and generators.', locationTag: 'Lagos Mainland', imageUrl: placeholderImages.markets.lagos.url, aiHint: 'alaba market electronics wholesale', isTrending: false },
   { id: 'm7', name: 'Tejuosho Market', description: 'A Yaba landmark rebuilt into a modern complex, known for fashion, fabrics, and everyday essentials.', locationTag: 'Lagos Mainland', imageUrl: placeholderImages.markets.lagos.url, aiHint: 'tejuosho market fashion textiles', isTrending: false },
   { id: 'm2', name: 'Wuse Market', description: 'The primary open-air market in Abuja. Great for fresh food, clothes, and electronics.', locationTag: 'Abuja Central', imageUrl: placeholderImages.markets.abuja.url, aiHint: placeholderImages.markets.abuja.hint, isTrending: true },
+  { id: 'm8', name: 'Garki Market', description: 'A busy neighborhood market in Garki, popular for fresh foodstuff and everyday household essentials.', locationTag: 'Abuja Central', imageUrl: placeholderImages.markets.abuja.url, aiHint: 'garki market abuja', isTrending: false },
   { id: 'm3', name: 'Ogbete Main Market', description: 'The bustling heart of Enugu. Famous for fresh palm oil and agricultural produce.', locationTag: 'Enugu East', imageUrl: placeholderImages.markets.enugu.url, aiHint: placeholderImages.markets.enugu.hint, isTrending: false },
+  { id: 'm9', name: 'Timber & Iron Market', description: 'Enugu\'s go-to hardware market for timber, tools, paints, and building materials.', locationTag: 'Enugu East', imageUrl: placeholderImages.markets.enugu.url, aiHint: 'timber iron market hardware', isTrending: false },
 ];
 
 export const sampleDeliveryAgents: DeliveryAgent[] = [
