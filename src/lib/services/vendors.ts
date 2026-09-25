@@ -42,6 +42,10 @@ export async function upsertVendor(vendorId: string, data: Partial<Vendor>): Pro
   }
 }
 
+export async function deleteVendor(vendorId: string): Promise<void> {
+  db.delete(vendorsTable).where(eq(vendorsTable.id, vendorId)).run();
+}
+
 function rowToVendor(row: typeof vendorsTable.$inferSelect): Vendor {
   return {
     id: row.id,

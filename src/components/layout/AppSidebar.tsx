@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, Briefcase } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, Briefcase, ShieldCheck, MapPin, ShoppingBag } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -42,6 +42,13 @@ const deliveryAgentItems = [
 
 const companyItems = [
   { href: '/careers', label: 'Careers', icon: Briefcase, tooltip: "Join our team" },
+];
+
+const adminItems = [
+  { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck, tooltip: "Admin Dashboard" },
+  { href: '/admin/markets', label: 'Markets', icon: MapPin, tooltip: "Manage Markets" },
+  { href: '/admin/vendors', label: 'Vendors', icon: Store, tooltip: "Manage Vendors" },
+  { href: '/admin/products', label: 'Products', icon: ShoppingBag, tooltip: "Manage Products" },
 ];
 
 export function AppSidebar() {
@@ -118,6 +125,20 @@ export function AppSidebar() {
           <SidebarGroup>
              <SidebarGroupLabel>Company</SidebarGroupLabel>
             {companyItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton asChild tooltip={item.tooltip}>
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarGroup>
+          <SidebarSeparator />
+          <SidebarGroup>
+             <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            {adminItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild tooltip={item.tooltip}>
                   <Link href={item.href}>

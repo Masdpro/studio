@@ -115,7 +115,7 @@ export function LoginForm() {
           </Link>
         </p>
         <p className="text-xs">
-          Demo logins (password: password123): customer@closebuy.ng, vendor@closebuy.ng, agent@closebuy.ng
+          Demo logins (password: password123): customer@closebuy.ng, vendor@closebuy.ng, agent@closebuy.ng, admin@closebuy.ng
         </p>
       </CardFooter>
     </Card>

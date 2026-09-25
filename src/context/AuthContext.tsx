@@ -3,7 +3,7 @@
 import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 import type { ReactNode } from 'react';
 
-export type UserRole = 'customer' | 'vendor' | 'delivery_agent';
+export type UserRole = 'customer' | 'vendor' | 'delivery_agent' | 'admin';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;

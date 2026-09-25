@@ -6,7 +6,8 @@ import type { NextRequest } from 'next/server';
  * Role required for each protected path prefix. Checked in order;
  * `true` means "any signed-in role is fine".
  */
-const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_agent' | true }[] = [
+const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_agent' | 'admin' | true }[] = [
+  { prefix: '/admin', role: 'admin' },
   { prefix: '/vendor/dashboard', role: 'vendor' },
   { prefix: '/delivery-agent', role: 'delivery_agent' },
   { prefix: '/delivery/optimize-route', role: 'delivery_agent' },
@@ -38,6 +39,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/admin/:path*',
     '/vendor/dashboard/:path*',
     '/delivery-agent/:path*',
     '/delivery/optimize-route',

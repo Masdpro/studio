@@ -2,6 +2,7 @@
 import { db } from '@/db';
 import { markets as marketsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 import type { Market } from '@/lib/types';
 import { sampleMarkets } from '@/lib/mockData';
 
@@ -22,6 +23,20 @@ export async function getMarketById(marketId: string): Promise<Market | undefine
   const row = db.select().from(marketsTable).where(eq(marketsTable.id, marketId)).get();
   if (row) return rowToMarket(row);
   return sampleMarkets.find((m) => m.id === marketId);
+}
+
+export async function createMarket(data: Omit<Market, 'id'>): Promise<string> {
+  const id = randomUUID();
+  db.insert(marketsTable).values({ id, ...(data as any) }).run();
+  return id;
+}
+
+export async function updateMarket(marketId: string, data: Partial<Market>): Promise<void> {
+  db.update(marketsTable).set(data as any).where(eq(marketsTable.id, marketId)).run();
+}
+
+export async function deleteMarket(marketId: string): Promise<void> {
+  db.delete(marketsTable).where(eq(marketsTable.id, marketId)).run();
 }
 
 function rowToMarket(row: typeof marketsTable.$inferSelect): Market {

@@ -48,12 +48,14 @@ async function main() {
   // Demo logins use the SAME ids as the sample vendor/agent/order data above
   // (vendor001, agent001, cust001), so signing in as one of these actually
   // shows the seeded products/orders in that account's dashboard —
-  // password is "password123" for all three.
+  // password is "password123" for all four. The admin account has no
+  // matching sample data row — it's purely a login for /admin.
   const demoPassword = await bcrypt.hash('password123', 10);
   const demoUsers = [
     { id: 'cust001', email: 'customer@closebuy.ng', role: 'customer' as const, displayName: 'Demo Customer' },
     { id: 'vendor001', email: 'vendor@closebuy.ng', role: 'vendor' as const, displayName: 'Demo Vendor (Mama Cass Kitchen)' },
     { id: 'agent001', email: 'agent@closebuy.ng', role: 'delivery_agent' as const, displayName: 'Demo Delivery Agent (Chinedu Okeke)' },
+    { id: 'admin001', email: 'admin@closebuy.ng', role: 'admin' as const, displayName: 'Demo Admin' },
   ];
   for (const u of demoUsers) {
     db.insert(users)
@@ -83,7 +85,7 @@ async function main() {
       .run();
   }
 
-  console.log('Seeded markets, vendors, products, delivery agents, sample orders, and 3 demo logins.');
+  console.log(`Seeded markets, vendors, products, delivery agents, sample orders, and ${demoUsers.length} demo logins.`);
   console.log('Demo logins (password: password123):');
   demoUsers.forEach((u) => console.log(`  ${u.role}: ${u.email}`));
 }
