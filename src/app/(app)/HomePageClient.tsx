@@ -9,7 +9,7 @@ import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ArrowLeft, ChevronRight, ShoppingBag, Zap, Flame, Smartphone, Apple, Briefcase } from 'lucide-react';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple, Briefcase } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -53,9 +53,6 @@ export default function HomePageClient({
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
   const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE);
-
-  const [activeMarket, setActiveMarket] = useState<Market | null>(null);
-  const [activeMarketStore, setActiveMarketStore] = useState<Vendor | null>(null);
 
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -308,81 +305,6 @@ export default function HomePageClient({
   };
 
   const renderMarketContent = () => {
-    if (activeMarket && activeMarketStore) {
-      const storeProducts = sampleProducts.filter(p => p.vendorId === activeMarketStore.id);
-      return (
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setActiveMarketStore(null)}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Stores
-            </Button>
-            <div className="flex-grow">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Store className="h-6 w-6 text-primary" />
-                {activeMarketStore.businessName}
-              </h2>
-              <p className="text-muted-foreground">{activeMarketStore.streetAddress}, {activeMarketStore.city}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {storeProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                vendorName={activeMarketStore.businessName}
-                vendorStreetAddress={activeMarketStore.streetAddress}
-                vendorCity={activeMarketStore.city}
-                vendorCountry={activeMarketStore.country}
-                onViewVendorProfile={handleViewVendorProfile}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeMarket) {
-      const marketStores = mockVendors.filter(v => v.locationTag === activeMarket.locationTag);
-      return (
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setActiveMarket(null)}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Markets
-            </Button>
-            <div>
-              <h2 className="text-2xl font-bold">{activeMarket.name}</h2>
-              <p className="text-muted-foreground">{activeMarket.description}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {marketStores.map(store => (
-              <Button 
-                key={store.id} 
-                variant="outline" 
-                className="h-auto p-6 flex flex-col items-start gap-2 text-left hover:border-primary transition-all shadow-sm"
-                onClick={() => setActiveMarketStore(store)}
-              >
-                <div className="w-full flex justify-between items-center">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Store className="h-6 w-6 text-primary" />
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">{store.businessName}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-1">{store.operatingHours}</p>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                  <MapPin className="h-3 w-3" />
-                  <span>{store.streetAddress}</span>
-                </div>
-              </Button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="space-y-10">
         {/* Trending Markets Spotlight */}
@@ -394,15 +316,8 @@ export default function HomePageClient({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {trendingMarkets.map(market => {
-                const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
-                return (
-                  <MarketCard 
-                    key={market.id} 
-                    market={market} 
-                    storeCount={storeCount} 
-                    onClick={(m) => setActiveMarket(m)} 
-                  />
-                );
+                const storeCount = mockVendors.filter(v => v.marketId === market.id).length;
+                return <MarketCard key={market.id} market={market} storeCount={storeCount} />;
               })}
             </div>
           </section>
@@ -416,15 +331,8 @@ export default function HomePageClient({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredMarkets.length > 0 ? (
               filteredMarkets.map(market => {
-                const storeCount = mockVendors.filter(v => v.locationTag === market.locationTag).length;
-                return (
-                  <MarketCard 
-                    key={market.id} 
-                    market={market} 
-                    storeCount={storeCount} 
-                    onClick={(m) => setActiveMarket(m)} 
-                  />
-                );
+                const storeCount = mockVendors.filter(v => v.marketId === market.id).length;
+                return <MarketCard key={market.id} market={market} storeCount={storeCount} />;
               })
             ) : (
               <div className="col-span-full text-center py-20">

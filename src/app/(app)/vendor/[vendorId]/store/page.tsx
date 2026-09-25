@@ -1,70 +1,15 @@
-
-'use client';
-
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getVendorById } from '@/lib/services/vendors';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Globe, AlertTriangle, Info } from 'lucide-react';
-import type { Vendor } from '@/lib/types'; // Assuming Vendor type is defined
-import Link from 'next/link';
+import { Globe, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// Mock function to get vendor data - replace with actual data fetching
-const getVendorById = (id: string): Vendor | undefined => {
-  const sampleVendorsForPage: Vendor[] = [
-    { id: 'v1', businessName: 'Pizza Place', contactEmail: 'v1@example.com', phone:'111', streetAddress: '1 Main St', city: 'Pizza City', country: 'Foodland', externalStoreUrl: 'https://example.com/pizzapalace' },
-    { id: 'v2', businessName: 'Burger Bonanza', contactEmail: 'v2@example.com', phone:'222', streetAddress: '2 Burger Ave', city: 'Burger Town', country: 'Foodland', externalStoreUrl: 'https://example.com/burgerbonanza' },
-    { id: 'v3', businessName: 'Salad Supreme', contactEmail: 'v3@example.com', phone:'333', streetAddress: '3 Salad Rd', city: 'Green Ville', country: 'Foodland' }, // No external URL
-    { id: 'v4', businessName: 'Drinks & Co.', contactEmail: 'v4@example.com', phone:'444', streetAddress: '4 Drink Dr', city: 'Beverage City', country: 'Foodland', externalStoreUrl: 'https://example.com/drinksco' },
-    { id: 'v5', businessName: 'Dessert Dreams', contactEmail: 'v5@example.com', phone:'555', streetAddress: '5 Sweet St', city: 'Cakeburg', country: 'Foodland', externalStoreUrl: 'https://example.com/dessertdreams' },
-    { id: 'v6', businessName: 'Sushi Central', contactEmail: 'v6@example.com', phone:'666', streetAddress: '6 Fish Ln', city: 'Sushi City', country: 'Foodland' },
-  ];
-  return sampleVendorsForPage.find(v => v.id === id);
-};
-
-
-export default function VendorExternalStorePage() {
-  const params = useParams();
-  const vendorId = typeof params.vendorId === 'string' ? params.vendorId : undefined;
-  const [vendor, setVendor] = useState<Vendor | null | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (vendorId) {
-      setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        const foundVendor = getVendorById(vendorId);
-        setVendor(foundVendor);
-        setIsLoading(false);
-      }, 500);
-    } else {
-      setVendor(null); // No vendorId found
-      setIsLoading(false);
-    }
-  }, [vendorId]);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-lg">Loading Vendor Storefront...</p>
-      </div>
-    );
-  }
-
-  if (!vendor) {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>Vendor not found or ID is missing.</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+export default async function VendorExternalStorePage({ params }: { params: Promise<{ vendorId: string }> }) {
+  const { vendorId } = await params;
+  const vendor = await getVendorById(vendorId);
+  if (!vendor) notFound();
 
   return (
     <div className="container mx-auto py-8">
@@ -103,7 +48,7 @@ export default function VendorExternalStorePage() {
               src={vendor.externalStoreUrl}
               title={`${vendor.businessName} External Store`}
               className="w-full h-full"
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms" // Adjust sandbox attributes as needed
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
             />
           </div>
         </>

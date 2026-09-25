@@ -18,6 +18,12 @@ export async function getMarketsByLocationTag(locationTag: string): Promise<Mark
   return rows.map(rowToMarket);
 }
 
+export async function getMarketById(marketId: string): Promise<Market | undefined> {
+  const row = db.select().from(marketsTable).where(eq(marketsTable.id, marketId)).get();
+  if (row) return rowToMarket(row);
+  return sampleMarkets.find((m) => m.id === marketId);
+}
+
 function rowToMarket(row: typeof marketsTable.$inferSelect): Market {
   return {
     id: row.id,

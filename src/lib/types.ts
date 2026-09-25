@@ -22,6 +22,7 @@ export type Vendor = {
   profileManaged?: boolean; // To track if profile is filled
   externalStoreUrl?: string; // New field for external store link
   locationTag?: string; // For filtering by location
+  marketId?: string; // Which local market this vendor's stall is inside, if any
   latitude?: number; // For geolocation
   longitude?: number; // For geolocation
   operatingHours?: string; // e.g., "9 AM - 5 PM, Mon-Fri"

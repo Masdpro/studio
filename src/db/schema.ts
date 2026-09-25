@@ -32,6 +32,7 @@ export const vendors = sqliteTable('vendors', {
   city: text('city').notNull(),
   country: text('country').notNull(),
   locationTag: text('location_tag'),
+  marketId: text('market_id'), // which local market this vendor's stall belongs to, if any
   latitude: real('latitude'),
   longitude: real('longitude'),
   operatingHours: text('operating_hours'),
