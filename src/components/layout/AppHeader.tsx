@@ -3,9 +3,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, UserCircle } from 'lucide-react';
+import { ShoppingCart, UserCircle, Wallet } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -43,7 +43,16 @@ export function AppHeader() {
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
         <div className="ml-auto flex items-center gap-1 md:gap-2">
-          <UserWalletDisplay />
+          <Suspense
+            fallback={
+              <div className="flex items-center gap-2 text-sm px-2">
+                <Wallet className="h-5 w-5" />
+                <span>Loading...</span>
+              </div>
+            }
+          >
+            <UserWalletDisplay />
+          </Suspense>
           <NotificationBell />
           <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartSheetOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
