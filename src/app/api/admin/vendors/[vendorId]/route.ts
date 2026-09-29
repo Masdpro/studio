@@ -4,7 +4,7 @@ import { getVendorById, upsertVendor, deleteVendor } from '@/lib/services/vendor
 
 const EDITABLE_FIELDS = [
   'businessName', 'contactEmail', 'phone', 'streetAddress', 'city', 'country',
-  'locationTag', 'marketId', 'latitude', 'longitude', 'operatingHours', 'status', 'externalStoreUrl',
+  'locationTag', 'marketId', 'latitude', 'longitude', 'operatingHours', 'status', 'externalStoreUrl', 'imageUrl',
 ] as const;
 
 function pickEditableFields(body: Record<string, unknown>) {
@@ -12,6 +12,8 @@ function pickEditableFields(body: Record<string, unknown>) {
   for (const field of EDITABLE_FIELDS) {
     if (field in body) result[field] = body[field];
   }
+  // An emptied-out image means "no store photo"; the column is nullable.
+  if (result.imageUrl === '') result.imageUrl = null;
   return result;
 }
 

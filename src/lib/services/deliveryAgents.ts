@@ -28,6 +28,10 @@ export async function upsertDeliveryAgent(agentId: string, data: Partial<Deliver
   }
 }
 
+export async function deleteDeliveryAgent(agentId: string): Promise<void> {
+  db.delete(agentsTable).where(eq(agentsTable.id, agentId)).run();
+}
+
 function rowToAgent(row: typeof agentsTable.$inferSelect): DeliveryAgent {
   return {
     id: row.id,
@@ -38,6 +42,7 @@ function rowToAgent(row: typeof agentsTable.$inferSelect): DeliveryAgent {
     city: row.city,
     country: row.country,
     vehicleDetails: row.vehicleDetails ?? undefined,
+    imageUrl: row.imageUrl ?? undefined,
     profileManaged: !!row.profileManaged,
   };
 }

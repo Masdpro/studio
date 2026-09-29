@@ -49,6 +49,7 @@ const adminItems = [
   { href: '/admin/markets', label: 'Markets', icon: MapPin, tooltip: "Manage Markets" },
   { href: '/admin/vendors', label: 'Vendors', icon: Store, tooltip: "Manage Vendors" },
   { href: '/admin/products', label: 'Products', icon: ShoppingBag, tooltip: "Manage Products" },
+  { href: '/admin/agents', label: 'Agents', icon: Bike, tooltip: "Manage Delivery Agents" },
 ];
 
 export function AppSidebar() {

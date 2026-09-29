@@ -63,5 +63,6 @@ function rowToVendor(row: typeof vendorsTable.$inferSelect): Vendor {
     longitude: row.longitude ?? undefined,
     operatingHours: row.operatingHours ?? undefined,
     status: (row.status as Vendor['status']) ?? undefined,
+    imageUrl: row.imageUrl ?? undefined,
   };
 }

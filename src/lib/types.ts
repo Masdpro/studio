@@ -21,6 +21,7 @@ export type Vendor = {
   country: string;
   profileManaged?: boolean; // To track if profile is filled
   externalStoreUrl?: string; // New field for external store link
+  imageUrl?: string; // Store photo/logo
   locationTag?: string; // For filtering by location
   marketId?: string; // Which local market this vendor's stall is inside, if any
   latitude?: number; // For geolocation
@@ -103,6 +104,7 @@ export type DeliveryAgent = {
   city: string;
   country: string;
   vehicleDetails?: string; // e.g., "Motorcycle - Plate XYZ123"
+  imageUrl?: string; // Profile photo
   walletId?: string;
   profileManaged?: boolean;
 };

@@ -27,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import type { Product, Vendor } from '@/lib/types';
 
 const productSchema = z.object({
@@ -35,7 +36,7 @@ const productSchema = z.object({
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   discountPrice: z.coerce.number().positive().optional().or(z.literal(NaN)),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
   category: z.string().optional(),
   isAwoof: z.boolean(),
 });
@@ -207,9 +208,9 @@ export function ProductFormDialog({ product, vendors, open, onOpenChange, onSave
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image URL</FormLabel>
+                      <FormLabel>Product Image</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://..." {...field} />
+                        <ImageUploadField value={field.value ?? ''} onChange={field.onChange} emptyLabel="Placeholder will be used" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

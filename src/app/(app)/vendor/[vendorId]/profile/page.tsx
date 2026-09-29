@@ -48,7 +48,7 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader className="text-center">
           <Avatar className="w-24 h-24 mx-auto mb-4 border-2 border-primary">
-            <AvatarImage src={`https://placehold.co/100x100.png?text=${vendorInitials}`} alt={vendor.businessName} data-ai-hint="store logo" />
+            <AvatarImage src={vendor.imageUrl ?? `https://placehold.co/100x100.png?text=${vendorInitials}`} alt={vendor.businessName} data-ai-hint="store logo" />
             <AvatarFallback className="text-3xl">{vendorInitials}</AvatarFallback>
           </Avatar>
           <CardTitle className="text-3xl font-bold flex items-center justify-center gap-2">

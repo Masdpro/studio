@@ -38,6 +38,7 @@ export const vendors = sqliteTable('vendors', {
   operatingHours: text('operating_hours'),
   status: text('status', { enum: ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] }).default('Open'),
   externalStoreUrl: text('external_store_url'),
+  imageUrl: text('image_url'), // store photo/logo, uploaded by an admin
   profileManaged: integer('profile_managed', { mode: 'boolean' }).default(false),
 });
 
@@ -50,6 +51,7 @@ export const deliveryAgents = sqliteTable('delivery_agents', {
   city: text('city').notNull(),
   country: text('country').notNull(),
   vehicleDetails: text('vehicle_details'),
+  imageUrl: text('image_url'), // profile photo, uploaded by an admin
   profileManaged: integer('profile_managed', { mode: 'boolean' }).default(false),
 });
 

@@ -26,13 +26,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import type { Market } from '@/lib/types';
 
 const marketSchema = z.object({
   name: z.string().min(2, { message: 'Market name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   locationTag: z.string().min(2, { message: 'A location (e.g. Lagos Island) is required.' }),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
   aiHint: z.string().optional(),
   isTrending: z.boolean(),
 });
@@ -154,9 +155,9 @@ export function MarketFormDialog({ market, open, onOpenChange, onSaved }: Market
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image URL</FormLabel>
+                      <FormLabel>Market Image</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://..." {...field} />
+                        <ImageUploadField value={field.value ?? ''} onChange={field.onChange} emptyLabel="Placeholder will be used" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

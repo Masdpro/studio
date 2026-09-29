@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import type { Market, Vendor } from '@/lib/types';
 
 const NO_MARKET_VALUE = '__none__';
@@ -41,6 +42,7 @@ const vendorSchema = z.object({
   operatingHours: z.string().optional(),
   status: z.enum(['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable']),
   externalStoreUrl: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
 });
 
 type VendorFormValues = z.infer<typeof vendorSchema>;
@@ -66,6 +68,7 @@ function vendorToFormValues(vendor: Vendor | null): VendorFormValues {
     operatingHours: vendor?.operatingHours ?? '',
     status: vendor?.status ?? 'Open',
     externalStoreUrl: vendor?.externalStoreUrl ?? '',
+    imageUrl: vendor?.imageUrl ?? '',
   };
 }
 
@@ -273,6 +276,19 @@ export function VendorFormDialog({ vendor, markets, open, onOpenChange, onSaved 
                           <SelectItem value="Temporarily Unavailable">Temporarily Unavailable</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Store Photo / Logo</FormLabel>
+                      <FormControl>
+                        <ImageUploadField value={field.value ?? ''} onChange={field.onChange} emptyLabel="No photo yet" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
