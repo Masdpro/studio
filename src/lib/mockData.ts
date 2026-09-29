@@ -92,6 +92,46 @@ export const sampleProductsForMockOrders: Product[] = [
   { id: 'prod_toolbox_set', vendorId: 'vendor091', name: '32-Piece Tool Box Set', description: 'Complete home/workshop tool box with wrenches, pliers, and screwdrivers.', price: 25000, imageUrl: ph('Tool Box Set'), category: 'Hardware', aiHint: 'tool box set' },
   { id: 'prod_heavy_padlock', vendorId: 'vendor091', name: 'Heavy Duty Padlock', description: 'Weatherproof heavy-duty padlock with 3 keys.', price: 3500, imageUrl: ph('Heavy Padlock'), category: 'Hardware', aiHint: 'heavy duty padlock' },
   { id: 'prod_binding_wire', vendorId: 'vendor091', name: 'Roll of Binding Wire', description: 'Galvanized binding wire roll for construction and fencing.', price: 5000, imageUrl: ph('Binding Wire'), category: 'Hardware', aiHint: 'roll of wire' },
+
+  // --- Mile 1 Market (Port Harcourt) ---
+  { id: 'prod_live_catfish', vendorId: 'vendor100', name: 'Fresh Catfish (Live, 2kg)', description: 'Live catfish, weighed and packed fresh from the tank.', price: 12000, discountPrice: 10000, isAwoof: true, imageUrl: ph('Live Catfish'), category: 'Groceries', aiHint: 'live catfish' },
+  { id: 'prod_local_rice_10kg', vendorId: 'vendor100', name: 'Bag of Local Rice (10kg)', description: 'Locally grown parboiled rice, 10kg bag.', price: 15000, imageUrl: ph('Local Rice 10kg'), category: 'Groceries', aiHint: 'bag of rice' },
+  { id: 'prod_ugu_leaves', vendorId: 'vendor100', name: 'Basket of Ugu (Fluted Pumpkin) Leaves', description: 'Fresh ugu leaves, sold by the basket.', price: 3500, imageUrl: ph('Ugu Leaves'), category: 'Groceries', aiHint: 'ugu leaves basket' },
+  { id: 'prod_isiagu_top', vendorId: 'vendor101', name: 'Ready-to-Wear Isiagu Top', description: 'Traditional lion-print Isiagu top, unisex sizing.', price: 14000, imageUrl: ph('Isiagu Top'), category: 'Apparel', aiHint: 'isiagu top' },
+  { id: 'prod_native_sandals', vendorId: 'vendor101', name: 'Unisex Native Sandals', description: 'Handmade native palm-frond sandals.', price: 6000, imageUrl: ph('Native Sandals'), category: 'Apparel', aiHint: 'native sandals' },
+  { id: 'prod_coral_necklace_set', vendorId: 'vendor101', name: 'Beaded Coral Necklace Set', description: 'Traditional coral bead necklace and bracelet set.', price: 9000, discountPrice: 7500, isAwoof: true, imageUrl: ph('Coral Necklace Set'), category: 'Jewelry', aiHint: 'coral necklace set' },
+
+  // --- Kurmi Market (Kano) ---
+  { id: 'prod_leather_sandals_kano', vendorId: 'vendor102', name: 'Handcrafted Leather Sandals', description: 'Traditional Kano leatherwork, hand-tooled sandals.', price: 8500, imageUrl: ph('Leather Sandals'), category: 'Crafts', aiHint: 'handmade leather sandals' },
+  { id: 'prod_kano_leather_bag', vendorId: 'vendor102', name: 'Kano Leather Bag', description: 'Genuine hand-tooled leather bag, a Kurmi Market specialty.', price: 15000, discountPrice: 13000, isAwoof: true, imageUrl: ph('Kano Leather Bag'), category: 'Crafts', aiHint: 'kano leather bag' },
+  { id: 'prod_leather_pouf', vendorId: 'vendor102', name: 'Traditional Leather Pouf', description: 'Handmade leather pouf/ottoman, classic Kano craftsmanship.', price: 20000, imageUrl: ph('Leather Pouf'), category: 'Crafts', aiHint: 'leather pouf ottoman' },
+  { id: 'prod_guinea_brocade', vendorId: 'vendor103', name: 'Kano Guinea Brocade (5 Yards)', description: 'Premium guinea brocade fabric, 5-yard cut.', price: 30000, imageUrl: ph('Guinea Brocade'), category: 'Apparel', aiHint: 'guinea brocade fabric' },
+  { id: 'prod_babban_riga', vendorId: 'vendor103', name: "Men's Babban Riga Set", description: 'Traditional flowing babban riga robe set, embroidered.', price: 35000, discountPrice: 30000, isAwoof: true, imageUrl: ph('Babban Riga Set'), category: 'Apparel', aiHint: 'babban riga traditional robe' },
+  { id: 'prod_zanna_cap', vendorId: 'vendor103', name: 'Zanna Cap (Traditional Hat)', description: 'Classic woven Zanna cap, multiple colors.', price: 5000, imageUrl: ph('Zanna Cap'), category: 'Apparel', aiHint: 'zanna cap traditional hat' },
+
+  // --- Bodija Market (Ibadan) ---
+  { id: 'prod_yam_flour_50kg', vendorId: 'vendor104', name: '50kg Bag of Yam Flour (Elubo)', description: 'Finely milled yam flour, wholesale 50kg bag.', price: 25000, imageUrl: ph('Yam Flour 50kg'), category: 'Groceries', aiHint: 'bag of yam flour' },
+  { id: 'prod_fresh_pepper_ata', vendorId: 'vendor104', name: 'Basket of Fresh Pepper (Ata)', description: 'Mixed fresh pepper basket, straight from Bodija\'s produce section.', price: 12000, discountPrice: 10000, isAwoof: true, imageUrl: ph('Fresh Pepper Ata'), category: 'Groceries', aiHint: 'fresh pepper basket' },
+  { id: 'prod_groundnut_oil_5l', vendorId: 'vendor104', name: '5L Groundnut Oil', description: 'Pure groundnut oil, 5-litre jerrycan.', price: 11000, imageUrl: ph('Groundnut Oil 5L'), category: 'Groceries', aiHint: 'groundnut oil jerrycan' },
+  { id: 'prod_dried_spices_pack', vendorId: 'vendor105', name: 'Assorted Dried Spices Pack', description: 'A mixed pack of local dried spices and seasonings.', price: 5000, imageUrl: ph('Dried Spices Pack'), category: 'Groceries', aiHint: 'dried spices pack' },
+  { id: 'prod_locust_beans_iru', vendorId: 'vendor105', name: '1kg Locust Beans (Iru)', description: 'Fermented locust beans, a staple soup ingredient.', price: 3500, imageUrl: ph('Locust Beans Iru'), category: 'Groceries', aiHint: 'locust beans iru' },
+  { id: 'prod_dried_crayfish', vendorId: 'vendor105', name: 'Dried Crayfish (1kg)', description: 'Well-dried crayfish, ground or whole.', price: 9000, discountPrice: 7500, isAwoof: true, imageUrl: ph('Dried Crayfish'), category: 'Groceries', aiHint: 'dried crayfish' },
+
+  // --- Onitsha Main Market ---
+  { id: 'prod_ankara_bundle_wholesale', vendorId: 'vendor106', name: 'Wholesale Ankara Bundle (10 Yards)', description: 'Bulk Ankara fabric bundle, great for resellers.', price: 40000, discountPrice: 34000, isAwoof: true, imageUrl: ph('Ankara Bundle Wholesale'), category: 'Apparel', aiHint: 'ankara fabric bundle' },
+  { id: 'prod_school_uniform_fabric', vendorId: 'vendor106', name: 'School Uniform Fabric (Per Yard)', description: 'Durable school uniform fabric, sold by the yard.', price: 2500, imageUrl: ph('Uniform Fabric'), category: 'Apparel', aiHint: 'school uniform fabric' },
+  { id: 'prod_adire_fabric', vendorId: 'vendor106', name: 'Adire Fabric (3 Yards)', description: 'Hand-dyed Adire fabric, 3-yard cut.', price: 18000, imageUrl: ph('Adire Fabric'), category: 'Apparel', aiHint: 'adire fabric' },
+  { id: 'prod_led_tv_32', vendorId: 'vendor107', name: '32-Inch LED TV', description: 'HD LED television, wholesale pricing.', price: 95000, imageUrl: ph('32in LED TV'), category: 'Electronics', aiHint: 'led tv' },
+  { id: 'prod_standing_fan', vendorId: 'vendor107', name: 'Standing Fan', description: '3-speed standing fan with oscillation.', price: 22000, discountPrice: 19000, isAwoof: true, imageUrl: ph('Standing Fan'), category: 'Electronics', aiHint: 'standing fan' },
+  { id: 'prod_rechargeable_lantern', vendorId: 'vendor107', name: 'Rechargeable Lantern', description: 'Bright rechargeable LED lantern for power outages.', price: 8000, imageUrl: ph('Rechargeable Lantern'), category: 'Electronics', aiHint: 'rechargeable lantern' },
+
+  // --- Ariaria International Market (Aba) ---
+  { id: 'prod_mens_leather_shoes', vendorId: 'vendor108', name: "Handmade Men's Leather Shoes", description: 'Genuine leather shoes, handmade in Aba.', price: 18000, discountPrice: 15000, isAwoof: true, imageUrl: ph('Mens Leather Shoes'), category: 'Footwear', aiHint: 'handmade leather shoes' },
+  { id: 'prod_corporate_heels', vendorId: 'vendor108', name: "Ladies' Corporate Heels", description: 'Comfortable corporate heels, made in Aba.', price: 14000, imageUrl: ph('Corporate Heels'), category: 'Footwear', aiHint: 'corporate heels' },
+  { id: 'prod_school_shoes', vendorId: 'vendor108', name: "Children's School Shoes", description: 'Durable leather school shoes for children.', price: 8000, imageUrl: ph('School Shoes'), category: 'Footwear', aiHint: 'childrens school shoes' },
+  { id: 'prod_ladies_handbag_aba', vendorId: 'vendor109', name: "Ladies' Leather Handbag", description: 'Handmade leather handbag, Aba craftsmanship.', price: 16000, imageUrl: ph('Ladies Leather Handbag'), category: 'Apparel', aiHint: 'leather handbag' },
+  { id: 'prod_mens_briefcase', vendorId: 'vendor109', name: "Men's Leather Briefcase", description: 'Genuine leather briefcase for work.', price: 25000, discountPrice: 21000, isAwoof: true, imageUrl: ph('Mens Leather Briefcase'), category: 'Apparel', aiHint: 'leather briefcase' },
+  { id: 'prod_travel_duffel_bag', vendorId: 'vendor109', name: 'Travel Duffel Bag', description: 'Spacious leather-trimmed duffel bag for travel.', price: 12000, imageUrl: ph('Travel Duffel Bag'), category: 'Apparel', aiHint: 'travel duffel bag' },
 ];
 
 const mapProductToCartItem = (product: Product, quantity: number): CartItem => ({
@@ -144,6 +184,26 @@ export const sampleVendors: Vendor[] = [
   // --- Timber & Iron Market (m9) ---
   { id: 'vendor090', businessName: 'Enugu Timber & Hardware Supplies', streetAddress: 'Timber & Iron Market, Abakpa Road', city: 'Enugu', country: 'Nigeria', contactEmail: 'sales@enugutimber.ng', phone: '08090127890', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Enugu East', marketId: 'm9', latitude: 6.4520, longitude: 7.5060 },
   { id: 'vendor091', businessName: 'Iron Market Tools & Fittings', streetAddress: 'Timber & Iron Market, Abakpa Road', city: 'Enugu', country: 'Nigeria', contactEmail: 'info@ironmarkettools.ng', phone: '08001238901', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Enugu East', marketId: 'm9', latitude: 6.4524, longitude: 7.5064 },
+
+  // --- Mile 1 Market (Port Harcourt, m10) ---
+  { id: 'vendor100', businessName: 'Mile 1 Fresh Market Traders', streetAddress: 'Mile 1 Market, Diobu', city: 'Port Harcourt', country: 'Nigeria', contactEmail: 'sales@mile1fresh.ng', phone: '08023456781', status: 'Open', operatingHours: '6 AM - 7 PM, Daily', locationTag: 'Port Harcourt', marketId: 'm10', latitude: 4.7719, longitude: 7.0134 },
+  { id: 'vendor101', businessName: 'PH Fashion Corner', streetAddress: 'Mile 1 Market, Diobu', city: 'Port Harcourt', country: 'Nigeria', contactEmail: 'info@phfashioncorner.ng', phone: '08034567812', status: 'Open', operatingHours: '8 AM - 7 PM, Mon-Sat', locationTag: 'Port Harcourt', marketId: 'm10', latitude: 4.7715, longitude: 7.0130 },
+
+  // --- Kurmi Market (Kano, m11) ---
+  { id: 'vendor102', businessName: 'Kurmi Leather & Crafts', streetAddress: 'Kurmi Market, Kofar Mata', city: 'Kano', country: 'Nigeria', contactEmail: 'sales@kurmileather.ng', phone: '08045678123', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Kano', marketId: 'm11', latitude: 12.0000, longitude: 8.5167 },
+  { id: 'vendor103', businessName: 'Kano Textiles & Traditional Wear', streetAddress: 'Kurmi Market, Kofar Mata', city: 'Kano', country: 'Nigeria', contactEmail: 'info@kanotextiles.ng', phone: '08056781234', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Kano', marketId: 'm11', latitude: 11.9996, longitude: 8.5163 },
+
+  // --- Bodija Market (Ibadan, m12) ---
+  { id: 'vendor104', businessName: 'Bodija Foodstuff Depot', streetAddress: 'Bodija Market', city: 'Ibadan', country: 'Nigeria', contactEmail: 'sales@bodijafoodstuff.ng', phone: '08067812345', status: 'Open', operatingHours: '6 AM - 7 PM, Daily', locationTag: 'Ibadan', marketId: 'm12', latitude: 7.4194, longitude: 3.9098 },
+  { id: 'vendor105', businessName: 'Bodija Spice & Condiments', streetAddress: 'Bodija Market', city: 'Ibadan', country: 'Nigeria', contactEmail: 'info@bodijaspice.ng', phone: '08078123456', status: 'Open', operatingHours: '6 AM - 7 PM, Daily', locationTag: 'Ibadan', marketId: 'm12', latitude: 7.4190, longitude: 3.9094 },
+
+  // --- Onitsha Main Market (Onitsha, m13) ---
+  { id: 'vendor106', businessName: 'Onitsha Textile Mega Store', streetAddress: 'Onitsha Main Market', city: 'Onitsha', country: 'Nigeria', contactEmail: 'sales@onitshatextile.ng', phone: '08089123457', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Onitsha', marketId: 'm13', latitude: 6.1500, longitude: 6.7833 },
+  { id: 'vendor107', businessName: 'Onitsha Electronics Plaza', streetAddress: 'Onitsha Main Market', city: 'Onitsha', country: 'Nigeria', contactEmail: 'info@onitshaelectronics.ng', phone: '08090123458', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Onitsha', marketId: 'm13', latitude: 6.1496, longitude: 6.7829 },
+
+  // --- Ariaria International Market (Aba, m14) ---
+  { id: 'vendor108', businessName: 'Ariaria Shoe & Leather Works', streetAddress: 'Ariaria International Market', city: 'Aba', country: 'Nigeria', contactEmail: 'sales@ariariashoes.ng', phone: '08001234569', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Aba', marketId: 'm14', latitude: 5.1167, longitude: 7.3667 },
+  { id: 'vendor109', businessName: 'Ariaria Bag Makers', streetAddress: 'Ariaria International Market', city: 'Aba', country: 'Nigeria', contactEmail: 'info@ariariabags.ng', phone: '08012345670', status: 'Open', operatingHours: '8 AM - 6 PM, Mon-Sat', locationTag: 'Aba', marketId: 'm14', latitude: 5.1163, longitude: 7.3663 },
 ];
 
 export const sampleMarkets: Market[] = [
@@ -156,6 +216,14 @@ export const sampleMarkets: Market[] = [
   { id: 'm8', name: 'Garki Market', description: 'A busy neighborhood market in Garki, popular for fresh foodstuff and everyday household essentials.', locationTag: 'Abuja Central', imageUrl: placeholderImages.markets.abuja.url, aiHint: 'garki market abuja', isTrending: false },
   { id: 'm3', name: 'Ogbete Main Market', description: 'The bustling heart of Enugu. Famous for fresh palm oil and agricultural produce.', locationTag: 'Enugu East', imageUrl: placeholderImages.markets.enugu.url, aiHint: placeholderImages.markets.enugu.hint, isTrending: false },
   { id: 'm9', name: 'Timber & Iron Market', description: 'Enugu\'s go-to hardware market for timber, tools, paints, and building materials.', locationTag: 'Enugu East', imageUrl: placeholderImages.markets.enugu.url, aiHint: 'timber iron market hardware', isTrending: false },
+
+  // No real photo on hand for these 5 cities yet, so their market cards use
+  // a labeled placeholder instead of borrowing another city's real photo.
+  { id: 'm10', name: 'Mile 1 Market', description: 'Port Harcourt\'s busiest general market — fresh seafood, foodstuff, and everyday fashion all in one sprawling market.', locationTag: 'Port Harcourt', imageUrl: ph('Mile 1 Market'), aiHint: 'mile 1 market port harcourt', isTrending: true },
+  { id: 'm11', name: 'Kurmi Market', description: 'One of the oldest markets in Africa, in the heart of old Kano city — famed for leatherwork, crafts, and traditional textiles.', locationTag: 'Kano', imageUrl: ph('Kurmi Market'), aiHint: 'kurmi market kano leather crafts', isTrending: true },
+  { id: 'm12', name: 'Bodija Market', description: 'One of West Africa\'s largest foodstuff markets, supplying Ibadan and beyond with grains, produce, and spices.', locationTag: 'Ibadan', imageUrl: ph('Bodija Market'), aiHint: 'bodija market ibadan foodstuff', isTrending: false },
+  { id: 'm13', name: 'Onitsha Main Market', description: 'One of the largest markets in West Africa — a sprawling hub for textiles, electronics, and wholesale goods.', locationTag: 'Onitsha', imageUrl: ph('Onitsha Main Market'), aiHint: 'onitsha main market', isTrending: false },
+  { id: 'm14', name: 'Ariaria International Market', description: 'Aba\'s famous "Made in Aba" market — the country\'s hub for handmade shoes, bags, and leather goods.', locationTag: 'Aba', imageUrl: ph('Ariaria International Market'), aiHint: 'ariaria market aba shoes leather', isTrending: true },
 ];
 
 export const sampleDeliveryAgents: DeliveryAgent[] = [
