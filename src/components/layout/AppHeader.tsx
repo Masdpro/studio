@@ -30,22 +30,22 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-16 items-center gap-1 border-b bg-background/80 px-4 backdrop-blur md:px-6">
+      <header className="sticky top-0 z-50 flex h-16 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur sm:px-4 md:px-6">
         <div className="md:hidden">
           <SidebarTrigger />
         </div>
         <Link href="/" className="flex items-center gap-1 text-lg font-semibold md:text-base">
           <Image src="/logo-mark.png" alt="" width={30} height={39} className="block" />
           <span className="sr-only">Closebuy</span>
-          <h1 className="text-xl font-bold text-primary">Closebuy</h1>
+          <h1 className="text-lg font-bold text-primary sm:text-xl">Closebuy</h1>
         </Link>
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
-        <div className="ml-auto flex items-center gap-1 md:gap-2">
+        <div className="ml-auto flex min-w-0 items-center md:gap-2">
           <Suspense
             fallback={
-              <div className="flex items-center gap-2 text-sm px-2">
+              <div className="flex items-center gap-1 text-sm px-1 sm:gap-2 sm:px-2">
                 <Wallet className="h-5 w-5" />
                 <span>Loading...</span>
               </div>
