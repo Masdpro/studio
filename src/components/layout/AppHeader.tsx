@@ -9,6 +9,7 @@ import { ShoppingCart, UserCircle, Wallet } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { HomeViewTabs } from '@/components/layout/HomeViewTabs';
 import {
   Sheet,
   SheetContent,
@@ -34,15 +35,19 @@ export function AppHeader() {
         <div className="md:hidden">
           <SidebarTrigger />
         </div>
-        <Link href="/" className="flex items-center gap-1 text-lg font-semibold md:text-base">
+        {/* The full logo lives at the top of the sidebar on desktop; keep a compact one where the sidebar is hidden. */}
+        <Link href="/" className="flex items-center gap-1 md:hidden">
           <Image src="/logo-mark.png" alt="" width={30} height={39} className="block" />
           <span className="sr-only">Closebuy</span>
-          <h1 className="text-lg font-bold text-primary sm:text-xl">Closebuy</h1>
+          <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
         </Link>
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
         <div className="ml-auto flex min-w-0 items-center md:gap-2">
+          <Suspense fallback={null}>
+            <HomeViewTabs className="mr-2 hidden sm:block" />
+          </Suspense>
           <Suspense
             fallback={
               <div className="flex items-center gap-1 text-sm px-1 sm:gap-2 sm:px-2">
@@ -69,6 +74,9 @@ export function AppHeader() {
           <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />
         </div>
       </header>
+      <Suspense fallback={null}>
+        <HomeViewTabs className="sticky top-16 z-40 flex justify-center border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:hidden [&>div]:w-full [&_button]:flex-1" />
+      </Suspense>
 
       {/* Cart Sheet */}
       <Sheet open={isCartSheetOpen} onOpenChange={setIsCartSheetOpen}>

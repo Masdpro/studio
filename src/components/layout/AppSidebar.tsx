@@ -1,6 +1,7 @@
 
 import Link from 'next/link';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, Briefcase, ShieldCheck, MapPin, ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -40,10 +41,6 @@ const deliveryAgentItems = [
   { href: '/delivery-agent/errands/browse', label: 'Browse Errands', icon: SearchCheck, tooltip: "Find Errands to Quote"},
 ];
 
-const companyItems = [
-  { href: '/careers', label: 'Careers', icon: Briefcase, tooltip: "Join our team" },
-];
-
 const adminItems = [
   { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck, tooltip: "Admin Dashboard" },
   { href: '/admin/markets', label: 'Markets', icon: MapPin, tooltip: "Manage Markets" },
@@ -55,8 +52,13 @@ const adminItems = [
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
-      <SidebarHeader>
-        {/* Can add logo or search here */}
+      {/* Logo pinned to the top: only the menu below scrolls. */}
+      <SidebarHeader className="h-16 shrink-0 justify-center border-b px-4">
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/logo-mark.png" alt="" width={30} height={39} className="block shrink-0" />
+          <span className="text-xl font-bold text-primary group-data-[collapsible=icon]:hidden">Closebuy</span>
+          <span className="sr-only">Closebuy home</span>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -112,20 +114,6 @@ export function AppSidebar() {
               </SidebarMenuItem>
             ))}
             {deliveryAgentItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton asChild tooltip={item.tooltip}>
-                  <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarGroup>
-          <SidebarSeparator />
-          <SidebarGroup>
-             <SidebarGroupLabel>Company</SidebarGroupLabel>
-            {companyItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild tooltip={item.tooltip}>
                   <Link href={item.href}>

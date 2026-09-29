@@ -9,7 +9,7 @@ import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple, Briefcase } from 'lucide-react';
+import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,7 +21,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { useSearchParams } from 'next/navigation';
+import { parseHomeView } from '@/components/layout/HomeViewTabs';
 import { MarketCard } from '@/components/market/MarketCard';
 // Data now comes from the database (via src/lib/services) and is fetched
 // server-side in page.tsx, then handed to this client component as props.
@@ -49,6 +51,8 @@ export default function HomePageClient({
   initialVendors: mockVendors,
   initialMarkets: sampleMarkets,
 }: HomePageClientProps) {
+  // Products / Markets is switched from the header (see HomeViewTabs) via ?view=
+  const activeView = parseHomeView(useSearchParams().get('view'));
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
@@ -349,23 +353,7 @@ export default function HomePageClient({
 
   return (
     <div className="flex flex-col h-full">
-      <Tabs defaultValue="products" className="w-full flex flex-col h-full">
-        {/* Header Partition */}
-        <div className="sticky top-0 z-20 bg-background border-b">
-          <div className="container mx-auto px-4 md:px-6 h-16 flex items-center">
-            <TabsList className="grid w-full grid-cols-2 h-10 p-1 bg-muted rounded-md shrink-0">
-              <TabsTrigger value="products" className="text-xs sm:text-sm rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <ShoppingBag className="h-3.5 w-3.5 mr-1.5 hidden sm:inline" />
-                Browse Products
-              </TabsTrigger>
-              <TabsTrigger value="markets" className="text-xs sm:text-sm rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <Store className="h-3.5 w-3.5 mr-1.5 hidden sm:inline" />
-                Local Markets
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
-
+      <Tabs value={activeView} className="w-full flex flex-col h-full">
         <div className="flex-1 container mx-auto px-4 md:px-6 py-8">
           {/* Shared Filter Block */}
           <div className="mb-10 p-6 bg-card rounded-xl shadow-md border space-y-8">
@@ -576,7 +564,6 @@ export default function HomePageClient({
                    <Smartphone className="h-6 w-6" /> Play Store
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground italic">Interested in helping us build? <Link href="/careers" className="underline hover:text-primary inline-flex items-center gap-1">Check our Careers page <Briefcase className="h-3 w-3"/></Link></p>
             </div>
           </section>
         </div>

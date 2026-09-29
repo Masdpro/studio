@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import HomePageClient from './HomePageClient';
 import { getProducts } from '@/lib/services/products';
 import { getVendors } from '@/lib/services/vendors';
@@ -14,6 +15,8 @@ export default async function HomePage() {
   ]);
 
   return (
-    <HomePageClient initialProducts={products} initialVendors={vendors} initialMarkets={markets} />
+    <Suspense>
+      <HomePageClient initialProducts={products} initialVendors={vendors} initialMarkets={markets} />
+    </Suspense>
   );
 }
