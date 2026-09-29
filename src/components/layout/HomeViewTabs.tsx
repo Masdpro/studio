@@ -29,13 +29,13 @@ export function HomeViewTabs({ className }: { className?: string }) {
       onValueChange={(next) => router.replace(next === 'markets' ? '/?view=markets' : '/', { scroll: false })}
       className={className}
     >
-      <TabsList className="h-9 bg-muted p-1">
-        <TabsTrigger value="products" className={cn('px-2.5 text-xs sm:px-3 sm:text-sm')}>
+      <TabsList className="h-9 w-full bg-muted p-1">
+        <TabsTrigger value="products" className={cn('flex-1 px-2.5 text-xs sm:px-3 sm:text-sm')}>
           <ShoppingBag className="mr-1.5 hidden h-3.5 w-3.5 lg:inline" />
           <span className="lg:hidden">Products</span>
           <span className="hidden lg:inline">Browse Products</span>
         </TabsTrigger>
-        <TabsTrigger value="markets" className={cn('px-2.5 text-xs sm:px-3 sm:text-sm')}>
+        <TabsTrigger value="markets" className={cn('flex-1 px-2.5 text-xs sm:px-3 sm:text-sm')}>
           <Store className="mr-1.5 hidden h-3.5 w-3.5 lg:inline" />
           <span className="lg:hidden">Markets</span>
           <span className="hidden lg:inline">Local Markets</span>

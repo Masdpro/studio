@@ -44,10 +44,10 @@ export function AppHeader() {
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
+        <Suspense fallback={null}>
+          <HomeViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />
+        </Suspense>
         <div className="ml-auto flex min-w-0 items-center md:gap-2">
-          <Suspense fallback={null}>
-            <HomeViewTabs className="mr-2 hidden sm:block" />
-          </Suspense>
           <Suspense
             fallback={
               <div className="flex items-center gap-1 text-sm px-1 sm:gap-2 sm:px-2">
