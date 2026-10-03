@@ -9,7 +9,7 @@ import type { Product, Vendor, Market } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
+import { Search, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,8 +21,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { parseHomeView } from '@/components/layout/HomeViewTabs';
 import { MarketCard } from '@/components/market/MarketCard';
 // Data now comes from the database (via src/lib/services) and is fetched
@@ -53,6 +54,7 @@ export default function HomePageClient({
 }: HomePageClientProps) {
   // Products / Markets is switched from the header (see HomeViewTabs) via ?view=
   const activeView = parseHomeView(useSearchParams().get('view'));
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
@@ -225,6 +227,35 @@ export default function HomePageClient({
   }, [vendorsForFilter, selectedVendorId]);
 
 
+  // Vendors shown in the filter: on the Markets view, every store that sits inside a market.
+  const vendorOptions = useMemo(() => {
+    if (activeView !== 'markets') return vendorsForFilter;
+    const inMarkets = mockVendors.filter(
+      v => v.marketId && (selectedLocation === ALL_LOCATIONS_VALUE || selectedLocation === USER_CURRENT_LOCATION_VALUE || v.locationTag === selectedLocation)
+    );
+    return [vendorsForFilter[0], ...inMarkets];
+  }, [activeView, vendorsForFilter, selectedLocation]);
+
+  // Markets view: picking a vendor opens the market that holds the store, on that store's page.
+  const handleVendorChange = (vendorId: string) => {
+    if (activeView === 'markets' && vendorId !== 'All') {
+      const vendor = mockVendors.find(v => v.id === vendorId);
+      if (vendor?.marketId) {
+        router.push(`/market/${vendor.marketId}/vendor/${vendor.id}`);
+        return;
+      }
+    }
+    setSelectedVendorId(vendorId);
+  };
+
+  // The search box also matches vendors (store name, city, street address).
+  const vendorTextMatches = (v: Vendor, q: string) =>
+    [v.businessName, v.city, v.streetAddress, v.locationTag].some(t => t && t.toLowerCase().includes(q));
+  const vendorMatchesSearch = (vendorId: string, q: string) => {
+    const v = mockVendors.find(x => x.id === vendorId);
+    return !!v && vendorTextMatches(v, q);
+  };
+
   const selectedVendorDetails = useMemo(() => {
     return mockVendors.find(v => v.id === selectedVendorId);
   }, [selectedVendorId]);
@@ -270,7 +301,8 @@ export default function HomePageClient({
         searchTerm === '' ||
         product.name.toLowerCase().includes(searchLower) ||
         product.description.toLowerCase().includes(searchLower) ||
-        (product.category && product.category.toLowerCase().includes(searchLower));
+        (product.category && product.category.toLowerCase().includes(searchLower)) ||
+        vendorMatchesSearch(product.vendorId, searchLower);
 
       return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
@@ -290,7 +322,8 @@ export default function HomePageClient({
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch = searchTerm === '' || 
                            market.name.toLowerCase().includes(searchLower) || 
-                           market.description.toLowerCase().includes(searchLower);
+                           market.description.toLowerCase().includes(searchLower) ||
+                           mockVendors.some(v => v.marketId === market.id && vendorTextMatches(v, searchLower));
       
       return matchesLocation && matchesSearch;
     });
@@ -354,17 +387,17 @@ export default function HomePageClient({
   return (
     <div className="flex flex-col h-full">
       <Tabs value={activeView} className="w-full flex flex-col h-full">
-        <div className="flex-1 container mx-auto px-4 md:px-6 py-8">
+        <div className="flex-1 container mx-auto px-4 md:px-6 pt-2 pb-8 md:pt-3">
           {/* Shared Filter Block */}
-          <div className="mb-10 p-6 bg-card rounded-xl shadow-md border space-y-8">
-            <div className="grid md:grid-cols-2 gap-6 items-start">
+          <div className="mb-8 p-4 md:p-5 bg-card rounded-xl shadow-md border space-y-4">
+            <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] items-start">
                 <div>
-                <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
-                  <MapPin className="h-5 w-5 mr-2 text-primary" />
+                <h3 className="text-sm font-semibold mb-2 flex items-center text-foreground">
+                  <MapPin className="h-4 w-4 mr-2 text-primary" />
                   Filter by City/Area
                 </h3>
                 <Select onValueChange={handleLocationChange} value={selectedLocation}>
-                  <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
+                  <SelectTrigger className="w-full h-10 rounded-lg border-border focus:ring-primary">
                     <SelectValue placeholder="Select a location" />
                   </SelectTrigger>
                   <SelectContent>
@@ -395,17 +428,17 @@ export default function HomePageClient({
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-3 flex items-center text-foreground">
-                  <Store className="h-5 w-5 mr-2 text-primary" />
+                <h3 className="text-sm font-semibold mb-2 flex items-center text-foreground">
+                  <Store className="h-4 w-4 mr-2 text-primary" />
                   Filter by Vendor
                 </h3>
                   <div className="flex flex-col">
-                    <Select onValueChange={setSelectedVendorId} value={selectedVendorId}>
-                    <SelectTrigger className="w-full h-11 rounded-lg border-border focus:ring-primary">
+                    <Select onValueChange={handleVendorChange} value={activeView === 'markets' ? 'All' : selectedVendorId}>
+                    <SelectTrigger className="w-full h-10 rounded-lg border-border focus:ring-primary">
                         <SelectValue placeholder="Select a vendor" />
                     </SelectTrigger>
                     <SelectContent>
-                        {vendorsForFilter.map(vendor => (
+                        {vendorOptions.map(vendor => (
                         <SelectItem key={vendor.id} value={vendor.id}>
                             {vendor.businessName}
                         </SelectItem>
@@ -424,37 +457,52 @@ export default function HomePageClient({
                     )}
                 </div>
               </div>
+              <div>
+                <span className="mb-2 hidden text-sm md:block">&nbsp;</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={searchTerm ? 'default' : 'outline'}
+                      aria-label="Search products, markets and vendors"
+                      className="relative h-10 w-full rounded-lg md:w-10 md:px-0"
+                    >
+                      <Search className="h-4 w-4" />
+                      <span className="ml-2 md:sr-only">Search</span>
+                      {searchTerm && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 md:block" />}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="end" sideOffset={8} className="w-[min(20rem,calc(100vw-2rem))] p-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        autoFocus
+                        type="search"
+                        placeholder="Products, markets, vendors..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 w-full h-10 rounded-lg border-border focus:ring-primary"
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4 flex items-center text-foreground">
-                <Filter className="h-5 w-5 mr-2 text-primary" />
-                Filter by Category
-              </h3>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
                 {categories.map(category => (
                   <Button
                     key={category}
                     variant={selectedCategory === category ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(category)}
-                    className="rounded-full px-4"
+                    className="shrink-0 rounded-full px-4"
                   >
                     {category}
                   </Button>
                 ))}
               </div>
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Search jollof, fabrics, tubers or local stores..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-11 w-full h-11 rounded-lg border-border focus:ring-primary"
-              />
             </div>
           </div>
 
