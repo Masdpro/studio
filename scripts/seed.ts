@@ -59,7 +59,7 @@ async function main() {
   ];
   for (const u of demoUsers) {
     db.insert(users)
-      .values({ passwordHash: demoPassword, createdAt: new Date(), ...u })
+      .values({ passwordHash: demoPassword, createdAt: new Date(), emailVerifiedAt: new Date(), phoneVerifiedAt: new Date(), approvalStatus: 'approved', ...u })
       .onConflictDoNothing()
       .run();
   }

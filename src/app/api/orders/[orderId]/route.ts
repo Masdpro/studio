@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { tradingBlockReason } from '@/lib/verification';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getOrderById, updateOrderStatus } from '@/lib/services/orders';
@@ -69,6 +70,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
     role === 'delivery_agent' && !order.deliveryAgentId && order.status === 'ReadyForPickup';
   if (!isParticipant && !isClaimingUnassignedDelivery) {
     return NextResponse.json({ error: 'You do not have access to this order.' }, { status: 403 });
+  }
+  if (isClaimingUnassignedDelivery) {
+    const blocked = tradingBlockReason(userId);
+    if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
   }
 
   const body = await request.json();

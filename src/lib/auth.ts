@@ -21,11 +21,14 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = db.select().from(users).where(eq(users.email, credentials.email)).get();
+        const user = db.select().from(users).where(eq(users.email, credentials.email.trim().toLowerCase())).get();
         if (!user) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;
+
+        // Only reveal this once the password is right, so it can't be used to probe for accounts.
+        if (!user.emailVerifiedAt) throw new Error('EMAIL_NOT_VERIFIED');
 
         return {
           id: user.id,

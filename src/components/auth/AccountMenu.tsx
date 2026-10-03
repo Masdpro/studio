@@ -56,6 +56,9 @@ export function AccountMenu({ onOpenProfile }: { onOpenProfile: () => void }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onOpenProfile}>Profile</DropdownMenuItem>
+        {role !== 'admin' && (
+          <DropdownMenuItem onClick={() => router.push('/account/verification')}>Account verification</DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={async () => {
             await signOut();

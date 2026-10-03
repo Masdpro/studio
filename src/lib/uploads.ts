@@ -25,3 +25,14 @@ export function detectImageExtension(buf: Buffer): keyof typeof CONTENT_TYPES | 
   if (buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WEBP') return 'webp';
   return null;
 }
+
+/** Verification documents are kept in a private sub-folder that is never served directly. */
+export const PRIVATE_UPLOAD_DIR = path.join(UPLOAD_DIR, 'private');
+export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
+export const DOCUMENT_CONTENT_TYPES: Record<string, string> = { ...CONTENT_TYPES, pdf: 'application/pdf' };
+
+/** Like detectImageExtension, but also accepts PDFs (business registration papers are often PDFs). */
+export function detectDocumentExtension(buf: Buffer): keyof typeof DOCUMENT_CONTENT_TYPES | null {
+  if (buf.length >= 5 && buf.subarray(0, 5).toString('ascii') === '%PDF-') return 'pdf';
+  return detectImageExtension(buf);
+}

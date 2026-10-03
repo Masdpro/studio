@@ -1,6 +1,7 @@
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { VerificationBanner } from '@/components/account/VerificationBanner';
 import { SupportChatWidget } from '@/components/support/SupportChatWidget';
 
 export default function AppLayout({
@@ -14,6 +15,7 @@ export default function AppLayout({
       <SidebarInset>
         <AppHeader />
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+          <VerificationBanner />
           {children}
         </main>
         <SupportChatWidget />

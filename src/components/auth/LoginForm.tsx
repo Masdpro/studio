@@ -34,6 +34,8 @@ export function LoginForm() {
   const { signIn } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const verified = searchParams.get('verified');
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,6 +44,7 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFormValues) {
     setError(null);
+    setUnverifiedEmail(null);
     setIsLoading(true);
     try {
       await signIn(data.email, data.password);
@@ -50,6 +53,11 @@ export function LoginForm() {
       router.push(isSafeCallback ? callbackUrl : '/');
       router.refresh();
     } catch (err) {
+      if (err instanceof Error && err.message === 'EMAIL_NOT_VERIFIED') {
+        setUnverifiedEmail(data.email);
+        setError('Please confirm your email address before signing in.');
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
@@ -66,10 +74,31 @@ export function LoginForm() {
         <CardDescription>Sign in to your Closebuy account.</CardDescription>
       </CardHeader>
       <CardContent>
+        {verified === '1' && (
+          <Alert className="mb-4">
+            <AlertDescription>Email confirmed. You can sign in now.</AlertDescription>
+          </Alert>
+        )}
+        {verified === '0' && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>That confirmation link is invalid or has expired. Sign in to request a new one.</AlertDescription>
+          </Alert>
+        )}
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {unverifiedEmail && (
+                <>
+                  {' '}
+                  <Link href={`/auth/check-email?email=${encodeURIComponent(unverifiedEmail)}`} className="underline font-medium">
+                    Send me a new link
+                  </Link>
+                </>
+              )}
+            </AlertDescription>
           </Alert>
         )}
         <Form {...form}>

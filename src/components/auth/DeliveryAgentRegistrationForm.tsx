@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Bike, UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
 
 const deliveryAgentRegistrationSchema = z.object({
   name: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
@@ -64,24 +65,15 @@ export function DeliveryAgentRegistrationForm() {
     setIsLoading(true);
     try {
       const { password, email, ...agentProfile } = data;
-      await signUp(email, password, 'delivery_agent', data.name);
-
-      const res = await fetch('/api/delivery-agent/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, ...agentProfile }),
+      const { devLink } = await signUp(email, password, 'delivery_agent', data.name, {
+        phone: data.phone,
+        profile: { email, ...agentProfile },
       });
-      if (!res.ok) {
-        const { error } = await res.json().catch(() => ({ error: 'Failed to save your profile.' }));
-        throw new Error(error ?? 'Failed to save your profile.');
-      }
-
       toast({
         title: 'Registration Submitted!',
-        description: 'Your delivery agent account has been created.',
+        description: 'Confirm your email, then upload your documents for review.',
       });
-      router.push('/delivery-agent/dashboard');
-      router.refresh();
+      goToCheckEmail(router, email, devLink);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {

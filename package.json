@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
+    "create-admin": "tsx scripts/create-admin.ts",
+    "backfill-verified": "tsx scripts/backfill-verified.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -50,7 +52,7 @@
     "genkit": "1.28.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.475.0",
-    "next": "15.2.8",
+    "next": "15.5.27",
     "next-auth": "^4.24.15",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",

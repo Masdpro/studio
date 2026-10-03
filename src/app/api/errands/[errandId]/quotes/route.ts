@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { createErrandQuote, getErrandRequestById, getQuotesForErrand } from '@/lib/services/errands';
 import { getDeliveryAgentById } from '@/lib/services/deliveryAgents';
+import { tradingBlockReason } from '@/lib/verification';
 
 /** The errand's customer views quotes submitted so far, with the quoting agent's name attached. */
 export async function GET(request: Request, { params }: { params: Promise<{ errandId: string }> }) {
@@ -40,6 +41,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ err
   if (!session?.user?.id || session.user.role !== 'delivery_agent') {
     return NextResponse.json({ error: 'Only delivery agents can submit quotes.' }, { status: 403 });
   }
+  const blocked = tradingBlockReason(session.user.id);
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
 
   const errand = await getErrandRequestById(errandId);
   if (!errand) {

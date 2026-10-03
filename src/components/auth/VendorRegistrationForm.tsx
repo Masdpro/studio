@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
+import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -69,24 +70,15 @@ export function VendorRegistrationForm() {
     setIsLoading(true);
     try {
       const { password, contactEmail, ...vendorProfile } = data;
-      await signUp(contactEmail, password, 'vendor', data.businessName);
-
-      const res = await fetch('/api/vendor/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contactEmail, ...vendorProfile }),
+      const { devLink } = await signUp(contactEmail, password, 'vendor', data.businessName, {
+        phone: data.phone,
+        profile: { contactEmail, ...vendorProfile },
       });
-      if (!res.ok) {
-        const { error } = await res.json().catch(() => ({ error: 'Failed to save your vendor profile.' }));
-        throw new Error(error ?? 'Failed to save your vendor profile.');
-      }
-
       toast({
         title: 'Registration Submitted!',
-        description: 'Your vendor account and profile have been created.',
+        description: 'Confirm your email, then upload your documents for review.',
       });
-      router.push('/vendor/dashboard');
-      router.refresh();
+      goToCheckEmail(router, contactEmail, devLink);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {

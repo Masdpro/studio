@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
 
 const customerRegistrationSchema = z
   .object({
@@ -50,9 +51,8 @@ export function CustomerRegistrationForm() {
     setError(null);
     setIsLoading(true);
     try {
-      await signUp(data.email, data.password, 'customer', data.displayName);
-      router.push('/');
-      router.refresh();
+      const { devLink } = await signUp(data.email, data.password, 'customer', data.displayName);
+      goToCheckEmail(router, data.email, devLink);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {

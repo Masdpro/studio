@@ -19,20 +19,35 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string) => {
     const result = await nextAuthSignIn('credentials', { email, password, redirect: false });
-    if (result?.error) throw new Error('Invalid email or password');
+    if (result?.error) {
+      if (result.error.includes('EMAIL_NOT_VERIFIED')) throw new Error('EMAIL_NOT_VERIFIED');
+      throw new Error('Invalid email or password');
+    }
   };
 
-  const signUp = async (email: string, password: string, role: UserRole, displayName?: string) => {
+  /**
+   * Creates the account but does NOT sign in: the user must confirm their email first.
+   * `extra` carries a phone number and (for vendors/agents) the business/agent profile.
+   * Returns a dev-only `devLink` to show on screen, since no real emails are sent yet.
+   */
+  const signUp = async (
+    email: string,
+    password: string,
+    role: UserRole,
+    displayName?: string,
+    extra?: { phone?: string; profile?: Record<string, unknown> },
+  ): Promise<{ devLink?: string }> => {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role, displayName }),
+      body: JSON.stringify({ email, password, role, displayName, ...extra }),
     });
     if (!res.ok) {
       const { error } = await res.json().catch(() => ({ error: 'Registration failed' }));
       throw new Error(error ?? 'Registration failed');
     }
-    await signIn(email, password);
+    const { devLink } = await res.json().catch(() => ({}));
+    return { devLink };
   };
 
   const signOut = () => nextAuthSignOut({ redirect: false });

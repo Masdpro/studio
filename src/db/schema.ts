@@ -11,6 +11,35 @@ export const users = sqliteTable('users', {
   role: text('role', { enum: ['customer', 'vendor', 'delivery_agent', 'admin'] }).notNull(),
   displayName: text('display_name'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
+  phone: text('phone'), // E.164, e.g. +2348012345678
+  phoneVerifiedAt: integer('phone_verified_at', { mode: 'timestamp' }),
+  // Vendors and delivery agents start 'pending' until an admin reviews their documents.
+  approvalStatus: text('approval_status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('approved'),
+  approvalNote: text('approval_note'),
+});
+
+// One-time email links and phone codes. Only a hash of the secret is stored.
+export const verificationCodes = sqliteTable('verification_codes', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  channel: text('channel', { enum: ['email', 'phone'] }).notNull(),
+  target: text('target').notNull(), // the email address or phone number being verified
+  codeHash: text('code_hash').notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  attempts: integer('attempts').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// ID / business documents. Files are stored privately (see src/lib/uploads.ts) and only
+// the owner and admins can open them.
+export const verificationDocuments = sqliteTable('verification_documents', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  kind: text('kind', { enum: ['business_proof', 'store_photo', 'government_id', 'selfie'] }).notNull(),
+  fileName: text('file_name').notNull(), // name on disk inside the private folder
+  contentType: text('content_type').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
 export const markets = sqliteTable('markets', {

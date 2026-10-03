@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getProductsByVendor, createProduct } from '@/lib/services/products';
+import { tradingBlockReason } from '@/lib/verification';
 
 /** Lists the signed-in vendor's own products. */
 export async function GET() {
@@ -19,6 +20,9 @@ export async function POST(request: Request) {
   if (!session?.user?.id || session.user.role !== 'vendor') {
     return NextResponse.json({ error: 'Vendor sign-in required.' }, { status: 401 });
   }
+
+  const blocked = tradingBlockReason(session.user.id);
+  if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
 
   const data = await request.json();
   if (!data.name || typeof data.price !== 'number') {

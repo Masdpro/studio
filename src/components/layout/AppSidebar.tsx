@@ -47,6 +47,7 @@ const adminItems = [
   { href: '/admin/vendors', label: 'Vendors', icon: Store, tooltip: "Manage Vendors" },
   { href: '/admin/products', label: 'Products', icon: ShoppingBag, tooltip: "Manage Products" },
   { href: '/admin/agents', label: 'Agents', icon: Bike, tooltip: "Manage Delivery Agents" },
+  { href: '/admin/verifications', label: 'Verifications', icon: ShieldCheck, tooltip: "Review vendor and agent verifications" },
 ];
 
 export function AppSidebar() {

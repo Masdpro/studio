@@ -14,6 +14,7 @@ const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_age
   { prefix: '/errands', role: 'customer' },
   { prefix: '/orders', role: true },
   { prefix: '/profile', role: true },
+  { prefix: '/account', role: true },
   { prefix: '/notifications', role: true },
 ];
 
@@ -46,6 +47,7 @@ export const config = {
     '/errands/:path*',
     '/orders',
     '/profile',
+    '/account/:path*',
     '/notifications',
   ],
 };
