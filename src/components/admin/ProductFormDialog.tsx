@@ -35,7 +35,7 @@ const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  discountPrice: z.coerce.number().positive().optional().or(z.literal(NaN)),
+  discountPrice: z.union([z.coerce.number().positive(), z.literal('')]).nullable().optional(),
   imageUrl: z.string().optional(),
   category: z.string().optional(),
   isAwoof: z.boolean(),
@@ -57,7 +57,7 @@ function productToFormValues(product: Product | null): ProductFormValues {
     name: product?.name ?? '',
     description: product?.description ?? '',
     price: product?.price ?? 0,
-    discountPrice: product?.discountPrice ?? undefined,
+    discountPrice: product?.discountPrice ?? '',
     imageUrl: product?.imageUrl ?? '',
     category: product?.category ?? '',
     isAwoof: product?.isAwoof ?? false,
@@ -82,7 +82,7 @@ export function ProductFormDialog({ product, vendors, open, onOpenChange, onSave
     try {
       const payload = {
         ...data,
-        discountPrice: Number.isFinite(data.discountPrice) ? data.discountPrice : undefined,
+        discountPrice: typeof data.discountPrice === 'number' ? data.discountPrice : null,
       };
       const url = product ? `/api/admin/products/${product.id}` : '/api/admin/products';
       const res = await fetch(url, {
@@ -195,7 +195,7 @@ export function ProductFormDialog({ product, vendors, open, onOpenChange, onSave
                             step="0.01"
                             placeholder="3800"
                             {...field}
-                            value={Number.isFinite(field.value) ? field.value : ''}
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormMessage />
