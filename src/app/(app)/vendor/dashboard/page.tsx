@@ -2,11 +2,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { BranchesManager } from '@/components/vendor/BranchesManager';
 import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2 } from 'lucide-react';
+import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2, MapPin } from 'lucide-react';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
@@ -123,9 +124,12 @@ export default function VendorDashboardPage() {
         </Card>
       )}
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <Settings className="h-5 w-5" /> Profile
+          </TabsTrigger>
+          <TabsTrigger value="branches" className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" /> Branches
           </TabsTrigger>
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5" /> Wallet
@@ -159,6 +163,10 @@ export default function VendorDashboardPage() {
               <VendorProfileForm vendor={vendor ?? undefined} onSaved={loadDashboard} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="branches">
+          <BranchesManager vendorName={vendor?.businessName} mainAddress={vendor ? `${vendor.streetAddress}, ${vendor.city}, ${vendor.country}` : undefined} />
         </TabsContent>
 
         <TabsContent value="wallet">

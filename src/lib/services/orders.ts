@@ -56,6 +56,7 @@ export async function createOrder(data: Omit<Order, 'id' | 'createdAt'>): Promis
       createdAt: new Date(),
       deliveryAgentId: data.deliveryAgentId,
       deliveryPreference: data.deliveryPreference,
+      branchId: data.branchId ?? null,
     })
     .run();
   return id;
@@ -95,5 +96,6 @@ function rowToOrder(row: typeof ordersTable.$inferSelect): Order {
     agentLatitude: row.agentLatitude ?? undefined,
     agentLongitude: row.agentLongitude ?? undefined,
     agentLocationUpdatedAt: row.agentLocationUpdatedAt ?? undefined,
+    branchId: row.branchId ?? undefined,
   };
 }

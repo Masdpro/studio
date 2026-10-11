@@ -30,6 +30,22 @@ export type Vendor = {
   status?: 'Open' | 'Closed' | 'Opening Soon' | 'Temporarily Unavailable';
 };
 
+export type VendorBranch = {
+  id: string;
+  vendorId: string;
+  name: string;
+  streetAddress: string;
+  city: string;
+  country: string;
+  locationTag?: string;
+  marketId?: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  operatingHours?: string;
+  status?: Vendor['status'];
+};
+
 export type Product = {
   id: string;
   vendorId: string;
@@ -80,6 +96,7 @@ export type Order = {
   agentLatitude?: number; // Agent's live position while status is PickedUpByAgent
   agentLongitude?: number;
   agentLocationUpdatedAt?: Date;
+  branchId?: string; // vendor branch the order is collected from (undefined = main address)
 };
 
 export type TimeWindow = {

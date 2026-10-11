@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { track } from '@/lib/track';
 import { ProductCard } from '@/components/product/ProductCard';
 import { FlashDealCard } from '@/components/product/FlashDealCard';
-import type { Product, Vendor, Market } from '@/lib/types';
+import type { Product, Vendor, Market, VendorBranch } from '@/lib/types';
+import { vendorInLocation, vendorMatchesQuery } from '@/lib/vendor-search';
+import { VendorResultCard } from '@/components/vendor/VendorResultCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,12 +48,14 @@ interface HomePageClientProps {
   initialProducts: Product[];
   initialVendors: Vendor[];
   initialMarkets: Market[];
+  initialBranches?: VendorBranch[];
 }
 
 export default function HomePageClient({
   initialProducts: sampleProducts,
   initialVendors: mockVendors,
   initialMarkets: sampleMarkets,
+  initialBranches = [],
 }: HomePageClientProps) {
   // Products / Markets is switched from the header (see HomeViewTabs) via ?view=
   const activeView = parseHomeView(useSearchParams().get('view'));
@@ -141,9 +145,17 @@ export default function HomePageClient({
     return ['All', ...uniqueCategories];
   }, []);
 
+  const branchesByVendor = useMemo(() => {
+    const m = new Map<string, VendorBranch[]>();
+    initialBranches.forEach(b => m.set(b.vendorId, [...(m.get(b.vendorId) ?? []), b]));
+    return m;
+  }, [initialBranches]);
+  const locationFilter = (): { value: string; all: string; current: string; coords: { latitude: number; longitude: number } | null } =>
+    ({ value: selectedLocation, all: ALL_LOCATIONS_VALUE, current: USER_CURRENT_LOCATION_VALUE, coords: userCoords });
+
   const locationsForFilter = useMemo(() => {
     const uniqueLocations = Array.from(
-      new Set(mockVendors.map(v => v.locationTag))
+      new Set([...mockVendors.map(v => v.locationTag), ...initialBranches.map(b => b.locationTag)])
     ).filter(Boolean).sort() as string[];
     return [ALL_LOCATIONS_VALUE, USER_CURRENT_LOCATION_VALUE, ...uniqueLocations];
   }, []);
@@ -209,17 +221,7 @@ export default function HomePageClient({
   };
 
   const vendorsForFilter = useMemo(() => {
-    let vendorsFilteredByLocation = mockVendors;
-
-    if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
-      vendorsFilteredByLocation = mockVendors.filter(vendor =>
-        vendor.latitude && vendor.longitude &&
-        Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
-        Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
-      );
-    } else if (selectedLocation !== ALL_LOCATIONS_VALUE && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
-      vendorsFilteredByLocation = mockVendors.filter(vendor => vendor.locationTag === selectedLocation);
-    }
+    const vendorsFilteredByLocation = mockVendors.filter(v => vendorInLocation(v, branchesByVendor.get(v.id) ?? [], locationFilter()));
 
     const productVendorIds = Array.from(new Set(sampleProducts.map(p => p.vendorId)));
     const availableVendors = vendorsFilteredByLocation.filter(v => productVendorIds.includes(v.id));
@@ -240,7 +242,7 @@ export default function HomePageClient({
   const vendorOptions = useMemo(() => {
     if (activeView !== 'markets') return vendorsForFilter;
     const inMarkets = mockVendors.filter(
-      v => v.marketId && (selectedLocation === ALL_LOCATIONS_VALUE || selectedLocation === USER_CURRENT_LOCATION_VALUE || v.locationTag === selectedLocation)
+      v => v.marketId && (selectedLocation === USER_CURRENT_LOCATION_VALUE || vendorInLocation(v, branchesByVendor.get(v.id) ?? [], locationFilter()))
     );
     return [vendorsForFilter[0], ...inMarkets];
   }, [activeView, vendorsForFilter, selectedLocation]);
@@ -258,12 +260,46 @@ export default function HomePageClient({
   };
 
   // The search box also matches vendors (store name, city, street address).
-  const vendorTextMatches = (v: Vendor, q: string) =>
-    [v.businessName, v.city, v.streetAddress, v.locationTag].some(t => t && t.toLowerCase().includes(q));
+  const vendorTextMatches = (v: Vendor, q: string) => vendorMatchesQuery(v, branchesByVendor.get(v.id) ?? [], q);
   const vendorMatchesSearch = (vendorId: string, q: string) => {
     const v = mockVendors.find(x => x.id === vendorId);
     return !!v && vendorTextMatches(v, q);
   };
+
+  // Stores whose name or any branch matches the search — shown as store cards that open the vendor's page.
+  const matchedStores = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return [];
+    return mockVendors
+      .filter(v => vendorTextMatches(v, q) && vendorInLocation(v, branchesByVendor.get(v.id) ?? [], locationFilter()))
+      .sort((a, b) => Number(b.businessName.toLowerCase().includes(q)) - Number(a.businessName.toLowerCase().includes(q)) || a.businessName.localeCompare(b.businessName))
+      .slice(0, 12);
+  }, [searchTerm, selectedLocation, userCoords, initialBranches]);
+  const productCountByVendor = useMemo(() => {
+    const m = new Map<string, number>();
+    sampleProducts.forEach(p => m.set(p.vendorId, (m.get(p.vendorId) ?? 0) + 1));
+    return m;
+  }, []);
+  const storesSection = matchedStores.length > 0 && (
+    <section>
+      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+        <Store className="h-6 w-6 text-primary" />
+        Stores
+        <span className="text-base font-normal text-muted-foreground">({matchedStores.length})</span>
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {matchedStores.map(v => (
+          <VendorResultCard
+            key={v.id}
+            vendor={v}
+            branches={branchesByVendor.get(v.id) ?? []}
+            productCount={productCountByVendor.get(v.id) ?? 0}
+            marketName={v.marketId ? sampleMarkets.find(m => m.id === v.marketId)?.name : undefined}
+          />
+        ))}
+      </div>
+    </section>
+  );
 
   const selectedVendorDetails = useMemo(() => {
     return mockVendors.find(v => v.id === selectedVendorId);
@@ -271,17 +307,7 @@ export default function HomePageClient({
 
 
   const filteredProducts = useMemo(() => {
-    let vendorsToFilterBy = mockVendors;
-
-    if (selectedLocation === USER_CURRENT_LOCATION_VALUE && userCoords) {
-      vendorsToFilterBy = mockVendors.filter(vendor =>
-        vendor.latitude && vendor.longitude &&
-        Math.abs(vendor.latitude - userCoords.latitude) < NEARBY_THRESHOLD_DEGREES &&
-        Math.abs(vendor.longitude - userCoords.longitude) < NEARBY_THRESHOLD_DEGREES
-      );
-    } else if (selectedLocation !== ALL_LOCATIONS_VALUE && selectedLocation !== USER_CURRENT_LOCATION_VALUE) {
-      vendorsToFilterBy = mockVendors.filter(vendor => vendor.locationTag === selectedLocation);
-    }
+    const vendorsToFilterBy = mockVendors.filter(v => vendorInLocation(v, branchesByVendor.get(v.id) ?? [], locationFilter()));
 
     const vendorIdsFromLocationFilter = new Set(vendorsToFilterBy.map(v => v.id));
 
@@ -315,7 +341,7 @@ export default function HomePageClient({
 
       return matchesCategory && matchesSearch && matchesVendor && matchesLocationCriteria;
     });
-  }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating]);
+  }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating, initialBranches]);
 
   const flashDeals = useMemo(() => {
     return sampleProducts.filter(p => p.isAwoof);
@@ -353,6 +379,7 @@ export default function HomePageClient({
   const renderMarketContent = () => {
     return (
       <div className="space-y-10">
+        {storesSection}
         {/* Trending Markets Spotlight */}
         {trendingMarkets.length > 0 && searchTerm === '' && selectedLocation === ALL_LOCATIONS_VALUE && (
            <section>
@@ -537,6 +564,8 @@ export default function HomePageClient({
               </section>
             )}
 
+            {storesSection}
+
             {filteredProducts.length > 0 ? (
               <section>
                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -567,7 +596,7 @@ export default function HomePageClient({
                   })}
                 </div>
               </section>
-            ) : (
+            ) : matchedStores.length > 0 ? null : (
                <div className="text-center py-20">
                 {isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE ? (
                   <div className="flex flex-col items-center">

@@ -15,6 +15,7 @@
     "create-admin": "tsx scripts/create-admin.ts",
     "backfill-verified": "tsx scripts/backfill-verified.ts",
     "seed-analytics": "tsx scripts/seed-analytics.ts",
+    "seed-branches": "tsx scripts/seed-branches.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

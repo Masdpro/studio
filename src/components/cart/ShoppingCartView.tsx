@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { track, getSessionId } from '@/lib/track';
 import { useRouter } from 'next/navigation';
 import { CartItem } from './CartItem';
@@ -14,6 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
 
 export function ShoppingCartView() {
   const router = useRouter();
@@ -23,6 +26,23 @@ export function ShoppingCartView() {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const { toast } = useToast();
+
+  // Vendors in the cart that have several branches: let the customer choose where to collect from.
+  const [branchInfo, setBranchInfo] = useState<Record<string, BranchInfo>>({});
+  const [branchChoice, setBranchChoice] = useState<Record<string, string>>({});
+  const vendorKey = useMemo(
+    () => Array.from(new Set(cartItems.map((i) => i.vendorId).filter(Boolean))).sort().join(','),
+    [cartItems]
+  );
+  useEffect(() => {
+    if (!vendorKey) { setBranchInfo({}); return; }
+    let cancelled = false;
+    fetch(`/api/branches?vendorIds=${encodeURIComponent(vendorKey)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.vendors) setBranchInfo(d.vendors); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [vendorKey]);
 
   const handleRemoveItem = (productId: string) => {
     removeItem(productId);
@@ -77,6 +97,7 @@ export function ShoppingCartView() {
           deliveryPreference: isDeliverySelected ? 'delivery' : 'pickup',
           deliveryAddress,
           sessionId: getSessionId(),
+          branchSelections: branchChoice,
         }),
       });
       if (!res.ok) {
@@ -144,6 +165,22 @@ export function ShoppingCartView() {
               onCheckedChange={(checked) => setIsDeliverySelected(Boolean(checked))}
             />
           </div>
+          {Object.entries(branchInfo).map(([vendorId, info]) => (
+            <div key={vendorId} className="py-1">
+              <Label className="text-xs text-muted-foreground">Collect {info.name} items from</Label>
+              <Select value={branchChoice[vendorId] ?? 'main'} onValueChange={(v) => setBranchChoice((prev) => ({ ...prev, [vendorId]: v }))}>
+                <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="main">Main branch — {info.main}</SelectItem>
+                  {info.branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id} disabled={b.status === 'Closed' || b.status === 'Temporarily Unavailable'}>
+                      {b.name} — {b.address}{b.status && b.status !== 'Open' ? ` (${b.status})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
           <div className="py-1">
             <Label htmlFor="delivery-address" className="text-xs text-muted-foreground">
               {isDeliverySelected ? 'Delivery address' : 'Name for pickup'}

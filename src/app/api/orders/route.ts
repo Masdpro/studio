@@ -13,6 +13,7 @@ import { debitWallet } from '@/lib/services/wallets';
 import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
 import { recordEvent } from '@/lib/services/events';
+import { getBranchById } from '@/lib/services/branches';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
 export async function GET() {
@@ -44,8 +45,9 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { items, deliveryPreference, deliveryAddress, sessionId } = body as {
+  const { items, deliveryPreference, deliveryAddress, sessionId, branchSelections } = body as {
     sessionId?: string;
+    branchSelections?: Record<string, string>;
     items: CartItem[];
     deliveryPreference: 'delivery' | 'pickup';
     deliveryAddress: string;
@@ -67,9 +69,23 @@ export async function POST(request: Request) {
 
   // Resolve each vendor sub-order's total up front so we know the grand total
   // to charge the wallet before creating anything.
-  const vendorOrders = await Promise.all(
+  let vendorOrders: Awaited<ReturnType<typeof resolveVendorOrders>>;
+  try {
+    vendorOrders = await resolveVendorOrders();
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not place order.' }, { status: 400 });
+  }
+
+  async function resolveVendorOrders() {
+    return Promise.all(
     Array.from(itemsByVendor.entries()).map(async ([vendorId, vendorItems]) => {
       const vendor = await getVendorById(vendorId);
+      // Customer may collect from one of the vendor's branches instead of its main address.
+      const wanted = branchSelections?.[vendorId];
+      const branch = wanted && wanted !== 'main' ? await getBranchById(wanted) : undefined;
+      if (wanted && wanted !== 'main' && (!branch || branch.vendorId !== vendorId)) {
+        throw new Error('That pickup branch is not available.');
+      }
       const itemsTotal = vendorItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
       const deliveryFee = deliveryPreference === 'delivery' ? 1500 : 0;
       return {
@@ -77,12 +93,17 @@ export async function POST(request: Request) {
         vendorItems,
         totalAmount: itemsTotal + deliveryFee,
         deliveryFee,
-        pickupAddress: vendor
-          ? `${vendor.businessName}, ${vendor.streetAddress}, ${vendor.city}`
-          : 'Vendor address unavailable',
+        branchId: branch?.id,
+        branchName: branch?.name,
+        pickupAddress: branch
+          ? `${vendor?.businessName ?? 'Vendor'} (${branch.name}), ${branch.streetAddress}, ${branch.city}`
+          : vendor
+            ? `${vendor.businessName}, ${vendor.streetAddress}, ${vendor.city}`
+            : 'Vendor address unavailable',
       };
     })
-  );
+    );
+  }
 
   const grandTotal = vendorOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
@@ -107,6 +128,7 @@ export async function POST(request: Request) {
       deliveryAddress,
       deliveryFee: order.deliveryFee,
       deliveryPreference,
+      branchId: order.branchId,
     });
     orderIds.push(orderId);
     recordEvent({
@@ -125,7 +147,7 @@ export async function POST(request: Request) {
     });
     await createNotification({
       userId: order.vendorId,
-      message: `You have a new order for ₦${order.totalAmount.toLocaleString()}.`,
+      message: `You have a new order for ₦${order.totalAmount.toLocaleString()}${order.branchName ? ` (pickup at ${order.branchName})` : ''}.`,
       category: 'Activity',
       link: '/vendor/dashboard',
       iconName: 'PackageCheck',
