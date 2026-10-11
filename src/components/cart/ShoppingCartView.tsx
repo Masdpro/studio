@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { track, getSessionId } from '@/lib/track';
 import { useRouter } from 'next/navigation';
 import { CartItem } from './CartItem';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ export function ShoppingCartView() {
       return;
     }
 
+    track('checkout_start');
     setIsPlacingOrder(true);
     try {
       const res = await fetch('/api/orders', {
@@ -74,6 +76,7 @@ export function ShoppingCartView() {
           items: cartItems,
           deliveryPreference: isDeliverySelected ? 'delivery' : 'pickup',
           deliveryAddress,
+          sessionId: getSessionId(),
         }),
       });
       if (!res.ok) {

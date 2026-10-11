@@ -12,6 +12,7 @@ import { getVendorById } from '@/lib/services/vendors';
 import { debitWallet } from '@/lib/services/wallets';
 import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
+import { recordEvent } from '@/lib/services/events';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
 export async function GET() {
@@ -43,7 +44,8 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { items, deliveryPreference, deliveryAddress } = body as {
+  const { items, deliveryPreference, deliveryAddress, sessionId } = body as {
+    sessionId?: string;
     items: CartItem[];
     deliveryPreference: 'delivery' | 'pickup';
     deliveryAddress: string;
@@ -107,6 +109,12 @@ export async function POST(request: Request) {
       deliveryPreference,
     });
     orderIds.push(orderId);
+    recordEvent({
+      type: 'order_placed',
+      sessionId: typeof sessionId === 'string' && sessionId ? sessionId.slice(0, 64) : `server:${session.user.id}`,
+      userId: session.user.id,
+      vendorId: order.vendorId,
+    });
 
     await createNotification({
       userId: session.user.id,

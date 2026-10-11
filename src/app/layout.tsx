@@ -5,6 +5,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { PageViewTracker } from '@/components/analytics/PageViewTracker';
+import { ServiceWorkerRegister } from '@/components/analytics/ServiceWorkerRegister';
 
 // Removed geistSans and geistMono initializations
 
@@ -24,6 +26,8 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <CartProvider>
+            <PageViewTracker />
+            <ServiceWorkerRegister />
             {children}
             <Toaster />
           </CartProvider>

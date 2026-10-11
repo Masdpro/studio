@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { track } from '@/lib/track';
 import { ProductCard } from '@/components/product/ProductCard';
 import { FlashDealCard } from '@/components/product/FlashDealCard';
 import type { Product, Vendor, Market } from '@/lib/types';
@@ -100,6 +101,14 @@ export default function HomePageClient({
     if (isMounted.current) {
       sessionStorage.setItem(SESSION_STORAGE_KEYS.searchTerm, searchTerm);
     }
+  }, [searchTerm]);
+
+  // Record what people search for (debounced, so typing doesn't spam events).
+  useEffect(() => {
+    const term = searchTerm.trim();
+    if (!isMounted.current || term.length < 2) return;
+    const t = setTimeout(() => track('search', { term }), 1000);
+    return () => clearTimeout(t);
   }, [searchTerm]);
 
   useEffect(() => {

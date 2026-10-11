@@ -8,7 +8,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Store, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { track } from '@/lib/track';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
@@ -35,7 +36,22 @@ export function ProductCard({
   const { addItem } = useCart();
   const [isAddressExpanded, setIsAddressExpanded] = useState(false);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        track('product_view', { productId: product.id, vendorId: product.vendorId });
+        io.disconnect();
+      }
+    }, { threshold: 0.6 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [product.id, product.vendorId]);
+
   const handleAddToCart = () => {
+    track('add_to_cart', { productId: product.id, vendorId: product.vendorId });
     addItem(product);
     toast({
       title: "Added to cart!",
@@ -53,7 +69,7 @@ export function ProductCard({
   };
 
   return (
-    <Card className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+    <Card ref={cardRef} className="w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <div className="relative w-full h-48 overflow-hidden bg-muted">
         <SafeImage
           src={product.imageUrl || "https://placehold.co/300x200.png"}
