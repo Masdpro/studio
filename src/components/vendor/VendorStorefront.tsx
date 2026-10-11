@@ -1,9 +1,15 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Clock, ExternalLink, MapPin, Navigation, Phone, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProductCard } from '@/components/product/ProductCard';
+import { getBranchChoice, setBranchChoice } from '@/lib/branch-choice';
+import { cn } from '@/lib/utils';
+import { Check } from 'lucide-react';
 import type { Market, Product, Vendor, VendorBranch } from '@/lib/types';
 
 type Place = {
@@ -40,6 +46,23 @@ export function VendorStorefront({
     })),
   ];
 
+  const unavailable = (p: Place) => p.status === 'Closed' || p.status === 'Temporarily Unavailable';
+  const [selected, setSelected] = useState('main');
+  useEffect(() => {
+    const saved = getBranchChoice()[vendor.id];
+    const place = places.find((p) => p.key === saved);
+    if (place && !unavailable(place)) setSelected(place.key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendor.id]);
+  const choose = (p: Place) => {
+    if (unavailable(p)) return;
+    setSelected(p.key);
+    setBranchChoice(vendor.id, p.key);
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const current = places.find((p) => p.key === selected) ?? places[0];
+  const multi = places.length > 1;
+
   return (
     <div className="container mx-auto max-w-6xl py-2">
       <Button variant="ghost" size="sm" asChild className="mb-4">
@@ -67,11 +90,15 @@ export function VendorStorefront({
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" />{places.length > 1 ? 'Branches' : 'Location'}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {places.map((p) => (
-            <Card key={p.key}>
+            <Card key={p.key} className={cn(multi && p.key === selected && 'border-primary ring-2 ring-primary/30')}>
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold">{p.title}</span>
-                  {p.status && <Badge variant={p.status === 'Open' ? 'default' : 'secondary'}>{p.status}</Badge>}
+                  {p.status === 'Open' ? (
+                    <Button size="sm" className="h-7 px-3" variant={p.key === selected ? 'secondary' : 'default'} onClick={() => choose(p)} aria-pressed={p.key === selected}>
+                      {p.key === selected && multi && <Check className="h-3.5 w-3.5 mr-1" />}Open
+                    </Button>
+                  ) : p.status ? <Badge variant="secondary">{p.status}</Badge> : null}
                 </div>
                 <p className="text-sm text-muted-foreground">{p.address}</p>
                 {p.market && (
@@ -81,16 +108,23 @@ export function VendorStorefront({
                   {p.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{p.phone}</span>}
                   {p.hours && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{p.hours}</span>}
                 </div>
+                <div className="pt-1">
                 <Button variant="outline" size="sm" asChild>
                   <a href={mapsLink(p)} target="_blank" rel="noopener noreferrer"><Navigation className="h-3.5 w-3.5 mr-1.5" />Directions</a>
                 </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       </section>
 
-      <h2 className="text-lg font-semibold mb-3">Products</h2>
+      <h2 id="products" className="text-lg font-semibold mb-3 scroll-mt-20">Products</h2>
+      {multi && (
+        <p className="text-sm mb-4 rounded-md bg-muted px-3 py-2">
+          Ordering from <span className="font-semibold">{current.title}</span> · {current.address}
+        </p>
+      )}
       {products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {products.map((product) => (
@@ -101,6 +135,7 @@ export function VendorStorefront({
               vendorStreetAddress={vendor.streetAddress}
               vendorCity={vendor.city}
               vendorCountry={vendor.country}
+              orderBranch={multi ? { branchId: current.key, name: current.title, unavailable: unavailable(current) } : undefined}
             />
           ))}
         </div>

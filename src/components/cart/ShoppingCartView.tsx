@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { getBranchChoice, setBranchChoice as storeBranchChoice } from '@/lib/branch-choice';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
@@ -30,6 +31,17 @@ export function ShoppingCartView() {
   // Vendors in the cart that have several branches: let the customer choose where to collect from.
   const [branchInfo, setBranchInfo] = useState<Record<string, BranchInfo>>({});
   const [branchChoice, setBranchChoice] = useState<Record<string, string>>({});
+  useEffect(() => { setBranchChoice(getBranchChoice()); }, []);
+  // A remembered branch that no longer exists (or is closed) falls back to the main branch.
+  const effectiveChoice = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const [vendorId, info] of Object.entries(branchInfo)) {
+      const c = branchChoice[vendorId];
+      const b = info.branches.find((x) => x.id === c);
+      out[vendorId] = b && b.status !== 'Closed' && b.status !== 'Temporarily Unavailable' ? c : 'main';
+    }
+    return out;
+  }, [branchInfo, branchChoice]);
   const vendorKey = useMemo(
     () => Array.from(new Set(cartItems.map((i) => i.vendorId).filter(Boolean))).sort().join(','),
     [cartItems]
@@ -97,7 +109,7 @@ export function ShoppingCartView() {
           deliveryPreference: isDeliverySelected ? 'delivery' : 'pickup',
           deliveryAddress,
           sessionId: getSessionId(),
-          branchSelections: branchChoice,
+          branchSelections: effectiveChoice,
         }),
       });
       if (!res.ok) {
@@ -168,7 +180,7 @@ export function ShoppingCartView() {
           {Object.entries(branchInfo).map(([vendorId, info]) => (
             <div key={vendorId} className="py-1">
               <Label className="text-xs text-muted-foreground">Collect {info.name} items from</Label>
-              <Select value={branchChoice[vendorId] ?? 'main'} onValueChange={(v) => setBranchChoice((prev) => ({ ...prev, [vendorId]: v }))}>
+              <Select value={effectiveChoice[vendorId] ?? 'main'} onValueChange={(v) => { storeBranchChoice(vendorId, v); setBranchChoice((prev) => ({ ...prev, [vendorId]: v })); }}>
                 <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="main">Main branch — {info.main}</SelectItem>

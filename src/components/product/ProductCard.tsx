@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { track } from '@/lib/track';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { setBranchChoice } from '@/lib/branch-choice';
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +22,8 @@ interface ProductCardProps {
   vendorCity: string;
   vendorCountry: string;
   onViewVendorProfile?: (vendorId: string) => void;
+  /** Set on a vendor's store page when the customer has picked a branch to collect from. */
+  orderBranch?: { branchId: string; name: string; unavailable?: boolean };
 }
 
 export function ProductCard({
@@ -30,7 +33,8 @@ export function ProductCard({
   vendorStreetAddress,
   vendorCity,
   vendorCountry,
-  onViewVendorProfile
+  onViewVendorProfile,
+  orderBranch
 }: ProductCardProps) {
   const { toast } = useToast();
   const { addItem } = useCart();
@@ -53,9 +57,12 @@ export function ProductCard({
   const handleAddToCart = () => {
     track('add_to_cart', { productId: product.id, vendorId: product.vendorId });
     addItem(product);
+    if (orderBranch) setBranchChoice(product.vendorId, orderBranch.branchId);
     toast({
       title: "Added to cart!",
-      description: `${product.name} has been added to your cart.`,
+      description: orderBranch
+        ? `${product.name} added. You'll collect it from ${orderBranch.name}.`
+        : `${product.name} has been added to your cart.`,
     });
   };
 
@@ -130,8 +137,8 @@ export function ProductCard({
         <p className="text-lg font-bold text-primary mt-auto">₦{product.price.toLocaleString()}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart} disabled={orderBranch?.unavailable}>
+          <ShoppingCart className="mr-2 h-4 w-4" /> {orderBranch?.unavailable ? 'Branch unavailable' : 'Add to Cart'}
         </Button>
       </CardFooter>
     </Card>
