@@ -7,7 +7,8 @@ import { CartItem } from './CartItem';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Loader2 } from 'lucide-react';
+import { ShoppingBag, Loader2, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { getBranchChoice } from '@/lib/branch-choice';
-import { getSavedAddress } from '@/lib/delivery-address';
+import { getSavedAddress, getAddressHistory, rememberAddress } from '@/lib/delivery-address';
 
 type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
 
@@ -37,6 +38,28 @@ export function ShoppingCartView() {
     const saved = getSavedAddress();
     if (saved) setDeliveryAddress((cur) => cur || saved.address);
   }, []);
+  // Addresses used on earlier orders (plus ones remembered in this browser) to pick from at checkout.
+  const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
+  useEffect(() => {
+    let off = false;
+    const local = getAddressHistory().map((a) => a.address);
+    setRecentAddresses(local.slice(0, 6));
+    if (!user) return;
+    fetch('/api/account/addresses')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { addresses?: string[] } | null) => {
+        if (off || !d?.addresses) return;
+        const seen = new Set<string>();
+        const merged: string[] = [];
+        for (const a of [...d.addresses, ...local]) {
+          const k = a.trim().toLowerCase();
+          if (k && !seen.has(k)) { seen.add(k); merged.push(a.trim()); }
+        }
+        setRecentAddresses(merged.slice(0, 6));
+      })
+      .catch(() => {});
+    return () => { off = true; };
+  }, [user]);
   // A remembered branch that no longer exists (or is closed) falls back to the main branch.
   const effectiveChoice = useMemo(() => {
     const out: Record<string, string> = {};
@@ -122,6 +145,7 @@ export function ShoppingCartView() {
         throw new Error(error ?? 'Failed to place order.');
       }
 
+      if (isDeliverySelected) rememberAddress({ address: deliveryAddress.trim() });
       clear();
       // This just debited the wallet and created a notification — tell the
       // header's already-mounted displays to refetch instead of going stale.
@@ -199,6 +223,28 @@ export function ShoppingCartView() {
               placeholder={isDeliverySelected ? 'e.g. 12 Allen Avenue, Ikeja, Lagos' : 'e.g. Your name'}
               className="mt-1"
             />
+            {isDeliverySelected && recentAddresses.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                <p className="text-xs text-muted-foreground">Recent addresses — tap one to use it</p>
+                <div className="flex flex-col gap-1.5">
+                  {recentAddresses.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => setDeliveryAddress(a)}
+                      className={cn(
+                        'flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors hover:border-primary',
+                        deliveryAddress.trim().toLowerCase() === a.toLowerCase() && 'border-primary bg-primary/5'
+                      )}
+                    >
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                      <span className="break-words">{a}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Or type a new address above.</p>
+              </div>
+            )}
           </div>
           <Separator />
           <div className="flex justify-between text-xs">

@@ -19,6 +19,7 @@ function rowToBranch(r: typeof vendorBranches.$inferSelect): VendorBranch {
     phone: r.phone ?? undefined,
     operatingHours: r.operatingHours ?? undefined,
     status: (r.status as VendorBranch['status']) ?? undefined,
+    imageUrl: r.imageUrl ?? undefined,
   };
 }
 
@@ -30,6 +31,10 @@ export async function getBranchesByVendor(vendorId: string): Promise<VendorBranc
   return db.select().from(vendorBranches).where(eq(vendorBranches.vendorId, vendorId)).all().map(rowToBranch);
 }
 
+export async function getBranchesByMarketId(marketId: string): Promise<VendorBranch[]> {
+  return db.select().from(vendorBranches).where(eq(vendorBranches.marketId, marketId)).all().map(rowToBranch);
+}
+
 export async function getBranchById(id: string): Promise<VendorBranch | undefined> {
   const r = db.select().from(vendorBranches).where(eq(vendorBranches.id, id)).get();
   return r ? rowToBranch(r) : undefined;
@@ -37,13 +42,15 @@ export async function getBranchById(id: string): Promise<VendorBranch | undefine
 
 export async function createBranch(vendorId: string, data: Omit<VendorBranch, 'id' | 'vendorId'>): Promise<string> {
   const id = randomUUID();
-  db.insert(vendorBranches).values({ id, vendorId, ...data, createdAt: new Date() }).run();
+  db.insert(vendorBranches).values({ id, vendorId, ...data, imageUrl: data.imageUrl || null, createdAt: new Date() }).run();
   return id;
 }
 
 /** Only touches a branch that belongs to `vendorId`. Returns false if there is no such branch. */
 export async function updateBranch(id: string, vendorId: string, data: Partial<Omit<VendorBranch, 'id' | 'vendorId'>>): Promise<boolean> {
-  const res = db.update(vendorBranches).set(data).where(and(eq(vendorBranches.id, id), eq(vendorBranches.vendorId, vendorId))).run();
+  const patch: Record<string, unknown> = { ...data };
+  if (patch.imageUrl === '') patch.imageUrl = null;
+  const res = db.update(vendorBranches).set(patch).where(and(eq(vendorBranches.id, id), eq(vendorBranches.vendorId, vendorId))).run();
   return res.changes > 0;
 }
 

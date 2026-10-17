@@ -11,12 +11,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { VendorBranch } from '@/lib/types';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { BranchAccountControl } from '@/components/vendor/BranchAccountControl';
 
 const STATUSES = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 const NO_MARKET = 'none';
-type Form = { name: string; streetAddress: string; city: string; country: string; locationTag: string; marketId: string; phone: string; operatingHours: string; status: string };
-const EMPTY: Form = { name: '', streetAddress: '', city: '', country: 'Nigeria', locationTag: '', marketId: NO_MARKET, phone: '', operatingHours: '', status: 'Open' };
+type Form = { name: string; streetAddress: string; city: string; country: string; locationTag: string; marketId: string; phone: string; operatingHours: string; status: string; imageUrl: string };
+const EMPTY: Form = { name: '', streetAddress: '', city: '', country: 'Nigeria', locationTag: '', marketId: NO_MARKET, phone: '', operatingHours: '', status: 'Open', imageUrl: '' };
 
 export function BranchesManager({ vendorName, mainAddress }: { vendorName?: string; mainAddress?: string }) {
   const { toast } = useToast();
@@ -42,7 +43,7 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
     setEditing(b);
     setForm(b === 'new' ? EMPTY : {
       name: b.name, streetAddress: b.streetAddress, city: b.city, country: b.country, locationTag: b.locationTag ?? '',
-      marketId: b.marketId ?? NO_MARKET, phone: b.phone ?? '', operatingHours: b.operatingHours ?? '', status: b.status ?? 'Open',
+      marketId: b.marketId ?? NO_MARKET, phone: b.phone ?? '', operatingHours: b.operatingHours ?? '', status: b.status ?? 'Open', imageUrl: b.imageUrl ?? '',
     });
   };
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -122,6 +123,10 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
             <DialogDescription>We place the branch on the map from its address automatically.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
+            <div>
+              <Label>Branch photo (optional)</Label>
+              <ImageUploadField value={form.imageUrl} onChange={(v: string) => setForm((f) => ({ ...f, imageUrl: v }))} endpoint="/api/vendor/upload" />
+            </div>
             <div><Label htmlFor="b-name">Branch name</Label><Input id="b-name" value={form.name} onChange={set('name')} placeholder="e.g. Wuse 2 branch" /></div>
             <div><Label htmlFor="b-street">Street address</Label><Input id="b-street" value={form.streetAddress} onChange={set('streetAddress')} /></div>
             <div className="grid grid-cols-2 gap-3">

@@ -22,6 +22,11 @@ export function parseBranchInput(body: any, partial = false): { data: Partial<Om
     if (!STATUSES.includes(body.status)) return { error: 'Invalid status.' };
     data.status = body.status;
   }
+  if (body.imageUrl !== undefined) {
+    const u = str(body.imageUrl, 200);
+    if (u && !/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/.test(u)) return { error: 'Invalid image.' };
+    data.imageUrl = u;
+  }
   const lat = num(body.latitude), lon = num(body.longitude);
   if (lat !== undefined || lon !== undefined) {
     if (lat === undefined || lon === undefined || Math.abs(lat) > 90 || Math.abs(lon) > 180) return { error: 'Invalid coordinates.' };

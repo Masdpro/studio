@@ -15,6 +15,7 @@ import type { Market, Product, Vendor, VendorBranch } from '@/lib/types';
 
 type Place = {
   key: string;
+  image?: string;
   title: string;
   address: string;
   phone?: string;
@@ -38,11 +39,11 @@ export function VendorStorefront({
   const marketOf = (id?: string) => markets.find((m) => m.id === id);
   const places: Place[] = [
     {
-      key: 'main', main: true, title: 'Main branch', address: `${vendor.streetAddress}, ${vendor.city}, ${vendor.country}`,
+      key: 'main', main: true, image: vendor.imageUrl, title: 'Main branch', address: `${vendor.streetAddress}, ${vendor.city}, ${vendor.country}`,
       phone: vendor.phone, hours: vendor.operatingHours, status: vendor.status, market: marketOf(vendor.marketId), lat: vendor.latitude, lon: vendor.longitude,
     },
     ...branches.map((b) => ({
-      key: b.id, title: b.name, address: `${b.streetAddress}, ${b.city}, ${b.country}`, phone: b.phone, hours: b.operatingHours,
+      key: b.id, image: b.imageUrl, title: b.name, address: `${b.streetAddress}, ${b.city}, ${b.country}`, phone: b.phone, hours: b.operatingHours,
       status: b.status, market: marketOf(b.marketId), lat: b.latitude, lon: b.longitude,
     })),
   ];
@@ -95,23 +96,33 @@ export function VendorStorefront({
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" />{places.length > 1 ? 'Branches' : 'Location'}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {places.map((p) => (
-            <Card key={p.key} className={cn(multi && p.key === selected && 'border-primary ring-2 ring-primary/30')}>
+            <Card key={p.key} className={cn('overflow-hidden', multi && p.key === selected && 'border-primary ring-2 ring-primary/30')}>
+              <div className="relative aspect-[16/9] bg-muted">
+                {p.image ? (
+                  <SafeImage src={p.image} alt={`${p.title} storefront`} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary/10"><Store className="h-12 w-12 text-primary/60" aria-hidden /></div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 space-y-1 p-4 text-white">
+                  <h3 className="text-lg font-bold leading-tight">{p.title}</h3>
+                  {p.hours && <p className="flex items-center gap-1.5 text-xs"><Clock className="h-3.5 w-3.5 shrink-0" />{p.hours}</p>}
+                  <p className="flex items-center gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5 shrink-0" /><span className="line-clamp-1">{p.address}</span></p>
+                </div>
+              </div>
               <CardContent className="p-4 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold">{p.title}</span>
+                <div className="flex items-center justify-end gap-2">
                   {p.status === 'Open' ? (
                     <Button size="sm" className="h-7 px-3" variant={p.key === selected ? 'secondary' : 'default'} onClick={() => choose(p)} aria-pressed={p.key === selected}>
                       {p.key === selected && multi && <Check className="h-3.5 w-3.5 mr-1" />}Open
                     </Button>
                   ) : p.status ? <Badge variant="secondary">{p.status}</Badge> : null}
                 </div>
-                <p className="text-sm text-muted-foreground">{p.address}</p>
                 {p.market && (
                   <p className="text-sm">In <Link className="underline text-primary" href={`/market/${p.market.id}`}>{p.market.name}</Link></p>
                 )}
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                   {p.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{p.phone}</span>}
-                  {p.hours && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{p.hours}</span>}
                 </div>
                 <div className="pt-1">
                 <Button variant="outline" size="sm" asChild>

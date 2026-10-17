@@ -1,22 +1,36 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getMarketById } from '@/lib/services/markets';
-import { getVendorsByMarketId } from '@/lib/services/vendors';
+import { getVendorsByMarketId, getVendorById } from '@/lib/services/vendors';
+import { getBranchesByMarketId } from '@/lib/services/branches';
 import { SafeImage } from '@/components/ui/safe-image';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronRight, MapPin, Store } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, MapPin, Store } from 'lucide-react';
 
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const { marketId } = await params;
   const market = await getMarketById(marketId);
   if (!market) notFound();
 
-  const stores = await getVendorsByMarketId(marketId);
+  const [vendorsHere, branchesHere] = await Promise.all([getVendorsByMarketId(marketId), getBranchesByMarketId(marketId)]);
+  const owners = new Map<string, Awaited<ReturnType<typeof getVendorById>>>();
+  for (const id of new Set(branchesHere.map((b) => b.vendorId))) owners.set(id, await getVendorById(id));
+  // Main stores and branches that trade in this market, each shown as a photo tile.
+  const stores = [
+    ...vendorsHere.map((s) => ({
+      key: s.id, href: `/market/${marketId}/vendor/${s.id}`, name: s.businessName, image: s.imageUrl, hours: s.operatingHours,
+      address: [s.streetAddress, s.city].filter(Boolean).join(', '),
+    })),
+    ...branchesHere.filter((b) => owners.get(b.vendorId)).map((b) => ({
+      key: `branch-${b.id}`, href: `/market/${marketId}/vendor/${b.vendorId}`, name: `${owners.get(b.vendorId)!.businessName} · ${b.name}`,
+      image: b.imageUrl, hours: b.operatingHours, address: [b.streetAddress, b.city].filter(Boolean).join(', '),
+    })),
+  ];
 
   return (
     <div className="container mx-auto max-w-5xl py-2">
       <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link href="/">
+        <Link href="/?view=markets">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Local Markets
         </Link>
       </Button>
@@ -51,21 +65,35 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
       {stores.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {stores.map((store) => (
-            <Link key={store.id} href={`/market/${marketId}/vendor/${store.id}`}>
-              <div className="h-full p-6 flex flex-col items-start gap-2 text-left border rounded-lg hover:border-primary hover:shadow-md transition-all">
-                <div className="w-full flex justify-between items-center">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Store className="h-6 w-6 text-primary" />
+            <Link key={store.key} href={store.href} className="group block">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted transition-all group-hover:border-primary group-hover:shadow-lg">
+                {store.image ? (
+                  <SafeImage
+                    src={store.image}
+                    alt={`${store.name} storefront`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+                    <Store className="h-14 w-14 text-primary/60" aria-hidden />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">{store.businessName}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-1">{store.operatingHours}</p>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                  <MapPin className="h-3 w-3" />
-                  <span>{store.streetAddress}</span>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                <ChevronRight className="absolute right-3 top-3 h-5 w-5 rounded-full bg-black/40 p-0.5 text-white" aria-hidden />
+                <div className="absolute inset-x-0 bottom-0 space-y-1 p-4 text-white">
+                  <h3 className="text-lg font-bold leading-tight break-words">{store.name}</h3>
+                  {store.hours && (
+                    <p className="flex items-center gap-1.5 text-xs opacity-95">
+                      <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="line-clamp-1">{store.hours}</span>
+                    </p>
+                  )}
+                  <p className="flex items-center gap-1.5 text-xs opacity-95">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span className="line-clamp-1">{store.address}</span>
+                  </p>
                 </div>
               </div>
             </Link>

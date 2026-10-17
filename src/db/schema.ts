@@ -222,5 +222,6 @@ export const vendorBranches = sqliteTable('vendor_branches', {
   operatingHours: text('operating_hours'),
   status: text('status', { enum: ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] }).default('Open'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  imageUrl: text('image_url'), // storefront photo
   accountUserId: text('account_user_id'), // the branch's own login (a customer account)
 });

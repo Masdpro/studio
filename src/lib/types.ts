@@ -45,6 +45,7 @@ export type VendorBranch = {
   phone?: string;
   operatingHours?: string;
   status?: Vendor['status'];
+  imageUrl?: string; // storefront photo
   accountEmail?: string; // only sent to the owning vendor
 };
 
