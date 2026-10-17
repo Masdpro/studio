@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getBranchForUser } from '@/lib/roles';
 import { getProductById, updateProduct, deleteProduct } from '@/lib/services/products';
 import type { Product } from '@/lib/types';
 
@@ -20,7 +21,8 @@ function pickEditableFields(body: Record<string, unknown>): Partial<Product> {
 async function assertOwnership(productId: string, userId: string) {
   const product = await getProductById(productId);
   if (!product) return { ok: false as const, status: 404, error: 'Product not found.' };
-  if (product.vendorId !== userId) return { ok: false as const, status: 403, error: 'You do not own this product.' };
+  const branch = getBranchForUser(userId);
+  if (product.vendorId !== userId && !(branch && product.branchId === branch.id)) return { ok: false as const, status: 403, error: 'You do not own this product.' };
   return { ok: true as const };
 }
 

@@ -26,6 +26,9 @@ export function SupportChatWidget() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  // Keep the newest message (or the typing spinner) in view; the ScrollArea root itself doesn't scroll.
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' }); });
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -81,7 +84,7 @@ export function SupportChatWidget() {
       setMessages(prev => [...prev, aiResponseMessage]);
 
     } catch (error) {
-      console.error("Error fetching AI response:", error);
+      console.warn("Error fetching AI response:", error);
       const errorMessage: DisplayMessage = {
         text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
         sender: 'ai',
@@ -144,7 +147,7 @@ export function SupportChatWidget() {
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted'
                             )}>
-                                <p>{msg.text}</p>
+                                <p className="whitespace-pre-wrap">{msg.text}</p>
                                 <p className={cn('text-xs mt-1', msg.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground' )}>
                                     {msg.timestamp}
                                 </p>
@@ -166,6 +169,7 @@ export function SupportChatWidget() {
                                 </div>
                             </div>
                         )}
+                        <div ref={endRef} />
                     </div>
                 </ScrollArea>
             </CardContent>

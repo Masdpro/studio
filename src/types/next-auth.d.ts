@@ -5,12 +5,14 @@ declare module 'next-auth' {
     user: {
       id: string;
       role: 'customer' | 'vendor' | 'delivery_agent' | 'admin';
+    roles?: ('customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch')[];
     } & DefaultSession['user'];
   }
 
   interface User {
     id: string;
     role: 'customer' | 'vendor' | 'delivery_agent' | 'admin';
+    roles?: ('customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch')[];
   }
 }
 
@@ -18,5 +20,6 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
     role: 'customer' | 'vendor' | 'delivery_agent' | 'admin';
+    roles?: ('customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch')[];
   }
 }

@@ -113,19 +113,6 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
               </div>
             </div>
           )}
-          {vendor.externalStoreUrl && (
-            <div className="flex items-start gap-4 p-3 bg-muted/50 rounded-md">
-              <Globe className="h-5 w-5 text-primary mt-1 shrink-0" />
-              <div>
-                <p className="text-sm text-muted-foreground">External Store</p>
-                <Button variant="link" asChild className="p-0 h-auto font-medium">
-                  <Link href={`/vendor/${vendor.id}/store`} target="_blank" rel="noopener noreferrer">
-                    Visit {vendor.businessName}'s Store on Closebuy
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
           <div className="mt-6 flex justify-end">
             <Button variant="outline" disabled>Edit Profile (Vendor Dashboard)</Button>
           </div>

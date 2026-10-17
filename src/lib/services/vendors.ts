@@ -4,6 +4,7 @@ import { vendors as vendorsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Vendor } from '@/lib/types';
 import { sampleVendors } from '@/lib/mockData';
+import { slugify } from '@/lib/slug';
 
 export async function getVendors(): Promise<Vendor[]> {
   const rows = db.select().from(vendorsTable).all();
@@ -30,14 +31,36 @@ export async function getVendorsByMarketId(marketId: string): Promise<Vendor[]> 
   return rows.map(rowToVendor);
 }
 
+export async function getVendorBySlug(slug: string): Promise<Vendor | undefined> {
+  const row = db.select().from(vendorsTable).where(eq(vendorsTable.slug, slug)).get();
+  return row ? rowToVendor(row) : undefined;
+}
+
+export function vendorSlugTaken(slug: string, excludeId?: string): boolean {
+  const r = db.select({ id: vendorsTable.id }).from(vendorsTable).where(eq(vendorsTable.slug, slug)).get();
+  return !!r && r.id !== excludeId;
+}
+
+function uniqueSlug(input: string, vendorId: string): string {
+  let base = slugify(input) || 'store';
+  if (base.length < 3) base += '-store';
+  let s = base;
+  let i = 2;
+  while (vendorSlugTaken(s, vendorId)) s = base + '-' + i++;
+  return s;
+}
+
 /** Creates/updates a vendor profile. `vendorId` should match the signed-in user's id. */
 export async function upsertVendor(vendorId: string, data: Partial<Vendor>): Promise<void> {
   const existing = db.select().from(vendorsTable).where(eq(vendorsTable.id, vendorId)).get();
+  const d: any = { ...data };
+  if (d.slug) d.slug = uniqueSlug(d.slug, vendorId);
+  else if (!existing?.slug) d.slug = uniqueSlug(d.businessName ?? existing?.businessName ?? 'store', vendorId);
   if (existing) {
-    db.update(vendorsTable).set(data as any).where(eq(vendorsTable.id, vendorId)).run();
+    db.update(vendorsTable).set(d).where(eq(vendorsTable.id, vendorId)).run();
   } else {
     db.insert(vendorsTable)
-      .values({ id: vendorId, profileManaged: true, ...(data as any) })
+      .values({ id: vendorId, profileManaged: true, ...d })
       .run();
   }
 }
@@ -49,6 +72,7 @@ export async function deleteVendor(vendorId: string): Promise<void> {
 function rowToVendor(row: typeof vendorsTable.$inferSelect): Vendor {
   return {
     id: row.id,
+    slug: row.slug ?? undefined,
     businessName: row.businessName,
     contactEmail: row.contactEmail,
     phone: row.phone,

@@ -54,7 +54,7 @@ export function VendorProfileDisplay({ vendor }: VendorProfileDisplayProps) {
       <SheetHeader className="p-6 border-b">
         <div className="flex items-center gap-4 mb-4">
             <Avatar className="w-16 h-16 border-2 border-primary">
-            <AvatarImage src={`https://placehold.co/100x100.png?text=${vendorInitials}`} alt={vendor.businessName} data-ai-hint="store logo" />
+            <AvatarImage src={vendor.imageUrl || `https://placehold.co/100x100.png?text=${vendorInitials}`} alt={vendor.businessName} data-ai-hint="store logo" />
             <AvatarFallback className="text-2xl">{vendorInitials}</AvatarFallback>
             </Avatar>
             <div>
@@ -110,19 +110,6 @@ export function VendorProfileDisplay({ vendor }: VendorProfileDisplayProps) {
             <p className="font-medium">{fullAddress}</p>
           </div>
         </div>
-        {vendor.externalStoreUrl && (
-          <div className="flex items-start gap-4 p-3 bg-muted/50 rounded-md">
-            <Globe className="h-5 w-5 text-primary mt-1 shrink-0" />
-            <div>
-              <p className="text-sm text-muted-foreground">External Store</p>
-              <Button variant="link" asChild className="p-0 h-auto font-medium">
-                <Link href={`/vendor/${vendor.id}/store`} target="_blank" rel="noopener noreferrer">
-                  Visit {vendor.businessName}'s Store Page <ExternalLink className="ml-1 h-4 w-4"/>
-                </Link>
-              </Button>
-            </div>
-          </div>
-        )}
          <div className="p-3 bg-muted/50 rounded-md">
             <p className="text-sm text-muted-foreground">About Us (placeholder)</p>
             <p className="font-medium">

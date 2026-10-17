@@ -9,12 +9,12 @@ import type { VerificationState } from '@/components/account/AccountVerification
 
 /** A slim reminder shown to vendors/agents until they are fully verified. */
 export function VerificationBanner() {
-  const { user, role } = useAuth();
+  const { user, roles } = useAuth();
   const pathname = usePathname();
   const [state, setState] = useState<VerificationState | null>(null);
 
   useEffect(() => {
-    if (!user || (role !== 'vendor' && role !== 'delivery_agent')) {
+    if (!user || (!roles.includes('vendor') && !roles.includes('delivery_agent'))) {
       setState(null);
       return;
     }
@@ -22,9 +22,9 @@ export function VerificationBanner() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setState(d?.state ?? null))
       .catch(() => {});
-  }, [user, role, pathname]);
+  }, [user, roles, pathname]);
 
-  if (!state || state.mayTrade || pathname.startsWith('/account/verification')) return null;
+  if (!state || state.mayTrade || pathname === '/' || pathname.startsWith('/account/verification')) return null;
 
   const text =
     state.approvalStatus === 'rejected'

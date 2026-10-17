@@ -13,6 +13,7 @@ export type Market = {
 
 export type Vendor = {
   id: string;
+  slug?: string; // custom link: /s/<slug>
   businessName: string;
   contactEmail: string;
   phone: string;
@@ -44,6 +45,7 @@ export type VendorBranch = {
   phone?: string;
   operatingHours?: string;
   status?: Vendor['status'];
+  accountEmail?: string; // only sent to the owning vendor
 };
 
 export type Product = {
@@ -57,6 +59,7 @@ export type Product = {
   category?: string;
   aiHint?: string; // For more specific image hints
   isAwoof?: boolean; // Marking it as a flash deal
+  branchId?: string; // set when the product belongs to one branch only
 };
 
 export type CartItem = {

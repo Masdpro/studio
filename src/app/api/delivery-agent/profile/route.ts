@@ -1,3 +1,5 @@
+import { getUserRoles } from '@/lib/roles';
+import { startTradingRole, normalizeNigerianPhone } from '@/lib/verification';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -18,12 +20,20 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
   }
-  if (session.user.role !== 'delivery_agent') {
-    return NextResponse.json({ error: 'Only delivery agent accounts can create this profile.' }, { status: 403 });
+  if (session.user.role === 'admin') {
+    return NextResponse.json({ error: 'Admin accounts cannot be delivery agents.' }, { status: 403 });
   }
 
   const data = await request.json();
-  await upsertDeliveryAgent(session.user.id, data);
+  const before = getUserRoles(session.user.id);
+  const isNew = !before.includes('delivery_agent');
+  if (isNew && !normalizeNigerianPhone(String(data?.phone ?? ''))) {
+    return NextResponse.json({ error: 'Enter a valid Nigerian mobile number, e.g. 08012345678.' }, { status: 400 });
+  }
+  const FIELDS = ['name', 'email', 'phone', 'streetAddress', 'city', 'country', 'vehicleDetails'];
+  const profile = Object.fromEntries(FIELDS.filter((k) => data?.[k] !== undefined).map((k) => [k, data[k]]));
+  await upsertDeliveryAgent(session.user.id, profile as any);
+  if (isNew) startTradingRole(session.user.id, data.phone, before.includes('vendor'));
 
   return NextResponse.json({ ok: true });
 }

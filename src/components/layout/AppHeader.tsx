@@ -2,6 +2,8 @@
 'use client'; // Ensure this is a client component for useState and event handlers
 
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Image from 'next/image';
 import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,12 +24,18 @@ import { ShoppingCartView } from '@/components/cart/ShoppingCartView';
 import CustomerProfilePage from '@/app/(app)/profile/page'; // Import the default export
 import { AccountMenu } from '@/components/auth/AccountMenu';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/badge';
 
 export function AppHeader() {
   const [isCartSheetOpen, setIsCartSheetOpen] = useState(false);
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const { itemCount } = useCart();
+  // Admins only use the admin panel: no wallet, cart or shopping tabs.
+  const isAdmin = useAuth().role === 'admin';
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => { if (isAdmin && pathname === '/') router.replace('/admin'); }, [isAdmin, pathname, router]);
 
   return (
     <>
@@ -36,7 +44,7 @@ export function AppHeader() {
           <SidebarTrigger />
         </div>
         {/* The full logo lives at the top of the sidebar on desktop; keep a compact one where the sidebar is hidden. */}
-        <Link href="/" className="flex items-center gap-1 md:hidden">
+        <Link href={isAdmin ? '/admin' : '/'} className="flex items-center gap-1 md:hidden">
           <Image src="/logo-mark.png" alt="" width={30} height={39} className="block" />
           <span className="sr-only">Closebuy</span>
           <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
@@ -44,11 +52,13 @@ export function AppHeader() {
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
-        <Suspense fallback={null}>
-          <HomeViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />
-        </Suspense>
+        {!isAdmin && (
+          <Suspense fallback={null}>
+            <HomeViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />
+          </Suspense>
+        )}
         <div className="ml-auto flex min-w-0 items-center md:gap-2">
-          <Suspense
+          {!isAdmin && <Suspense
             fallback={
               <div className="flex items-center gap-1 text-sm px-1 sm:gap-2 sm:px-2">
                 <Wallet className="h-5 w-5" />
@@ -57,9 +67,9 @@ export function AppHeader() {
             }
           >
             <UserWalletDisplay />
-          </Suspense>
+          </Suspense>}
           <NotificationBell />
-          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartSheetOpen(true)}>
+          {!isAdmin && <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartSheetOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
               <Badge
@@ -70,13 +80,13 @@ export function AppHeader() {
               </Badge>
             )}
             <span className="sr-only">Shopping Cart</span>
-          </Button>
+          </Button>}
           <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />
         </div>
       </header>
-      <Suspense fallback={null}>
+      {!isAdmin && <Suspense fallback={null}>
         <HomeViewTabs className="sticky top-16 z-40 flex justify-center border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:hidden [&>div]:w-full [&_button]:flex-1" />
-      </Suspense>
+      </Suspense>}
 
       {/* Cart Sheet */}
       <Sheet open={isCartSheetOpen} onOpenChange={setIsCartSheetOpen}>

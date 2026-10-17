@@ -8,14 +8,14 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/db';
 import { users, verificationDocuments } from '@/db/schema';
 import { DOCUMENT_CONTENT_TYPES, MAX_DOCUMENT_BYTES, PRIVATE_UPLOAD_DIR, detectDocumentExtension } from '@/lib/uploads';
-import { REQUIRED_DOCUMENTS, type DocumentKind } from '@/lib/verification';
+import { requiredDocumentsFor, type DocumentKind } from '@/lib/verification';
 
 /** Vendors and agents upload their ID / business documents here (multipart: "file" + "kind"). */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
   const userId = session.user.id;
-  const allowed = REQUIRED_DOCUMENTS[session.user.role] ?? [];
+  const allowed = requiredDocumentsFor(userId);
   if (allowed.length === 0) return NextResponse.json({ error: 'Your account type does not need documents.' }, { status: 403 });
 
   let form: FormData;

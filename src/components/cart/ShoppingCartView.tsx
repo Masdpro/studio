@@ -14,8 +14,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { getBranchChoice, setBranchChoice as storeBranchChoice } from '@/lib/branch-choice';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getBranchChoice } from '@/lib/branch-choice';
+import { getSavedAddress } from '@/lib/delivery-address';
 
 type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
 
@@ -32,6 +32,11 @@ export function ShoppingCartView() {
   const [branchInfo, setBranchInfo] = useState<Record<string, BranchInfo>>({});
   const [branchChoice, setBranchChoice] = useState<Record<string, string>>({});
   useEffect(() => { setBranchChoice(getBranchChoice()); }, []);
+  // An address entered on the home page is used for delivery unless the customer has already typed one.
+  useEffect(() => {
+    const saved = getSavedAddress();
+    if (saved) setDeliveryAddress((cur) => cur || saved.address);
+  }, []);
   // A remembered branch that no longer exists (or is closed) falls back to the main branch.
   const effectiveChoice = useMemo(() => {
     const out: Record<string, string> = {};
@@ -174,25 +179,15 @@ export function ShoppingCartView() {
             <Checkbox
               id="delivery-option"
               checked={isDeliverySelected}
-              onCheckedChange={(checked) => setIsDeliverySelected(Boolean(checked))}
+              onCheckedChange={(checked) => {
+                const delivery = Boolean(checked);
+                setIsDeliverySelected(delivery);
+                const saved = getSavedAddress();
+                // The saved address is for delivery; the pickup field wants a name instead.
+                if (saved) setDeliveryAddress((cur) => (delivery ? cur || saved.address : cur === saved.address ? '' : cur));
+              }}
             />
           </div>
-          {Object.entries(branchInfo).map(([vendorId, info]) => (
-            <div key={vendorId} className="py-1">
-              <Label className="text-xs text-muted-foreground">Collect {info.name} items from</Label>
-              <Select value={effectiveChoice[vendorId] ?? 'main'} onValueChange={(v) => { storeBranchChoice(vendorId, v); setBranchChoice((prev) => ({ ...prev, [vendorId]: v })); }}>
-                <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="main">Main branch — {info.main}</SelectItem>
-                  {info.branches.map((b) => (
-                    <SelectItem key={b.id} value={b.id} disabled={b.status === 'Closed' || b.status === 'Temporarily Unavailable'}>
-                      {b.name} — {b.address}{b.status && b.status !== 'Open' ? ` (${b.status})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
           <div className="py-1">
             <Label htmlFor="delivery-address" className="text-xs text-muted-foreground">
               {isDeliverySelected ? 'Delivery address' : 'Name for pickup'}

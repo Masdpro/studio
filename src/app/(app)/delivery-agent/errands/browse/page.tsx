@@ -22,7 +22,7 @@ export default function BrowseErrandsPage() {
   const loadErrands = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/errands');
+      const res = await fetch('/api/errands?as=agent');
       if (!res.ok) throw new Error('Failed to load available errands.');
       const { errands } = (await res.json()) as { errands: ErrandRequest[] };
       setAvailableErrands(errands);

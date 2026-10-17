@@ -1,3 +1,4 @@
+import { userHasRole, getBranchForUser } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -5,6 +6,7 @@ import {
   createOrder,
   getOrdersForCustomer,
   getOrdersForVendor,
+  getOrdersForBranch,
   getOrdersForDeliveryAgent,
   getUnassignedReadyForPickupOrders,
 } from '@/lib/services/orders';
@@ -16,17 +18,20 @@ import { recordEvent } from '@/lib/services/events';
 import { getBranchById } from '@/lib/services/branches';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
   }
 
-  const { id, role } = session.user;
+  const { id } = session.user;
+  const as = new URL(request.url).searchParams.get('as');
   const orders =
-    role === 'vendor'
+    as === 'branch' && getBranchForUser(id)
+      ? await getOrdersForBranch(getBranchForUser(id)!.id)
+      : as === 'vendor' && userHasRole(id, 'vendor')
       ? await getOrdersForVendor(id)
-      : role === 'delivery_agent'
+      : as === 'agent' && userHasRole(id, 'delivery_agent')
         ? [...(await getOrdersForDeliveryAgent(id)), ...(await getUnassignedReadyForPickupOrders())]
         : await getOrdersForCustomer(id);
 

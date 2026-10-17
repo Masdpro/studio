@@ -8,6 +8,8 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { FlashDealCard } from '@/components/product/FlashDealCard';
 import type { Product, Vendor, Market, VendorBranch } from '@/lib/types';
 import { vendorInLocation, vendorMatchesQuery } from '@/lib/vendor-search';
+import { getSavedAddress, saveAddress, getAddressHistory, rememberAddress, forgetAddress, type SavedAddress } from '@/lib/delivery-address';
+import { LocationCombobox } from '@/components/home/LocationCombobox';
 import { VendorResultCard } from '@/components/vendor/VendorResultCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -28,12 +30,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { parseHomeView } from '@/components/layout/HomeViewTabs';
+import { FitChips } from '@/components/home/FitChips';
 import { MarketCard } from '@/components/market/MarketCard';
 // Data now comes from the database (via src/lib/services) and is fetched
 // server-side in page.tsx, then handed to this client component as props.
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const USER_CURRENT_LOCATION_VALUE = "user_current_location";
+const CUSTOM_ADDRESS_VALUE = "custom_address";
 const ALL_LOCATIONS_VALUE = "All Locations";
 const NEARBY_THRESHOLD_DEGREES = 0.1; 
 
@@ -69,9 +73,20 @@ export default function HomePageClient({
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
+  // A specific address typed into the location filter (also pre-fills the delivery address at checkout).
+  const [addressHistory, setAddressHistory] = useState<SavedAddress[]>([]);
+  const [activeAddress, setActiveAddress] = useState<string | null>(null);
+  const [customCoords, setCustomCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [addressNote, setAddressNote] = useState<string | null>(null);
+  const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+  // "My Current Location" is offered as a suggestion to confirm, like a typed address.
+  const [detected, setDetected] = useState<SavedAddress | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const selectedLocationRef = useRef(selectedLocation);
+  const applyAddressRef = useRef<((a: SavedAddress) => void) | null>(null);
   const isMounted = useRef(false);
 
   const [isVendorProfileSheetOpen, setIsVendorProfileSheetOpen] = useState(false);
@@ -87,7 +102,16 @@ export default function HomePageClient({
     const storedSelectedVendorId = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedVendorId);
     if (storedSelectedVendorId) setSelectedVendorId(storedSelectedVendorId);
 
-    const storedSelectedLocation = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedLocation);
+    const saved = getSavedAddress();
+    setAddressHistory(getAddressHistory());
+    let storedSelectedLocation = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedLocation);
+    if (storedSelectedLocation === USER_CURRENT_LOCATION_VALUE) storedSelectedLocation = null;
+    if (storedSelectedLocation === CUSTOM_ADDRESS_VALUE) {
+      if (saved) {
+        setActiveAddress(saved.address);
+        setCustomCoords(saved.latitude !== undefined && saved.longitude !== undefined ? { latitude: saved.latitude, longitude: saved.longitude } : null);
+      } else storedSelectedLocation = null;
+    }
     if (storedSelectedLocation) {
       setSelectedLocation(storedSelectedLocation);
       if (storedSelectedLocation !== USER_CURRENT_LOCATION_VALUE) {
@@ -138,12 +162,21 @@ export default function HomePageClient({
   }, [selectedLocation]);
 
 
+  // Quick filters: most-ordered categories first (refreshed on load); unordered ones follow alphabetically.
+  const [popularCategories, setPopularCategories] = useState<string[]>([]);
+  useEffect(() => {
+    fetch('/api/categories/popular')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.categories) setPopularCategories(d.categories); })
+      .catch(() => {});
+  }, []);
   const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
+    const unique = Array.from(
       new Set(sampleProducts.map(p => p.category).filter(Boolean as any as (value: string | undefined) => value is string))
     ).sort();
-    return ['All', ...uniqueCategories];
-  }, []);
+    const rank = (c: string) => { const i = popularCategories.indexOf(c); return i === -1 ? Infinity : i; };
+    return ['All', ...unique.sort((a, b) => rank(a) - rank(b))];
+  }, [sampleProducts, popularCategories]);
 
   const branchesByVendor = useMemo(() => {
     const m = new Map<string, VendorBranch[]>();
@@ -151,7 +184,9 @@ export default function HomePageClient({
     return m;
   }, [initialBranches]);
   const locationFilter = (): { value: string; all: string; current: string; coords: { latitude: number; longitude: number } | null } =>
-    ({ value: selectedLocation, all: ALL_LOCATIONS_VALUE, current: USER_CURRENT_LOCATION_VALUE, coords: userCoords });
+    selectedLocation === CUSTOM_ADDRESS_VALUE
+      ? { value: USER_CURRENT_LOCATION_VALUE, all: ALL_LOCATIONS_VALUE, current: USER_CURRENT_LOCATION_VALUE, coords: customCoords }
+      : { value: selectedLocation, all: ALL_LOCATIONS_VALUE, current: USER_CURRENT_LOCATION_VALUE, coords: userCoords };
 
   const locationsForFilter = useMemo(() => {
     const uniqueLocations = Array.from(
@@ -183,8 +218,20 @@ export default function HomePageClient({
 
         fetch(`/api/geocode/reverse?lat=${latitude}&lon=${longitude}`)
           .then((res) => (res.ok ? res.json() : null))
-          .then((data) => setResolvedAddress(data?.address ?? null))
-          .catch(() => setResolvedAddress(null));
+          .then((data) => {
+            const addr: string | null = data?.address ?? null;
+            setResolvedAddress(addr);
+            // Show the resolved street address in the same field/list as typed addresses (and use it at checkout).
+            // If the street lookup fails, fall back to the coordinates so the location still appears.
+            const label = addr ?? `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+            if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) applyAddressRef.current?.({ address: label, latitude, longitude });
+          })
+          .catch(() => {
+            setResolvedAddress(null);
+            if (selectedLocationRef.current === USER_CURRENT_LOCATION_VALUE) {
+              applyAddressRef.current?.({ address: `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`, latitude, longitude });
+            }
+          });
       },
       (error) => {
         let message = "Could not retrieve your location.";
@@ -218,6 +265,57 @@ export default function HomePageClient({
 
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
+    // Leaving the address option means checkout should no longer pre-fill it.
+    setActiveAddress(null);
+    setAddressNote(null);
+    saveAddress(null);
+  };
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) { setDetectError('Geolocation is not supported by your browser.'); return; }
+    setDetecting(true);
+    setDetectError(null);
+    setDetected(null);
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords: { latitude, longitude } }) => {
+        let address: string | null = null;
+        try {
+          const res = await fetch(`/api/geocode/reverse?lat=${latitude}&lon=${longitude}`);
+          if (res.ok) address = (await res.json()).address ?? null;
+        } catch { /* fall back to coordinates below */ }
+        setDetected({ address: address ?? `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`, latitude, longitude });
+        setDetecting(false);
+      },
+      (error) => {
+        setDetecting(false);
+        setDetectError(error.code === error.PERMISSION_DENIED ? 'Location permission denied. Please enable it in your browser settings.' : 'Could not retrieve your location.');
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  const applyAddress = (a: SavedAddress) => {
+    const coords = a.latitude !== undefined && a.longitude !== undefined ? { latitude: a.latitude, longitude: a.longitude } : null;
+    setCustomCoords(coords);
+    setActiveAddress(a.address);
+    setSelectedLocation(CUSTOM_ADDRESS_VALUE);
+    saveAddress(a);
+    setAddressHistory(rememberAddress(a));
+    setAddressNote(coords ? null : "We couldn't place that address on the map, so vendors aren't filtered by it. It will still be used for delivery at checkout.");
+  };
+
+  applyAddressRef.current = applyAddress;
+
+  const submitAddress = async (address: string) => {
+    setIsResolvingAddress(true);
+    let coords: { latitude: number; longitude: number } | null = null;
+    try {
+      const res = await fetch(`/api/geocode/forward?address=${encodeURIComponent(address)}`);
+      if (res.ok) coords = await res.json();
+    } catch { /* offline: handled as unmapped */ }
+    setIsResolvingAddress(false);
+    applyAddress({ address, ...(coords ?? {}) });
+    if (coords) toast({ title: 'Address set', description: 'Showing vendors near it. It will be used at checkout.' });
   };
 
   const vendorsForFilter = useMemo(() => {
@@ -227,7 +325,7 @@ export default function HomePageClient({
     const availableVendors = vendorsFilteredByLocation.filter(v => productVendorIds.includes(v.id));
 
     return [{ id: 'All', businessName: 'All Vendors', locationTag: 'Any', latitude: 0, longitude: 0, streetAddress:'', city:'', country:'', contactEmail:'', phone:'' }, ...availableVendors];
-  }, [selectedLocation, userCoords]);
+  }, [selectedLocation, userCoords, customCoords]);
 
   useEffect(() => {
     if (isMounted.current) {
@@ -432,28 +530,28 @@ export default function HomePageClient({
                   <MapPin className="h-4 w-4 mr-2 text-primary" />
                   Filter by City/Area
                 </h3>
-                <Select onValueChange={handleLocationChange} value={selectedLocation}>
-                  <SelectTrigger className="w-full h-10 rounded-lg border-border focus:ring-primary">
-                    <SelectValue placeholder="Select a location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locationsForFilter.map(location => (
-                      <SelectItem key={location} value={location}>
-                        {location === USER_CURRENT_LOCATION_VALUE ? (
-                          <span className="flex items-center gap-2">
-                            <LocateFixed className="h-4 w-4" /> My Current Location
-                          </span>
-                        ) : location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <LocationCombobox
+                  areas={locationsForFilter}
+                  allValue={ALL_LOCATIONS_VALUE}
+                  currentValue={USER_CURRENT_LOCATION_VALUE}
+                  selected={selectedLocation === CUSTOM_ADDRESS_VALUE ? CUSTOM_ADDRESS_VALUE : selectedLocation}
+                  activeAddress={selectedLocation === CUSTOM_ADDRESS_VALUE ? activeAddress : null}
+                  history={addressHistory}
+                  resolving={isResolvingAddress || isLocating}
+                  note={selectedLocation === CUSTOM_ADDRESS_VALUE ? addressNote : null}
+                  detected={detected}
+                  detecting={detecting}
+                  detectError={detectError}
+                  onDetect={detectLocation}
+                  onUseDetected={() => { if (detected) { applyAddress(detected); setDetected(null); } }}
+                  onSelectArea={handleLocationChange}
+                  onSelectAddress={applyAddress}
+                  onSubmitAddress={submitAddress}
+                  onForgetAddress={(addr) => { setAddressHistory(forgetAddress(addr)); if (activeAddress === addr) { setActiveAddress(null); if (selectedLocation === CUSTOM_ADDRESS_VALUE) setSelectedLocation(ALL_LOCATIONS_VALUE); } }}
+                />
                 {isLocating && <p className="text-xs text-muted-foreground mt-2">Fetching your location...</p>}
-                {!isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE && (
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <MapPin className="h-3 w-3 shrink-0" />
-                    {resolvedAddress ?? 'Resolving address…'}
-                  </p>
+                {!isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE && !locationError && (
+                  <p className="text-xs text-muted-foreground mt-2">Resolving address…</p>
                 )}
                 {locationError && (
                   <Alert variant="destructive" className="mt-2 py-2 px-3">
@@ -481,16 +579,6 @@ export default function HomePageClient({
                         ))}
                     </SelectContent>
                     </Select>
-                    {selectedVendorDetails && selectedVendorDetails.externalStoreUrl && selectedVendorId !== 'All' && (
-                    <div className="mt-2">
-                        <Button variant="link" size="sm" asChild className="px-0 h-auto">
-                        <Link href={`/vendor/${selectedVendorId}/store`}>
-                            Visit {selectedVendorDetails.businessName}'s Site
-                            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                        </Link>
-                        </Button>
-                    </div>
-                    )}
                 </div>
               </div>
               <div>
@@ -526,19 +614,7 @@ export default function HomePageClient({
             </div>
 
             <div>
-              <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
-                {categories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className="shrink-0 rounded-full px-4"
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
+              <FitChips items={categories} selected={selectedCategory} onSelect={setSelectedCategory} />
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 
 'use client';
+import { useRequireTrading } from '@/hooks/use-trading-status';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
@@ -14,7 +15,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function VendorProductManagementPage() {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, roles, loading: authLoading } = useAuth();
+  useRequireTrading();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -35,7 +37,7 @@ export default function VendorProductManagementPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user && role === 'vendor') {
+    if (!authLoading && user && roles.includes('vendor')) {
       fetchProducts();
     } else if (!authLoading) {
       setIsLoading(false);
@@ -84,7 +86,7 @@ export default function VendorProductManagementPage() {
     );
   }
 
-  if (!user || role !== 'vendor') {
+  if (!user || !roles.includes('vendor')) {
     return (
       <div className="container mx-auto py-8 text-center space-y-4">
         <p className="text-lg text-muted-foreground">Sign in with a vendor account to manage products.</p>

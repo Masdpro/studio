@@ -17,6 +17,7 @@ export const users = sqliteTable('users', {
   // Vendors and delivery agents start 'pending' until an admin reviews their documents.
   approvalStatus: text('approval_status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('approved'),
   approvalNote: text('approval_note'),
+  address: text('address'), // customer's own delivery address, edited from the profile
 });
 
 // One-time email links and phone codes. Only a hash of the secret is stored.
@@ -68,6 +69,7 @@ export const vendors = sqliteTable('vendors', {
   status: text('status', { enum: ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] }).default('Open'),
   externalStoreUrl: text('external_store_url'),
   imageUrl: text('image_url'), // store photo/logo, uploaded by an admin
+  slug: text('slug'), // custom link: /s/<slug>
   profileManaged: integer('profile_managed', { mode: 'boolean' }).default(false),
 });
 
@@ -95,6 +97,7 @@ export const products = sqliteTable('products', {
   category: text('category'),
   aiHint: text('ai_hint'),
   isAwoof: integer('is_awoof', { mode: 'boolean' }).default(false),
+  branchId: text('branch_id'), // set when the product belongs to one branch only
 });
 
 export const orders = sqliteTable('orders', {
@@ -219,4 +222,5 @@ export const vendorBranches = sqliteTable('vendor_branches', {
   operatingHours: text('operating_hours'),
   status: text('status', { enum: ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] }).default('Open'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  accountUserId: text('account_user_id'), // the branch's own login (a customer account)
 });

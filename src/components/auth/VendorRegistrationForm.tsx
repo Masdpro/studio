@@ -24,17 +24,19 @@ import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
 const vendorRegistrationSchema = z.object({
   businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
   contactEmail: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+  password: z.string().optional(),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
   streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
   country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
+  imageUrl: z.string().optional(),
   externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   operatingHours: z.string().min(5, { message: "Please provide operating hours (e.g., 9 AM - 5 PM, Mon-Fri)." }),
   status: z.enum(vendorStatusOptions, { required_error: "Please select a status." }),
@@ -45,9 +47,10 @@ type VendorRegistrationFormValues = z.infer<typeof vendorRegistrationSchema>;
 export function VendorRegistrationForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, user, refresh } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const form = useForm<VendorRegistrationFormValues>({
     resolver: zodResolver(vendorRegistrationSchema),
@@ -59,6 +62,7 @@ export function VendorRegistrationForm() {
       streetAddress: '',
       city: '',
       country: '',
+      imageUrl: '',
       externalStoreUrl: '',
       operatingHours: '',
       status: 'Open',
@@ -67,10 +71,23 @@ export function VendorRegistrationForm() {
 
   async function onSubmit(data: VendorRegistrationFormValues) {
     setError(null);
+    if (!user && (!data.password || data.password.length < 8)) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     setIsLoading(true);
     try {
       const { password, contactEmail, ...vendorProfile } = data;
-      const { devLink } = await signUp(contactEmail, password, 'vendor', data.businessName, {
+      if (user) {
+        const res = await fetch('/api/vendor/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contactEmail, ...vendorProfile }) });
+        if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? 'Could not save your profile.');
+        await refresh();
+        toast({ title: 'Profile created', description: 'Opening your verification page. The first load can take a few seconds.' });
+        setRedirecting(true);
+        router.push('/account/verification');
+        return;
+      }
+      const { devLink } = await signUp(contactEmail, password ?? "", 'vendor', data.businessName, {
         phone: data.phone,
         profile: { contactEmail, ...vendorProfile },
       });
@@ -80,7 +97,10 @@ export function VendorRegistrationForm() {
       });
       goToCheckEmail(router, contactEmail, devLink);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(msg);
+      toast({ variant: 'destructive', title: 'Could not register', description: msg });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsLoading(false);
     }
@@ -105,6 +125,20 @@ export function VendorRegistrationForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Storefront photo (optional)</FormLabel>
+              <FormControl>
+                <ImageUploadField value={field.value ?? ''} onChange={field.onChange} endpoint="/api/vendor/upload" />
+              </FormControl>
+              <FormDescription>A photo of your shop front. You can also add or change it later from your profile.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
               control={form.control}
               name="businessName"
               render={({ field }) => (
@@ -130,6 +164,7 @@ export function VendorRegistrationForm() {
                 </FormItem>
               )}
             />
+            {!user && (
             <FormField
               control={form.control}
               name="password"
@@ -143,6 +178,7 @@ export function VendorRegistrationForm() {
                 </FormItem>
               )}
             />
+            )}
             <FormField
               control={form.control}
               name="phone"
@@ -150,7 +186,7 @@ export function VendorRegistrationForm() {
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="123-456-7890" {...field} />
+                    <Input type="tel" placeholder="08012345678" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -233,24 +269,8 @@ export function VendorRegistrationForm() {
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="externalStoreUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>External Store URL (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="url" placeholder="https://yourstore.com" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Link to your existing online store, if you have one.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || redirecting}>
+              {(isLoading || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register
             </Button>
           </form>

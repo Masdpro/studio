@@ -1,3 +1,4 @@
+import { userHasRole } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -38,7 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ err
   const { errandId } = await params;
 
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== 'delivery_agent') {
+  if (!session?.user?.id || !userHasRole(session.user.id, 'delivery_agent')) {
     return NextResponse.json({ error: 'Only delivery agents can submit quotes.' }, { status: 403 });
   }
   const blocked = tradingBlockReason(session.user.id);

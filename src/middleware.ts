@@ -6,9 +6,11 @@ import type { NextRequest } from 'next/server';
  * Role required for each protected path prefix. Checked in order;
  * `true` means "any signed-in role is fine".
  */
-const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_agent' | 'admin' | true }[] = [
+const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch' | true }[] = [
   { prefix: '/admin', role: 'admin' },
+  { prefix: '/branch', role: 'branch' },
   { prefix: '/vendor/dashboard', role: 'vendor' },
+  { prefix: '/vendor/orders', role: 'vendor' },
   { prefix: '/delivery-agent', role: 'delivery_agent' },
   { prefix: '/delivery/optimize-route', role: 'delivery_agent' },
   { prefix: '/errands', role: 'customer' },
@@ -31,7 +33,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (rule.role !== true && token.role !== rule.role) {
+  if (rule.role !== true && token.role !== rule.role && !((token.roles as string[] | undefined) ?? []).includes(rule.role)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -41,7 +43,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/branch/:path*',
     '/vendor/dashboard/:path*',
+    '/vendor/orders',
     '/delivery-agent/:path*',
     '/delivery/optimize-route',
     '/errands/:path*',

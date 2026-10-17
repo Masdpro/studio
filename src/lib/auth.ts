@@ -1,3 +1,4 @@
+import { getUserRoles, getDisplayName } from '@/lib/roles';
 
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -45,12 +46,17 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role;
       }
+      if (token.id) {
+        token.roles = getUserRoles(token.id as string);
+        token.name = getDisplayName(token.id as string) ?? token.name;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).roles = token.roles;
       }
       return session;
     },

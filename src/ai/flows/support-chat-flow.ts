@@ -77,7 +77,7 @@ async function runPlaceOrder(input: {
   const { orderItems, deliveryPreference, deliveryAddress } = input;
 
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== 'customer') {
+  if (!session?.user?.id || session.user.role === 'admin') {
     return { success: false, error: 'The customer is not signed in with a customer account, so no order can be placed.' };
   }
   if (!orderItems?.length || !deliveryPreference) {
@@ -162,6 +162,27 @@ Every reply you give is structured JSON with a "toolCall" field.
 - Otherwise set toolCall to "none" and put your message to the customer in "reply".
 After a successful placeOrder, tell the customer their order id(s) and total in your next reply, and that they can track it on the Orders page. If it fails (e.g. not signed in), explain why in plain language.`;
 
+const CHAT_MODELS = ['googleai/gemini-3.5-flash', 'googleai/gemini-3.6-flash'] as const;
+const isBusy = (e: unknown) => /503|429|overload|high demand|unavailable|quota|resource.?exhausted/i.test(String((e as any)?.message ?? e));
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Calls the model, retrying briefly when Google reports a demand spike (503) or rate limit (429), then trying the other model. */
+async function generateWithFallback(opts: Omit<Parameters<typeof ai.generate>[0], 'model'>) {
+  let lastError: unknown;
+  for (const model of CHAT_MODELS) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await ai.generate({ ...(opts as any), model });
+      } catch (e) {
+        lastError = e;
+        if (!isBusy(e)) throw e;
+        await sleep(800 * (attempt + 1));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function supportChat(history: z.infer<typeof SupportChatInputSchema>): Promise<string> {
   const session = await getServerSession(authOptions);
   const authContext = session?.user
@@ -180,11 +201,10 @@ export async function supportChat(history: z.infer<typeof SupportChatInputSchema
   }));
 
   for (let turn = 0; turn < 4; turn++) {
-    const { output } = await ai.generate({
+    const { output } = await generateWithFallback({
       // Pinned rather than using the app default (gemini-3.6-flash, ai/genkit.ts): this loop can
       // make several model calls per chat turn, and gemini-3.6-flash's free-tier quota is a very
       // tight 20 requests/day — gemini-3.5-flash has its own separate quota.
-      model: 'googleai/gemini-3.5-flash',
       system: `${SYSTEM_PROMPT}\n\n${authContext}`,
       messages,
       output: { schema: AgentTurnSchema },

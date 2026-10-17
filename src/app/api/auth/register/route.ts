@@ -18,7 +18,7 @@ function isPublicRole(role: string): role is PublicRole {
   return (PUBLIC_ROLES as string[]).includes(role);
 }
 
-const VENDOR_FIELDS = ['businessName', 'contactEmail', 'phone', 'streetAddress', 'city', 'country', 'externalStoreUrl', 'operatingHours', 'status'];
+const VENDOR_FIELDS = ['businessName', 'contactEmail', 'phone', 'streetAddress', 'city', 'country', 'externalStoreUrl', 'operatingHours', 'status', 'imageUrl'];
 const AGENT_FIELDS = ['name', 'email', 'phone', 'streetAddress', 'city', 'country', 'vehicleDetails'];
 const pick = (src: Record<string, unknown>, keys: string[]) =>
   Object.fromEntries(keys.filter((k) => src[k] !== undefined).map((k) => [k, src[k]]));
@@ -79,7 +79,11 @@ export async function POST(request: Request) {
     })
     .run();
 
-  if (role === 'vendor' && profile) await upsertVendor(id, pick(profile, VENDOR_FIELDS) as any);
+  if (role === 'vendor' && profile) {
+    const v = pick(profile, VENDOR_FIELDS) as Record<string, unknown>;
+    if (typeof v.imageUrl !== 'string' || !/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/.test(v.imageUrl)) delete v.imageUrl;
+    await upsertVendor(id, v as any);
+  }
   if (role === 'delivery_agent' && profile) await upsertDeliveryAgent(id, pick(profile, AGENT_FIELDS) as any);
 
   const sent = await sendEmailVerification(id);

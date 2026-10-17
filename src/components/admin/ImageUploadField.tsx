@@ -12,10 +12,12 @@ interface ImageUploadFieldProps {
   onChange: (url: string) => void;
   /** Shown when there's no image yet. */
   emptyLabel?: string;
+  /** Where the file is posted (admins and vendors have separate, permission-checked endpoints). */
+  endpoint?: string;
 }
 
 /** Pick an image from the device; it uploads straight away and `onChange` receives its URL ('' when removed). */
-export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet' }: ImageUploadFieldProps) {
+export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet', endpoint = '/api/admin/upload' }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -33,7 +35,7 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet' 
     try {
       const body = new FormData();
       body.append('file', file);
-      const res = await fetch('/api/admin/upload', { method: 'POST', body });
+      const res = await fetch(endpoint, { method: 'POST', body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Upload failed.');
       onChange(data.url);

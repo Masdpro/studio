@@ -6,6 +6,7 @@ import { ArrowLeft, Clock, ExternalLink, MapPin, Navigation, Phone, Store } from
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { SafeImage } from '@/components/ui/safe-image';
 import { ProductCard } from '@/components/product/ProductCard';
 import { getBranchChoice, setBranchChoice } from '@/lib/branch-choice';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,7 @@ const mapsLink = (p: Place) =>
 
 /** A vendor's store page: who they are, every branch they trade from, and their products. */
 export function VendorStorefront({
-  vendor, branches, products, markets, back,
+  vendor, branches, products: allProducts, markets, back,
 }: {
   vendor: Vendor; branches: VendorBranch[]; products: Product[]; markets: Market[]; back: { href: string; label: string };
 }) {
@@ -48,6 +49,7 @@ export function VendorStorefront({
 
   const unavailable = (p: Place) => p.status === 'Closed' || p.status === 'Temporarily Unavailable';
   const [selected, setSelected] = useState('main');
+  const products = allProducts.filter((p) => !p.branchId || p.branchId === selected);
   useEffect(() => {
     const saved = getBranchChoice()[vendor.id];
     const place = places.find((p) => p.key === saved);
@@ -69,6 +71,12 @@ export function VendorStorefront({
         <Link href={back.href}><ArrowLeft className="h-4 w-4 mr-2" />{back.label}</Link>
       </Button>
 
+      {vendor.imageUrl && (
+        <div className="relative mb-6 h-44 w-full overflow-hidden rounded-xl bg-muted sm:h-64">
+          <SafeImage src={vendor.imageUrl} alt={`${vendor.businessName} storefront`} fill priority sizes="(max-width: 1152px) 100vw, 1152px" className="object-cover" />
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
@@ -79,9 +87,6 @@ export function VendorStorefront({
           </p>
         </div>
         <div className="flex gap-2">
-          {vendor.externalStoreUrl && (
-            <Button variant="outline" asChild><Link href={`/vendor/${vendor.id}/store`}><ExternalLink className="h-4 w-4 mr-2" />Website</Link></Button>
-          )}
           <Button variant="outline" asChild><Link href={`/vendor/${vendor.id}/profile`}>Vendor profile</Link></Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { userHasRole } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -6,7 +7,7 @@ import { parseBranchInput, geocode } from '@/lib/branch-input';
 
 async function vendorId() {
   const session = await getServerSession(authOptions);
-  return session?.user?.id && session.user.role === 'vendor' ? session.user.id : null;
+  return session?.user?.id && userHasRole(session.user.id, 'vendor') ? session.user.id : null;
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

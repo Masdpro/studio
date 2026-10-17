@@ -1,3 +1,4 @@
+import { getUserRoles } from '@/lib/roles';
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
@@ -10,6 +11,22 @@ export const REQUIRED_DOCUMENTS: Record<string, DocumentKind[]> = {
   vendor: ['business_proof', 'store_photo'],
   delivery_agent: ['government_id', 'selfie'],
 };
+
+export function requiredDocumentsFor(userId: string): DocumentKind[] {
+  const roles = getUserRoles(userId);
+  return Array.from(new Set(roles.flatMap((r) => REQUIRED_DOCUMENTS[r] ?? [])));
+}
+
+/** Called when an existing account adds a vendor / agent profile: records the phone and, for a first trading role, queues it for admin approval. */
+export function startTradingRole(userId: string, phone: unknown, alreadyTrading: boolean) {
+  const normalized = typeof phone === 'string' ? normalizeNigerianPhone(phone) : null;
+  const user = db.select().from(users).where(eq(users.id, userId)).get();
+  if (!user) return;
+  const patch: Record<string, unknown> = {};
+  if (normalized && normalized !== user.phone) { patch.phone = normalized; patch.phoneVerifiedAt = null; }
+  if (!alreadyTrading && user.role !== 'admin') patch.approvalStatus = 'pending';
+  if (Object.keys(patch).length) db.update(users).set(patch).where(eq(users.id, userId)).run();
+}
 
 export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   business_proof: 'Business registration (CAC certificate, business permit or similar)',
@@ -116,12 +133,14 @@ export function getVerificationState(userId: string) {
   const user = db.select().from(users).where(eq(users.id, userId)).get();
   if (!user) return null;
   const documents = db.select().from(verificationDocuments).where(eq(verificationDocuments.userId, userId)).all();
-  const required = REQUIRED_DOCUMENTS[user.role] ?? [];
+  const roles = getUserRoles(userId);
+  const required = requiredDocumentsFor(userId);
   const submitted = new Set(documents.map((d) => d.kind));
-  const needsReview = user.role === 'vendor' || user.role === 'delivery_agent';
+  const needsReview = roles.includes('vendor') || roles.includes('delivery_agent');
   const documentsComplete = required.every((k) => submitted.has(k));
   return {
-    role: user.role,
+    role: roles.includes('vendor') ? 'vendor' : roles.includes('delivery_agent') ? 'delivery_agent' : user.role,
+    roles,
     email: user.email,
     emailVerified: !!user.emailVerifiedAt,
     phone: user.phone,
@@ -132,7 +151,7 @@ export function getVerificationState(userId: string) {
     requiredDocuments: required.map((kind) => ({ kind, label: DOCUMENT_LABELS[kind], uploaded: submitted.has(kind), id: documents.find((d) => d.kind === kind)?.id ?? null })),
     documentsComplete,
     // Everything an admin needs before they can approve:
-    readyForReview: user.role === 'customer' ? true : !!user.emailVerifiedAt && !!user.phoneVerifiedAt && documentsComplete,
+    readyForReview: !needsReview ? true : !!user.emailVerifiedAt && !!user.phoneVerifiedAt && documentsComplete,
     // Vendors / agents may only trade once approved.
     mayTrade: !needsReview || (user.approvalStatus === 'approved' && !!user.phoneVerifiedAt),
   };

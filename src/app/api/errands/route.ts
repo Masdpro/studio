@@ -1,3 +1,4 @@
+import { userHasRole } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -8,7 +9,7 @@ import {
 } from '@/lib/services/errands';
 
 /** Customers see their own errand requests; delivery agents see ones still open to quote on. */
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
@@ -16,7 +17,7 @@ export async function GET() {
 
   const { id, role } = session.user;
   const errands =
-    role === 'delivery_agent' ? await getOpenErrandRequestsForAgent(id) : await getErrandRequestsForCustomer(id);
+    new URL(request.url).searchParams.get('as') === 'agent' && userHasRole(id, 'delivery_agent') ? await getOpenErrandRequestsForAgent(id) : await getErrandRequestsForCustomer(id);
 
   return NextResponse.json({ errands });
 }

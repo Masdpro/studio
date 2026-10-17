@@ -293,19 +293,6 @@ export function VendorFormDialog({ vendor, markets, open, onOpenChange, onSaved 
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="externalStoreUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>External Store URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </div>
             <DialogFooter className="pt-4 border-t mt-4">

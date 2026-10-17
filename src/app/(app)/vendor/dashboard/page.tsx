@@ -1,5 +1,10 @@
 // src/app/(app)/vendor/dashboard/page.tsx
 'use client';
+import { BranchPurchases } from '@/components/vendor/BranchPurchases';
+import { VendorAnalytics } from '@/components/vendor/VendorAnalytics';
+import { StoreLinkCard } from '@/components/vendor/StoreLinkCard';
+import { AccountVerification } from '@/components/account/AccountVerification';
+import { useTradingStatus } from '@/hooks/use-trading-status';
 
 import { useState, useEffect, useCallback } from 'react';
 import { BranchesManager } from '@/components/vendor/BranchesManager';
@@ -16,7 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 
 export default function VendorDashboardPage() {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, roles, loading: authLoading } = useAuth();
+  const { mayTrade, loaded: tradingLoaded } = useTradingStatus();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [displayedVendorOrders, setDisplayedVendorOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +31,7 @@ export default function VendorDashboardPage() {
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [vendorRes, ordersRes] = await Promise.all([fetch('/api/vendor/profile'), fetch('/api/orders')]);
+      const [vendorRes, ordersRes] = await Promise.all([fetch('/api/vendor/profile'), fetch('/api/orders?as=vendor')]);
       if (vendorRes.ok) {
         const { vendor } = await vendorRes.json();
         setVendor(vendor);
@@ -44,7 +50,7 @@ export default function VendorDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user && role === 'vendor') {
+    if (!authLoading && user && roles.includes('vendor')) {
       loadDashboard();
     } else if (!authLoading) {
       setIsLoading(false);
@@ -98,13 +104,23 @@ export default function VendorDashboardPage() {
     );
   }
 
-  if (!user || role !== 'vendor') {
+  if (!user || !roles.includes('vendor')) {
     return (
       <div className="container mx-auto py-8 text-center space-y-4">
         <p className="text-lg text-muted-foreground">Sign in with a vendor account to view your dashboard.</p>
         <Button asChild>
           <Link href="/auth/login">Sign In</Link>
         </Button>
+      </div>
+    );
+  }
+
+  if (!tradingLoaded) return <div className="container mx-auto py-8 text-center text-muted-foreground">Loading…</div>;
+  if (!mayTrade) {
+    return (
+      <div className="container mx-auto max-w-2xl space-y-6 py-8">
+        <h1 className="text-3xl font-bold text-primary">Vendor Dashboard</h1>
+        <AccountVerification />
       </div>
     );
   }
@@ -134,15 +150,14 @@ export default function VendorDashboardPage() {
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
-          <TabsTrigger value="orders" className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5" /> Orders
-          </TabsTrigger>
-           <TabsTrigger value="reviews" className="flex items-center gap-2">
+           <TabsTrigger value="analytics" className="flex items-center gap-2">Analytics</TabsTrigger>
+          <TabsTrigger value="reviews" className="flex items-center gap-2">
             <Star className="h-5 w-5" /> Reviews
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
+          {vendor && <StoreLinkCard slug={vendor.slug} onSaved={loadDashboard} />}
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
@@ -173,15 +188,11 @@ export default function VendorDashboardPage() {
           <VendorWalletWidget />
         </TabsContent>
 
-        <TabsContent value="orders">
-          <OrderTrackingView
-            orders={displayedVendorOrders}
-            title="Track Your Orders"
-            description="Monitor the status of orders placed with your business."
-            userRole="vendor"
-            onAttendToOrder={handleAttendToOrder}
-            onMarkAsReadyForPickup={handleMarkAsReadyForPickup}
-          />
+        <TabsContent value="analytics">
+          <div className="space-y-6">
+            <VendorAnalytics endpoint="/api/vendor/analytics" />
+            <BranchPurchases />
+          </div>
         </TabsContent>
 
         <TabsContent value="reviews">
@@ -201,25 +212,6 @@ export default function VendorDashboardPage() {
           </Card>
         </TabsContent>
       </Tabs>
-       {vendor && (
-         <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Your External Storefront</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {vendor.externalStoreUrl ? (
-              <p>
-                Customers can visit your external storefront at:{' '}
-                <Link href={`/vendor/${vendor.id}/store`} className="text-primary underline hover:text-primary/80">
-                  View Your Store Page on Closebuy
-                </Link>
-              </p>
-            ) : (
-              <p>You have not set an external store URL in your profile. Add one to allow customers to visit your site via Closebuy.</p>
-            )}
-          </CardContent>
-        </Card>
-       )}
     </div>
   );
 }

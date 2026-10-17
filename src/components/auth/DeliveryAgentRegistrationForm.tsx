@@ -29,7 +29,7 @@ import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
 const deliveryAgentRegistrationSchema = z.object({
   name: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+  password: z.string().optional(),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
   streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
@@ -42,9 +42,10 @@ type DeliveryAgentRegistrationFormValues = z.infer<typeof deliveryAgentRegistrat
 export function DeliveryAgentRegistrationForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, user, refresh } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const form = useForm<DeliveryAgentRegistrationFormValues>({
     resolver: zodResolver(deliveryAgentRegistrationSchema),
@@ -62,10 +63,23 @@ export function DeliveryAgentRegistrationForm() {
 
   async function onSubmit(data: DeliveryAgentRegistrationFormValues) {
     setError(null);
+    if (!user && (!data.password || data.password.length < 8)) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     setIsLoading(true);
     try {
       const { password, email, ...agentProfile } = data;
-      const { devLink } = await signUp(email, password, 'delivery_agent', data.name, {
+      if (user) {
+        const res = await fetch('/api/delivery-agent/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, ...agentProfile }) });
+        if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? 'Could not save your profile.');
+        await refresh();
+        toast({ title: 'Profile created', description: 'Opening your verification page. The first load can take a few seconds.' });
+        setRedirecting(true);
+        router.push('/account/verification');
+        return;
+      }
+      const { devLink } = await signUp(email, password ?? "", 'delivery_agent', data.name, {
         phone: data.phone,
         profile: { email, ...agentProfile },
       });
@@ -75,7 +89,10 @@ export function DeliveryAgentRegistrationForm() {
       });
       goToCheckEmail(router, email, devLink);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(msg);
+      toast({ variant: 'destructive', title: 'Could not register', description: msg });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsLoading(false);
     }
@@ -125,6 +142,7 @@ export function DeliveryAgentRegistrationForm() {
                 </FormItem>
               )}
             />
+            {!user && (
             <FormField
               control={form.control}
               name="password"
@@ -138,6 +156,7 @@ export function DeliveryAgentRegistrationForm() {
                 </FormItem>
               )}
             />
+            )}
             <FormField
               control={form.control}
               name="phone"
@@ -145,7 +164,7 @@ export function DeliveryAgentRegistrationForm() {
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="123-456-7890" {...field} />
+                    <Input type="tel" placeholder="08012345678" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -206,8 +225,8 @@ export function DeliveryAgentRegistrationForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || redirecting}>
+              {(isLoading || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register as Delivery Agent
             </Button>
           </form>

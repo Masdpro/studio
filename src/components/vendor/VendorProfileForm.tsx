@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Vendor } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { ImageUploadField } from '@/components/admin/ImageUploadField';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -32,6 +33,7 @@ const vendorProfileSchema = z.object({
   city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
   country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
   bio: z.string().optional(),
+  imageUrl: z.string().optional(),
   externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   operatingHours: z.string().min(5, { message: "Please provide operating hours (e.g., 9 AM - 5 PM, Mon-Fri)." }).optional(),
   status: z.enum(vendorStatusOptions).optional(),
@@ -52,6 +54,7 @@ function vendorToFormValues(vendor?: Vendor): VendorProfileFormValues {
     streetAddress: vendor?.streetAddress || '',
     city: vendor?.city || '',
     country: vendor?.country || '',
+    imageUrl: vendor?.imageUrl || '',
     bio: '', // Assuming bio is not part of initial Vendor type for simplicity
     externalStoreUrl: vendor?.externalStoreUrl || '',
     operatingHours: vendor?.operatingHours || '',
@@ -105,6 +108,20 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Storefront photo</FormLabel>
+              <FormControl>
+                <ImageUploadField value={field.value ?? ''} onChange={field.onChange} endpoint="/api/vendor/upload" emptyLabel="No photo yet" />
+              </FormControl>
+              <FormDescription>A photo of your shop front. Customers see it at the top of your store page.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="businessName"
@@ -233,22 +250,6 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
               <FormControl>
                 <Textarea placeholder="Tell us a little about your business" {...field} />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="externalStoreUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>External Store URL (Optional)</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder="https://yourstore.com" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormDescription>
-                Link to your existing online store. This will be displayed to customers.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

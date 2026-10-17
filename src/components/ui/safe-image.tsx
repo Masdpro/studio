@@ -35,7 +35,7 @@ export function SafeImage({ src, alt, fill, style, className, sizes, priority, .
         fill={fill}
         style={style}
         className={className}
-        sizes={sizes}
+        sizes={sizes ?? (fill ? '(max-width: 768px) 50vw, 25vw' : undefined)}
         priority={priority}
         unoptimized={typeof src === 'string' && src.startsWith('/api/uploads/')}
         onError={() => setFailed(true)}

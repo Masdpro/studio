@@ -1,3 +1,4 @@
+import { userHasRole, getBranchForUser } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { tradingBlockReason } from '@/lib/verification';
 import { getServerSession } from 'next-auth';
@@ -41,7 +42,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
   }
 
   const { id: userId } = session.user;
-  const isParticipant = order.customerId === userId || order.vendorId === userId || order.deliveryAgentId === userId;
+  const isParticipant = order.customerId === userId || order.vendorId === userId || order.deliveryAgentId === userId ||
+    (!!getBranchForUser(userId) && order.branchId === getBranchForUser(userId)!.id);
   if (!isParticipant) {
     return NextResponse.json({ error: 'You do not have access to this order.' }, { status: 403 });
   }
@@ -67,7 +69,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   const isParticipant = order.customerId === userId || order.vendorId === userId || order.deliveryAgentId === userId;
   // An unassigned delivery is claimable by any delivery agent, not just an existing participant.
   const isClaimingUnassignedDelivery =
-    role === 'delivery_agent' && !order.deliveryAgentId && order.status === 'ReadyForPickup';
+    userHasRole(userId, 'delivery_agent') && !order.deliveryAgentId && order.status === 'ReadyForPickup';
   if (!isParticipant && !isClaimingUnassignedDelivery) {
     return NextResponse.json({ error: 'You do not have access to this order.' }, { status: 403 });
   }

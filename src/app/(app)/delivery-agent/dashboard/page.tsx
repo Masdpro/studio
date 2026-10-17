@@ -1,6 +1,8 @@
 
 // src/app/(app)/delivery-agent/dashboard/page.tsx
 'use client';
+import { AccountVerification } from '@/components/account/AccountVerification';
+import { useTradingStatus } from '@/hooks/use-trading-status';
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Order, DeliveryAgent } from '@/lib/types';
@@ -16,7 +18,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
 
 export default function DeliveryAgentDashboardPage() {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, roles, loading: authLoading } = useAuth();
+  const { mayTrade, loaded: tradingLoaded } = useTradingStatus();
   const [agent, setAgent] = useState<DeliveryAgent | null>(null);
   // Store all orders and derive subsections from it
   const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -31,7 +34,7 @@ export default function DeliveryAgentDashboardPage() {
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [agentRes, ordersRes] = await Promise.all([fetch('/api/delivery-agent/profile'), fetch('/api/orders')]);
+      const [agentRes, ordersRes] = await Promise.all([fetch('/api/delivery-agent/profile'), fetch('/api/orders?as=agent')]);
       if (agentRes.ok) {
         const { agent } = await agentRes.json();
         setAgent(agent);
@@ -50,7 +53,7 @@ export default function DeliveryAgentDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user && role === 'delivery_agent') {
+    if (!authLoading && user && roles.includes('delivery_agent')) {
       loadDashboard();
     } else if (!authLoading) {
       setIsLoading(false);
@@ -136,7 +139,17 @@ export default function DeliveryAgentDashboardPage() {
     );
   }
 
-  if (!user || role !== 'delivery_agent') {
+  if (!tradingLoaded) return <div className="container mx-auto py-8 text-center text-muted-foreground">Loading…</div>;
+  if (!mayTrade) {
+    return (
+      <div className="container mx-auto max-w-2xl space-y-6 py-8">
+        <h1 className="text-3xl font-bold text-primary">Delivery Agent Dashboard</h1>
+        <AccountVerification />
+      </div>
+    );
+  }
+
+  if (!user || !roles.includes('delivery_agent')) {
     return (
       <div className="container mx-auto py-8 text-center space-y-4">
         <p className="text-lg text-muted-foreground">Sign in with a delivery agent account to view your dashboard.</p>

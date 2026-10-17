@@ -1,4 +1,6 @@
+import { userHasRole } from '@/lib/roles';
 import { NextResponse } from 'next/server';
+import { branchAccountEmails } from '@/lib/roles';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getVendorById, getVendors } from '@/lib/services/vendors';
@@ -11,7 +13,7 @@ const MAX_BRANCHES = 50;
 async function vendorSession() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: NextResponse.json({ error: 'You must be signed in.' }, { status: 401 }) };
-  if (session.user.role !== 'vendor') return { error: NextResponse.json({ error: 'Only vendor accounts can manage branches.' }, { status: 403 }) };
+  if (!userHasRole(session.user.id, 'vendor')) return { error: NextResponse.json({ error: 'Only vendor accounts can manage branches.' }, { status: 403 }) };
   return { id: session.user.id };
 }
 
@@ -21,7 +23,8 @@ export async function GET() {
   if ('error' in s) return s.error;
   const [branches, markets, vendors, all] = await Promise.all([getBranchesByVendor(s.id), getMarkets(), getVendors(), getAllBranches()]);
   const tags = Array.from(new Set([...vendors.map((v) => v.locationTag), ...all.map((b) => b.locationTag)].filter(Boolean))).sort();
-  return NextResponse.json({ branches, markets: markets.map((m) => ({ id: m.id, name: m.name })), tags });
+  const emails = branchAccountEmails(s.id);
+  return NextResponse.json({ branches: branches.map((b) => ({ ...b, accountEmail: emails[b.id] })), markets: markets.map((m) => ({ id: m.id, name: m.name })), tags });
 }
 
 export async function POST(request: Request) {

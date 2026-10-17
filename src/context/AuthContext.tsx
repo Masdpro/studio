@@ -1,9 +1,9 @@
 'use client';
 
 import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
-export type UserRole = 'customer' | 'vendor' | 'delivery_agent' | 'admin';
+export type UserRole = 'customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
@@ -15,7 +15,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  * regardless of which auth library sits underneath.
  */
 export function useAuth() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
+  const rolesKey = (session?.user?.roles ?? []).join(',');
+  const accountRole = session?.user?.role;
+  const roles = useMemo<UserRole[]>(() => (rolesKey ? (rolesKey.split(',') as UserRole[]) : accountRole ? [accountRole] : []), [rolesKey, accountRole]);
 
   const signIn = async (email: string, password: string) => {
     const result = await nextAuthSignIn('credentials', { email, password, redirect: false });
@@ -55,6 +58,10 @@ export function useAuth() {
   return {
     user: session?.user ?? null,
     role: session?.user?.role ?? null,
+    roles,
+    isVendor: roles.includes('vendor'),
+    isAgent: roles.includes('delivery_agent'),
+    refresh: () => update(),
     loading: status === 'loading',
     signIn,
     signUp,

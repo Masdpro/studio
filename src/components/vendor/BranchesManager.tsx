@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { VendorBranch } from '@/lib/types';
+import { BranchAccountControl } from '@/components/vendor/BranchAccountControl';
 
 const STATUSES = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 const NO_MARKET = 'none';
@@ -104,6 +105,7 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
                 {b.operatingHours && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{b.operatingHours}</span>}
                 {b.marketId && <span>In {markets.find((m) => m.id === b.marketId)?.name ?? 'a local market'}</span>}
               </div>
+              <BranchAccountControl branch={b} onChanged={load} />
             </div>
             <div className="flex gap-1 shrink-0">
               <Button variant="ghost" size="icon" onClick={() => open(b)} aria-label={`Edit ${b.name}`}><Pencil className="h-4 w-4" /></Button>

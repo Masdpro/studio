@@ -18,6 +18,11 @@ export async function getOrdersForVendor(vendorId: string): Promise<Order[]> {
   return rows.map(rowToOrder);
 }
 
+export async function getOrdersForBranch(branchId: string): Promise<Order[]> {
+  const rows = db.select().from(ordersTable).where(eq(ordersTable.branchId, branchId)).orderBy(desc(ordersTable.createdAt)).all();
+  return rows.map(rowToOrder);
+}
+
 export async function getOrdersForDeliveryAgent(agentId: string): Promise<Order[]> {
   const rows = db.select().from(ordersTable).where(eq(ordersTable.deliveryAgentId, agentId)).all();
   if (rows.length === 0) return masterSampleOrders.filter((o) => o.deliveryAgentId === agentId);
