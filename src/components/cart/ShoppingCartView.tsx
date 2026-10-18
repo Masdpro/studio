@@ -60,6 +60,12 @@ export function ShoppingCartView() {
       .catch(() => {});
     return () => { off = true; };
   }, [user]);
+  const [addrOpen, setAddrOpen] = useState(false);
+  // Typing narrows the list; an empty box or an exact pick shows every recent address.
+  const suggestions = recentAddresses.filter((a) => {
+    const q = deliveryAddress.trim().toLowerCase();
+    return !q || a.toLowerCase() === q || a.toLowerCase().includes(q);
+  });
   // A remembered branch that no longer exists (or is closed) falls back to the main branch.
   const effectiveChoice = useMemo(() => {
     const out: Record<string, string> = {};
@@ -216,35 +222,35 @@ export function ShoppingCartView() {
             <Label htmlFor="delivery-address" className="text-xs text-muted-foreground">
               {isDeliverySelected ? 'Delivery address' : 'Name for pickup'}
             </Label>
-            <Input
-              id="delivery-address"
-              value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
-              placeholder={isDeliverySelected ? 'e.g. 12 Allen Avenue, Ikeja, Lagos' : 'e.g. Your name'}
-              className="mt-1"
-            />
-            {isDeliverySelected && recentAddresses.length > 0 && (
-              <div className="mt-2 space-y-1.5">
-                <p className="text-xs text-muted-foreground">Recent addresses — tap one to use it</p>
-                <div className="flex flex-col gap-1.5">
-                  {recentAddresses.map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => setDeliveryAddress(a)}
-                      className={cn(
-                        'flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors hover:border-primary',
-                        deliveryAddress.trim().toLowerCase() === a.toLowerCase() && 'border-primary bg-primary/5'
-                      )}
-                    >
-                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
-                      <span className="break-words">{a}</span>
-                    </button>
+            <div className="relative">
+              <Input
+                id="delivery-address"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                onFocus={() => setAddrOpen(true)}
+                onBlur={() => setAddrOpen(false)}
+                autoComplete="off"
+                placeholder={isDeliverySelected ? 'e.g. 12 Allen Avenue, Ikeja, Lagos' : 'e.g. Your name'}
+                className="mt-1"
+              />
+              {isDeliverySelected && addrOpen && suggestions.length > 0 && (
+                <ul role="listbox" className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                  <li className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Recent addresses</li>
+                  {suggestions.map((a) => (
+                    <li key={a} role="option" aria-selected={deliveryAddress.trim().toLowerCase() === a.toLowerCase()}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); setDeliveryAddress(a); setAddrOpen(false); }}
+                        className="flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                        <span className="break-words">{a}</span>
+                      </button>
+                    </li>
                   ))}
-                </div>
-                <p className="text-xs text-muted-foreground">Or type a new address above.</p>
-              </div>
-            )}
+                </ul>
+              )}
+            </div>
           </div>
           <Separator />
           <div className="flex justify-between text-xs">
