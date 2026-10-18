@@ -73,9 +73,7 @@ export function NotificationItem({ notification, onMarkAsRead, onNotificationCli
 
   if (notification.link) {
     return (
-      <Link href={notification.link} passHref legacyBehavior>
-        <a>{content}</a>
-      </Link>
+      <Link href={notification.link}>{content}</Link>
     );
   }
 
