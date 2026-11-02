@@ -27,7 +27,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { ProductMediaField } from '@/components/vendor/ProductMediaField';
+import { sanitizeOptions, sanitizeStock } from '@/lib/product-media';
 import type { Product, Vendor } from '@/lib/types';
 
 const productSchema = z.object({
@@ -37,7 +38,12 @@ const productSchema = z.object({
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   discountPrice: z.union([z.coerce.number().positive(), z.literal('')]).nullable().optional(),
   imageUrl: z.string().optional(),
+  galleryImages: z.array(z.string()).optional(),
+  videoUrl: z.string().optional(),
   category: z.string().optional(),
+  colors: z.string().optional(),
+  sizes: z.string().optional(),
+  stock: z.string().optional(),
   isAwoof: z.boolean(),
 });
 
@@ -59,7 +65,12 @@ function productToFormValues(product: Product | null): ProductFormValues {
     price: product?.price ?? 0,
     discountPrice: product?.discountPrice ?? '',
     imageUrl: product?.imageUrl ?? '',
+    galleryImages: product?.galleryImages ?? [],
+    videoUrl: product?.videoUrl ?? '',
     category: product?.category ?? '',
+    colors: (product?.colors ?? []).join(', '),
+    sizes: (product?.sizes ?? []).join(', '),
+    stock: product?.stock !== undefined ? String(product.stock) : '',
     isAwoof: product?.isAwoof ?? false,
   };
 }
@@ -83,6 +94,9 @@ export function ProductFormDialog({ product, vendors, open, onOpenChange, onSave
       const payload = {
         ...data,
         discountPrice: typeof data.discountPrice === 'number' ? data.discountPrice : null,
+        colors: sanitizeOptions(data.colors),
+        sizes: sanitizeOptions(data.sizes),
+        stock: sanitizeStock(data.stock),
       };
       const url = product ? `/api/admin/products/${product.id}` : '/api/admin/products';
       const res = await fetch(url, {
@@ -208,10 +222,54 @@ export function ProductFormDialog({ product, vendors, open, onOpenChange, onSave
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product Image</FormLabel>
+                      <FormLabel>Product Photos &amp; Video</FormLabel>
                       <FormControl>
-                        <ImageUploadField value={field.value ?? ''} onChange={field.onChange} emptyLabel="Placeholder will be used" />
+                        <ProductMediaField
+                          imageEndpoint="/api/admin/upload"
+                          images={[field.value, ...(form.watch('galleryImages') ?? [])].filter((u): u is string => !!u)}
+                          video={form.watch('videoUrl') ?? ''}
+                          onChange={(imgs, vid) => {
+                            field.onChange(imgs[0] ?? '');
+                            form.setValue('galleryImages', imgs.slice(1), { shouldDirty: true });
+                            form.setValue('videoUrl', vid, { shouldDirty: true });
+                          }}
+                        />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="colors"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Colors (Optional)</FormLabel>
+                        <FormControl><Input placeholder="Red, Blue, Black" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="sizes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sizes (Optional)</FormLabel>
+                        <FormControl><Input placeholder="S, M, L, XL" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity in stock (Optional)</FormLabel>
+                      <FormControl><Input type="number" min={0} step={1} inputMode="numeric" placeholder="Leave blank if not tracked" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

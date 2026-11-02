@@ -55,6 +55,10 @@ export function LoginForm() {
       router.push(isSafeCallback ? callbackUrl : '/');
       router.refresh();
     } catch (err) {
+      if (err instanceof Error && err.message === 'ACCOUNT_SUSPENDED') {
+        setError('This account has been suspended. Please contact Closebuy support.');
+        return;
+      }
       if (err instanceof Error && err.message === 'TOO_MANY_ATTEMPTS') {
         setError('Too many wrong attempts. Please wait 15 minutes, or reset your password.');
         return;

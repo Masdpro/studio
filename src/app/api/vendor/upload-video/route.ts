@@ -11,7 +11,7 @@ import { UPLOAD_DIR, MAX_VIDEO_BYTES, UPLOAD_URL_PREFIX, detectVideoExtension } 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   const id = session?.user?.id;
-  if (!id || (!userHasRole(id, 'vendor') && !getBranchForUser(id))) {
+  if (!id || (!userHasRole(id, 'vendor') && !getBranchForUser(id) && session?.user?.role !== 'admin')) {
     return NextResponse.json({ error: 'Vendor sign-in required.' }, { status: 401 });
   }
   let file: FormDataEntryValue | null;

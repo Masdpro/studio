@@ -7,8 +7,7 @@ import {
 } from 'recharts';
 import {
   ArrowDownRight, ArrowUpRight, Banknote, Loader2, MapPin, RefreshCw, ShoppingBag, ShoppingCart, Store, Bike,
-  UserPlus, Activity, Wallet, Eye, AlertTriangle, ShieldCheck,
-} from 'lucide-react';
+  UserPlus, Activity, Wallet, Eye, AlertTriangle, ShieldCheck, Receipt, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -285,7 +284,7 @@ export function AnalyticsDashboard() {
             <Panel title="Top vendors"><HBars items={data.topVendors.map((v) => ({ name: v.name, value: v.revenue, note: `${v.orders} orders` }))} format={nairaCompact} color="var(--s3)" /></Panel>
             <Panel title="Top markets"><HBars items={data.topMarkets.map((m) => ({ name: m.name, value: m.revenue, note: `${m.orders} orders` }))} format={nairaCompact} color="var(--s4)" /></Panel>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Tile title="Markets" value={String(data.totals.markets)} icon={MapPin} sub="listed" />
             <Tile title="Vendors" value={String(data.totals.vendors)} icon={Store} sub="stalls" />
             <Tile title="Products" value={String(data.totals.products)} icon={ShoppingBag} sub="in catalogue" />
@@ -365,12 +364,14 @@ export function AnalyticsDashboard() {
             { href: '/admin/products', label: 'Products', n: data.totals.products, icon: ShoppingBag },
             { href: '/admin/agents', label: 'Delivery agents', n: data.totals.agents, icon: Bike },
             { href: '/admin/verifications', label: 'Verifications', n: data.totals.pendingApprovals, icon: ShieldCheck },
+            { href: '/admin/orders', label: 'Orders & refunds', n: undefined as number | undefined, icon: Receipt },
+            { href: '/admin/users', label: 'Users', n: undefined as number | undefined, icon: Users },
           ].map((m) => (
             <Link key={m.href} href={m.href}>
               <Card className="hover:border-primary transition-colors">
                 <CardContent className="p-4 flex items-center gap-3">
                   <m.icon className="h-5 w-5 text-primary" aria-hidden />
-                  <div><div className="font-semibold tabular-nums">{m.n}</div><div className="text-sm text-muted-foreground">{m.label}{m.href.endsWith('verifications') ? ' pending' : ''}</div></div>
+                  <div>{m.n !== undefined && <div className="font-semibold tabular-nums">{m.n}</div>}<div className="text-sm text-muted-foreground">{m.label}{m.href.endsWith('verifications') ? ' pending' : ''}</div></div>
                 </CardContent>
               </Card>
             </Link>

@@ -25,6 +25,7 @@ export function useAuth() {
     if (result?.error) {
       if (result.error.includes('EMAIL_NOT_VERIFIED')) throw new Error('EMAIL_NOT_VERIFIED');
       if (result.error.includes('TOO_MANY_ATTEMPTS')) throw new Error('TOO_MANY_ATTEMPTS');
+      if (result.error.includes('ACCOUNT_SUSPENDED')) throw new Error('ACCOUNT_SUSPENDED');
       throw new Error('Invalid email or password');
     }
   };

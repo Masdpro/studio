@@ -1,17 +1,23 @@
 
 import { db } from '@/db';
-import { products as productsTable } from '@/db/schema';
+import { products as productsTable, users as usersTable } from '@/db/schema';
 import { and, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { Product } from '@/lib/types';
 import { sampleProductsForMockOrders } from '@/lib/mockData';
 import { sanitizeGallery, sanitizeVideo, sanitizeOptions, sanitizeStock } from '@/lib/product-media';
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(opts: { includeSuspended?: boolean } = {}): Promise<Product[]> {
   const rows = db.select().from(productsTable).all();
   if (rows.length === 0) return sampleProductsForMockOrders;
-  // Products that belong to a single branch only show on that vendor's store page.
-  return rows.filter((r) => !r.branchId).map(rowToProduct);
+  const hidden = opts.includeSuspended ? new Set<string>() : suspendedVendorIds();
+  // Products that belong to a single branch only show on that vendor's store page; suspended shops don't show at all.
+  return rows.filter((r) => !r.branchId && !hidden.has(r.vendorId)).map(rowToProduct);
+}
+
+/** Vendors an admin has suspended: their products are hidden and can't be ordered. */
+export function suspendedVendorIds(): Set<string> {
+  return new Set(db.select({ id: usersTable.id }).from(usersTable).where(isNotNull(usersTable.suspendedAt)).all().map((u) => u.id));
 }
 
 export async function getProductsByBranch(branchId: string): Promise<Product[]> {

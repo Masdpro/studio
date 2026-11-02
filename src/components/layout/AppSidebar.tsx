@@ -5,7 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag, Receipt, Users } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -62,6 +62,8 @@ const adminItems = [
   { href: '/admin/products', label: 'Products', icon: ShoppingBag, tooltip: "Manage Products" },
   { href: '/admin/agents', label: 'Agents', icon: Bike, tooltip: "Manage Delivery Agents" },
   { href: '/admin/verifications', label: 'Verifications', icon: ShieldCheck, tooltip: "Review vendor and agent verifications" },
+  { href: '/admin/orders', label: 'Orders', icon: Receipt, tooltip: "All orders and refunds" },
+  { href: '/admin/users', label: 'Users', icon: Users, tooltip: "Look up and suspend accounts" },
 ];
 
 type NavItem = { href: string; label: string; icon: React.ComponentType; tooltip: string };

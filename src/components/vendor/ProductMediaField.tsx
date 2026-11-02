@@ -14,6 +14,8 @@ interface ProductMediaFieldProps {
   images: string[];
   video: string;
   onChange: (images: string[], video: string) => void;
+  /** Where photos are uploaded; admins use their own endpoint. */
+  imageEndpoint?: string;
 }
 
 async function upload(endpoint: string, file: File): Promise<string> {
@@ -26,7 +28,7 @@ async function upload(endpoint: string, file: File): Promise<string> {
 }
 
 /** Several product photos plus one optional video. Files upload as soon as they are picked. */
-export function ProductMediaField({ images, video, onChange }: ProductMediaFieldProps) {
+export function ProductMediaField({ images, video, onChange, imageEndpoint = '/api/vendor/upload' }: ProductMediaFieldProps) {
   const { toast } = useToast();
   const imageInput = useRef<HTMLInputElement>(null);
   const videoInput = useRef<HTMLInputElement>(null);
@@ -48,7 +50,7 @@ export function ProductMediaField({ images, video, onChange }: ProductMediaField
     for (const file of picked) {
       if (!file.type.startsWith('image/')) { toast({ title: 'Not an image', description: `${file.name} was skipped.`, variant: 'destructive' }); continue; }
       if (file.size > MAX_IMAGE_BYTES) { toast({ title: 'Image too large', description: `${file.name} is over 5 MB.`, variant: 'destructive' }); continue; }
-      try { added.push(await upload('/api/vendor/upload', file)); } catch (err) { fail(err); }
+      try { added.push(await upload(imageEndpoint, file)); } catch (err) { fail(err); }
     }
     if (added.length) onChange([...images, ...added], video);
     setBusy(null);

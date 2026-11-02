@@ -4,8 +4,7 @@ import { tradingBlockReason } from '@/lib/verification';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getOrderById, transitionOrderStatus } from '@/lib/services/orders';
-import { creditWallet } from '@/lib/services/wallets';
-import { releaseStock } from '@/lib/services/products';
+import { refundCancelledOrder } from '@/lib/services/order-refunds';
 import { createNotification } from '@/lib/services/notifications';
 import type { Order } from '@/lib/types';
 
@@ -140,30 +139,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
 
   let refunded = 0;
   if (status === 'Cancelled') {
-    // Give the money back and put the items back in stock.
-    refunded = order.totalAmount;
-    await creditWallet(order.customerId, refunded);
-    const qty = new Map<string, number>();
-    for (const i of order.items) qty.set(i.productId, (qty.get(i.productId) ?? 0) + i.quantity);
-    releaseStock(Array.from(qty.entries()).map(([productId, quantity]) => ({ productId, quantity })));
-
-    const by = actor === 'customer' ? 'You cancelled' : 'The vendor cancelled';
-    await createNotification({
-      userId: order.customerId,
-      message: `${by} your order. ₦${refunded.toLocaleString()} has been refunded to your wallet.`,
-      category: 'Transaction',
-      link: '/orders',
-      iconName: 'XCircle',
-    });
-    if (actor === 'customer') {
-      await createNotification({
-        userId: order.vendorId,
-        message: `A customer cancelled their ₦${order.totalAmount.toLocaleString()} order.`,
-        category: 'Activity',
-        link: '/vendor/orders',
-        iconName: 'XCircle',
-      });
-    }
+    // Give the money back, put the items back in stock and tell both sides.
+    refunded = await refundCancelledOrder(order, actor === 'customer' ? 'customer' : 'vendor');
   } else if (actor !== 'customer') {
     // Tell the customer when the vendor or agent moves their order along.
     const message = STATUS_MESSAGES[status];

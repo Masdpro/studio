@@ -50,7 +50,8 @@ export const authOptions: NextAuthOptions = {
         }
         FAILS.delete(email);
 
-        // Only reveal this once the password is right, so it can't be used to probe for accounts.
+        // Only reveal these once the password is right, so they can't be used to probe for accounts.
+        if (user.suspendedAt) throw new Error('ACCOUNT_SUSPENDED');
         if (!user.emailVerifiedAt) throw new Error('EMAIL_NOT_VERIFIED');
 
         return {

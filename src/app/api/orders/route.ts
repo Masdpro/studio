@@ -16,7 +16,7 @@ import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
 import { recordEvent } from '@/lib/services/events';
 import { getBranchById } from '@/lib/services/branches';
-import { getProductById, reserveStock, releaseStock } from '@/lib/services/products';
+import { getProductById, reserveStock, releaseStock, suspendedVendorIds } from '@/lib/services/products';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
 export async function GET(request: Request) {
@@ -73,11 +73,15 @@ export async function POST(request: Request) {
   // come from the product record, quantities must be sensible whole numbers,
   // and colour/size must be one the vendor actually offers.
   const cleanItems: CartItem[] = [];
+  const suspended = suspendedVendorIds();
   const qtyByProduct = new Map<string, number>();
   for (const item of items) {
     const product = item?.productId ? await getProductById(String(item.productId)) : undefined;
     if (!product) {
       return NextResponse.json({ error: `${item?.name ?? 'An item'} is no longer available. Please remove it from your cart.` }, { status: 400 });
+    }
+    if (suspended.has(product.vendorId)) {
+      return NextResponse.json({ error: `${product.name} is no longer available. Please remove it from your cart.` }, { status: 400 });
     }
     const quantity = Math.floor(Number(item.quantity));
     if (!Number.isFinite(quantity) || quantity < 1 || quantity > 999) {

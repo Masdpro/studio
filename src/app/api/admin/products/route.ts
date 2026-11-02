@@ -6,7 +6,7 @@ export async function GET() {
   if (!(await requireAdminSession())) {
     return NextResponse.json({ error: 'Admin sign-in required.' }, { status: 401 });
   }
-  const products = await getProducts();
+  const products = await getProducts({ includeSuspended: true });
   return NextResponse.json({ products });
 }
 

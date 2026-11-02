@@ -19,6 +19,8 @@ export const users = sqliteTable('users', {
   approvalNote: text('approval_note'),
   address: text('address'), // customer's own delivery address, edited from the profile
   sessionVersion: integer('session_version').notNull().default(0), // bumped on password change/reset to sign out every device
+  suspendedAt: integer('suspended_at', { mode: 'timestamp' }), // set by an admin: can't sign in, shop hidden
+  suspendedReason: text('suspended_reason'),
 });
 
 // One-time email links and phone codes. Only a hash of the secret is stored.

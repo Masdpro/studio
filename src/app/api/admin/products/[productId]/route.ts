@@ -6,6 +6,7 @@ import { getProductById, updateProduct, deleteProduct } from '@/lib/services/pro
 // that's the whole point of an admin panel (fixing a miscategorized stall).
 const EDITABLE_FIELDS = [
   'vendorId', 'name', 'description', 'price', 'discountPrice', 'imageUrl', 'category', 'aiHint', 'isAwoof',
+  'galleryImages', 'videoUrl', 'colors', 'sizes', 'stock',
 ] as const;
 
 function pickEditableFields(body: Record<string, unknown>) {
