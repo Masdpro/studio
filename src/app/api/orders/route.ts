@@ -16,6 +16,7 @@ import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
 import { recordEvent } from '@/lib/services/events';
 import { getBranchById } from '@/lib/services/branches';
+import { getProductById, reserveStock, releaseStock } from '@/lib/services/products';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
 export async function GET(request: Request) {
@@ -58,20 +59,65 @@ export async function POST(request: Request) {
     deliveryAddress: string;
   };
 
-  if (!items?.length) {
+  if (!Array.isArray(items) || !items.length) {
     return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400 });
   }
-  if (!deliveryAddress?.trim()) {
+  if (items.length > 100) {
+    return NextResponse.json({ error: 'Too many items in one order.' }, { status: 400 });
+  }
+  if (typeof deliveryAddress !== 'string' || !deliveryAddress.trim()) {
     return NextResponse.json({ error: 'A delivery/pickup address is required.' }, { status: 400 });
   }
 
-  const itemsByVendor = new Map<string, CartItem[]>();
+  // Never trust the browser's copy of the cart for money: price, vendor and name
+  // come from the product record, quantities must be sensible whole numbers,
+  // and colour/size must be one the vendor actually offers.
+  const cleanItems: CartItem[] = [];
+  const qtyByProduct = new Map<string, number>();
   for (const item of items) {
+    const product = item?.productId ? await getProductById(String(item.productId)) : undefined;
+    if (!product) {
+      return NextResponse.json({ error: `${item?.name ?? 'An item'} is no longer available. Please remove it from your cart.` }, { status: 400 });
+    }
+    const quantity = Math.floor(Number(item.quantity));
+    if (!Number.isFinite(quantity) || quantity < 1 || quantity > 999) {
+      return NextResponse.json({ error: `Please choose a valid quantity for ${product.name}.` }, { status: 400 });
+    }
+    const pick = (offered: string[] | undefined, chosen: unknown, label: string) => {
+      if (!offered?.length) return { value: undefined as string | undefined };
+      const match = typeof chosen === 'string' ? offered.find((o) => o.toLowerCase() === chosen.trim().toLowerCase()) : undefined;
+      return match ? { value: match } : { error: `Please choose a ${label} for ${product.name}.` };
+    };
+    const color = pick(product.colors, item.color, 'colour');
+    const size = pick(product.sizes, item.size, 'size');
+    const optionError = color.error ?? size.error;
+    if (optionError) return NextResponse.json({ error: optionError }, { status: 400 });
+
+    qtyByProduct.set(product.id, (qtyByProduct.get(product.id) ?? 0) + quantity);
+    if (product.stock !== undefined && qtyByProduct.get(product.id)! > product.stock) {
+      return NextResponse.json(
+        { error: product.stock === 0 ? `${product.name} is sold out.` : `Only ${product.stock} of ${product.name} left. Please reduce the quantity.`, code: 'OUT_OF_STOCK', productId: product.id, available: product.stock },
+        { status: 409 }
+      );
+    }
+    cleanItems.push({
+      productId: product.id,
+      vendorId: product.vendorId,
+      name: product.name,
+      price: product.discountPrice ?? product.price,
+      quantity,
+      imageUrl: product.imageUrl,
+      ...(product.aiHint ? { aiHint: product.aiHint } : {}),
+      ...(color.value ? { color: color.value } : {}),
+      ...(size.value ? { size: size.value } : {}),
+    });
+  }
+
+  const itemsByVendor = new Map<string, CartItem[]>();
+  for (const item of cleanItems) {
     const vendorId = item.vendorId ?? 'unknown-vendor';
     if (!itemsByVendor.has(vendorId)) itemsByVendor.set(vendorId, []);
-    const clean = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : undefined);
-    const { color, size, ...rest } = item;
-    itemsByVendor.get(vendorId)!.push({ ...rest, ...(clean(color) ? { color: clean(color) } : {}), ...(clean(size) ? { size: clean(size) } : {}) });
+    itemsByVendor.get(vendorId)!.push(item);
   }
 
   // Resolve each vendor sub-order's total up front so we know the grand total
@@ -114,9 +160,21 @@ export async function POST(request: Request) {
 
   const grandTotal = vendorOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
+  // Hold the stock first (all or nothing), then charge; give the stock back if the charge fails.
+  const stockLines = Array.from(qtyByProduct.entries()).map(([productId, quantity]) => ({ productId, quantity }));
+  const reserved = reserveStock(stockLines);
+  if (!reserved.ok) {
+    const p = await getProductById(reserved.productId);
+    return NextResponse.json(
+      { error: `${p?.name ?? 'An item'} just sold out or has fewer units left. Please update your cart.`, code: 'OUT_OF_STOCK', productId: reserved.productId, available: p?.stock ?? 0 },
+      { status: 409 }
+    );
+  }
+
   try {
     await debitWallet(session.user.id, grandTotal);
   } catch (err) {
+    releaseStock(stockLines);
     if (err instanceof InsufficientFundsError) {
       return NextResponse.json(
         { error: err.message, code: 'INSUFFICIENT_FUNDS', balance: err.balance, needed: err.needed, shortfall: err.needed - err.balance },

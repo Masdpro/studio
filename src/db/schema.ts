@@ -102,6 +102,7 @@ export const products = sqliteTable('products', {
   videoUrl: text('video_url'),
   colorsJson: text('colors_json'), // JSON array of colour choices
   sizesJson: text('sizes_json'), // JSON array of size choices
+  stock: integer('stock'), // units left; NULL = not tracked (always available)
 });
 
 export const orders = sqliteTable('orders', {

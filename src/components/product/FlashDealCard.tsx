@@ -20,13 +20,18 @@ interface FlashDealCardProps {
 
 export function FlashDealCard({ product }: FlashDealCardProps) {
   const { toast } = useToast();
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selection, setSelection] = useState<ProductSelection>({});
 
   const handleAddToCart = () => {
     // Colours/sizes must be chosen first.
+    if (product.stock === 0) return;
     if (hasOptions(product) && !selectionComplete(product, selection)) { setPickerOpen(true); return; }
+    if (product.stock !== undefined && items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0) >= product.stock) {
+      toast({ title: 'No more available', description: `All ${product.stock} of ${product.name} are already in your cart.` });
+      return;
+    }
     track('add_to_cart', { productId: product.id, vendorId: product.vendorId });
     addItem(product, 1, selection);
     setSelection({});
@@ -66,8 +71,8 @@ export function FlashDealCard({ product }: FlashDealCardProps) {
         </div>
       </div>
       <CardContent className="p-3">
-        <Button onClick={handleAddToCart} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-          <ShoppingCart className="h-4 w-4 mr-2" /> {hasOptions(product) ? 'Choose options' : 'Grab Deal'}
+        <Button onClick={handleAddToCart} disabled={product.stock === 0} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+          <ShoppingCart className="h-4 w-4 mr-2" /> {product.stock === 0 ? 'Sold out' : hasOptions(product) ? 'Choose options' : 'Grab Deal'}
         </Button>
       </CardContent>
       <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setSelection({}); }}>

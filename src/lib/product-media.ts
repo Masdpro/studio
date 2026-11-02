@@ -25,3 +25,10 @@ export function sanitizeOptions(value: unknown): string[] {
   }
   return out.slice(0, 12);
 }
+
+/** Units in stock: a whole number 0..1,000,000, or null when blank/invalid (= not tracked). */
+export function sanitizeStock(value: unknown): number | null {
+  if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) return null;
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, 1_000_000) : null;
+}

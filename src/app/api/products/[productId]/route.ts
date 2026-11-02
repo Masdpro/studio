@@ -8,7 +8,7 @@ import type { Product } from '@/lib/types';
 // Fields a vendor may edit on their own product. Deliberately excludes id and
 // vendorId — a vendor must never be able to reassign a product to a
 // different account via this endpoint.
-const EDITABLE_FIELDS = ['name', 'description', 'price', 'discountPrice', 'imageUrl', 'category', 'aiHint', 'isAwoof', 'galleryImages', 'videoUrl', 'colors', 'sizes'] as const;
+const EDITABLE_FIELDS = ['name', 'description', 'price', 'discountPrice', 'imageUrl', 'category', 'aiHint', 'isAwoof', 'galleryImages', 'videoUrl', 'colors', 'sizes', 'stock'] as const;
 
 function pickEditableFields(body: Record<string, unknown>): Partial<Product> {
   const result: Partial<Product> = {};

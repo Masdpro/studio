@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Trash2, Camera, ScanLine, XCircle, Loader2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { identifyProductFromImage } from '@/ai/flows/identify-product-from-image';
-import { sanitizeOptions } from '@/lib/product-media';
+import { sanitizeOptions, sanitizeStock } from '@/lib/product-media';
 import { ProductMediaField } from '@/components/vendor/ProductMediaField';
 import { Separator } from '@/components/ui/separator';
 
@@ -37,6 +37,7 @@ const productSchema = z.object({
   category: z.string().optional(),
   colors: z.string().optional(),
   sizes: z.string().optional(),
+  stock: z.string().optional(),
   aiHint: z.string().optional().refine(value => !value || value.split(' ').length <= 2, {
     message: "AI hint can have at most two words."
   }),
@@ -45,7 +46,7 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductUploadFormProps {
-  onProductAdd?: (product: Omit<ProductFormValues, 'colors' | 'sizes'> & { colors: string[]; sizes: string[] }) => void;
+  onProductAdd?: (product: Omit<ProductFormValues, 'colors' | 'sizes' | 'stock'> & { colors: string[]; sizes: string[]; stock?: number }) => void;
 }
 
 export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
@@ -65,6 +66,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
       category: '',
       colors: '',
       sizes: '',
+      stock: '',
       aiHint: '',
     },
   });
@@ -197,7 +199,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
   function onSubmit(data: ProductFormValues) {
     console.log('New product data:', data);
     if (onProductAdd) {
-      onProductAdd({ ...data, colors: sanitizeOptions(data.colors), sizes: sanitizeOptions(data.sizes) });
+      onProductAdd({ ...data, colors: sanitizeOptions(data.colors), sizes: sanitizeOptions(data.sizes), stock: sanitizeStock(data.stock) ?? undefined });
     }
     toast({
       title: 'Product Added!',
@@ -405,6 +407,20 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
               )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name="stock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quantity in stock (Optional)</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} step={1} inputMode="numeric" placeholder="Leave blank if you don't track stock" {...field} />
+                </FormControl>
+                <FormDescription>Shows "Only N left" at 5 or fewer and "Sold out" at 0. Goes down automatically with each order.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="category"

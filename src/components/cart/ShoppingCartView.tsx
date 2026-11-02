@@ -178,7 +178,7 @@ export function ShoppingCartView() {
       router.push('/orders');
     } catch (err) {
       toast({
-        title: 'Something went wrong',
+        title: 'Could not place your order',
         description: err instanceof Error ? err.message : 'Please try again.',
         variant: 'destructive',
       });

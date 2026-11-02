@@ -54,10 +54,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (product: Product, quantity = 1, options: { color?: string; size?: string } = {}) => {
     const key = cartLineKey({ productId: product.id, ...options });
     setItems((prev) => {
+      // Never hold more than the vendor has in stock (summed over every colour/size line of the product).
+      if (product.stock !== undefined) {
+        const inCart = prev.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0);
+        quantity = Math.min(quantity, product.stock - inCart);
+        if (quantity <= 0) return prev;
+      }
       const existing = prev.find((item) => cartLineKey(item) === key);
       if (existing) {
         return prev.map((item) =>
-          cartLineKey(item) === key ? { ...item, quantity: item.quantity + quantity } : item
+          cartLineKey(item) === key ? { ...item, quantity: item.quantity + quantity, ...(product.stock !== undefined ? { maxQuantity: product.stock } : {}) } : item
         );
       }
       return [
@@ -72,6 +78,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           aiHint: product.aiHint,
           ...(options.color ? { color: options.color } : {}),
           ...(options.size ? { size: options.size } : {}),
+          ...(product.stock !== undefined ? { maxQuantity: product.stock } : {}),
         },
       ];
     });
@@ -79,7 +86,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = (lineKey: string, quantity: number) => {
     setItems((prev) =>
-      prev.map((item) => (cartLineKey(item) === lineKey ? { ...item, quantity } : item)).filter((item) => item.quantity > 0)
+      prev
+        .map((item) => {
+          if (cartLineKey(item) !== lineKey) return item;
+          if (item.maxQuantity === undefined) return { ...item, quantity };
+          const otherLines = prev.filter((i) => i.productId === item.productId && cartLineKey(i) !== lineKey).reduce((n, i) => n + i.quantity, 0);
+          return { ...item, quantity: Math.min(quantity, Math.max(0, item.maxQuantity - otherLines)) };
+        })
+        .filter((item) => item.quantity > 0)
     );
   };
 

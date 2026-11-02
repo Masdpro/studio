@@ -41,13 +41,15 @@ export function ProductCard({
   orderBranch
 }: ProductCardProps) {
   const { toast } = useToast();
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [mediaIdx, setMediaIdx] = useState(0);
   const [selection, setSelection] = useState<ProductSelection>({});
   const needsChoice = hasOptions(product);
   const choiceMissing = needsChoice && !selectionComplete(product, selection);
+  const soldOut = product.stock === 0;
+  const lowStock = product.stock !== undefined && product.stock > 0 && product.stock <= 5;
   // The main photo is the homepage photo; the other photos and the video only show in the details.
   const media: { type: 'image' | 'video'; src: string }[] = [
     { type: 'image', src: product.imageUrl || 'https://placehold.co/300x200.png' },
@@ -73,7 +75,12 @@ export function ProductCard({
   const handleAddToCart = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     // Products with colours/sizes need a choice first, so open the details to pick one.
+    if (soldOut) return;
     if (choiceMissing) { setDetailsOpen(true); return; }
+    if (product.stock !== undefined && items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0) >= product.stock) {
+      toast({ title: 'No more available', description: `All ${product.stock} of ${product.name} are already in your cart.` });
+      return;
+    }
     track('add_to_cart', { productId: product.id, vendorId: product.vendorId });
     addItem(product, 1, selection);
     setSelection({});
@@ -109,6 +116,11 @@ export function ProductCard({
           className="w-full h-full object-cover"
           priority={true} 
         />
+        {(soldOut || lowStock) && (
+          <span className={`absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-xs font-semibold shadow ${soldOut ? 'bg-neutral-900/85 text-white' : 'bg-amber-500 text-white'}`}>
+            {soldOut ? 'Sold out' : `Only ${product.stock} left`}
+          </span>
+        )}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-10 text-white">
           {onViewVendorProfile ? (
             <button type="button" onClick={handleVendorNameClick} className="flex max-w-full items-center gap-1.5 text-left text-sm font-semibold drop-shadow hover:underline">
@@ -134,8 +146,8 @@ export function ProductCard({
         <p className="text-lg font-bold text-primary mt-auto">₦{product.price.toLocaleString()}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart} disabled={orderBranch?.unavailable}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> {orderBranch?.unavailable ? 'Branch unavailable' : needsChoice ? 'Choose options' : 'Add to Cart'}
+        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart} disabled={orderBranch?.unavailable || soldOut}>
+          <ShoppingCart className="mr-2 h-4 w-4" /> {soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : needsChoice ? 'Choose options' : 'Add to Cart'}
         </Button>
       </CardFooter>
     </Card>
@@ -190,6 +202,9 @@ export function ProductCard({
               {product.description || 'No description provided.'}
             </DialogDescription>
           </DialogHeader>
+          {(soldOut || lowStock) && (
+            <p className={`text-sm font-medium ${soldOut ? 'text-destructive' : 'text-amber-600'}`}>{soldOut ? 'Sold out' : `Only ${product.stock} left in stock`}</p>
+          )}
           <ProductOptionsPicker product={product} value={selection} onChange={setSelection} />
           <div className="flex gap-3 shrink-0">
           {onViewVendorProfile && !vendorMarketId ? (
@@ -197,8 +212,8 @@ export function ProductCard({
           ) : (
             <Button asChild variant="outline" className="flex-1"><Link href={vendorMarketId ? `/market/${vendorMarketId}/vendor/${product.vendorId}` : `/vendor/${product.vendorId}/profile`}>View store</Link></Button>
           )}
-          <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { handleAddToCart(); setDetailsOpen(false); }} disabled={orderBranch?.unavailable || choiceMissing}>
-            <ShoppingCart className="mr-2 h-4 w-4" /> {orderBranch?.unavailable ? 'Branch unavailable' : 'Add to Cart'}
+          <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { handleAddToCart(); setDetailsOpen(false); }} disabled={orderBranch?.unavailable || choiceMissing || soldOut}>
+            <ShoppingCart className="mr-2 h-4 w-4" /> {soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : 'Add to Cart'}
           </Button>
           </div>
         </div>

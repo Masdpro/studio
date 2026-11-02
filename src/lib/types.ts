@@ -65,6 +65,7 @@ export type Product = {
   videoUrl?: string; // optional product video
   colors?: string[]; // colours the vendor offers (customer must pick one)
   sizes?: string[]; // sizes the vendor offers (customer must pick one)
+  stock?: number; // units left; undefined = not tracked
 };
 
 export type CartItem = {
@@ -77,6 +78,7 @@ export type CartItem = {
   aiHint?: string;
   color?: string; // chosen colour, when the product offers colours
   size?: string; // chosen size, when the product offers sizes
+  maxQuantity?: number; // stock when added to the cart (the server re-checks at checkout)
 };
 
 export type Order = {

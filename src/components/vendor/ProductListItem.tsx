@@ -31,6 +31,11 @@ export function ProductListItem({ product, onEdit, onDelete }: ProductListItemPr
         </CardDescription>
         <p className="text-sm line-clamp-2">{product.description}</p>
         <p className="text-md font-bold text-primary mt-1">₦{product.price.toLocaleString()}</p>
+        {product.stock !== undefined && (
+          <p className={`text-xs font-medium mt-0.5 ${product.stock === 0 ? 'text-destructive' : product.stock <= 5 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+            {product.stock === 0 ? 'Sold out' : `${product.stock} in stock`}
+          </p>
+        )}
       </div>
       <div className="flex gap-2 mt-2 md:mt-0 md:flex-col">
         {onEdit && (

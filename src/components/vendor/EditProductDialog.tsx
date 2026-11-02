@@ -41,6 +41,7 @@ const editProductSchema = z.object({
   category: z.string().optional(),
   colors: z.string().optional(),
   sizes: z.string().optional(),
+  stock: z.string().optional(),
 });
 
 type EditProductFormValues = z.infer<typeof editProductSchema>;
@@ -64,6 +65,7 @@ function productToFormValues(product: Product | null): EditProductFormValues {
     category: product?.category ?? '',
     colors: (product?.colors ?? []).join(', '),
     sizes: (product?.sizes ?? []).join(', '),
+    stock: product?.stock !== undefined ? String(product.stock) : '',
   };
 }
 
@@ -244,6 +246,20 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quantity in stock (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} step={1} inputMode="numeric" placeholder="Leave blank if you don't track stock" {...field} />
+                  </FormControl>
+                  <FormDescription>Shows "Only N left" at 5 or fewer and "Sold out" at 0. Goes down automatically with each order.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="category"
