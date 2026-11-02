@@ -45,8 +45,10 @@ export async function PATCH(request: Request) {
     const np = String(body.newPassword);
     if (np.length < 8 || np.length > 72) return NextResponse.json({ error: 'New password must be 8 to 72 characters.' }, { status: 400 });
     set.passwordHash = await bcrypt.hash(np, 10);
+    // Signs out every device, this one included; the page sends the user to sign in again.
+    set.sessionVersion = (user.sessionVersion ?? 0) + 1;
   }
   if (!Object.keys(set).length) return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
   db.update(users).set(set).where(eq(users.id, id)).run();
-  return NextResponse.json({ ok: true, ...read(id) });
+  return NextResponse.json({ ok: true, signedOut: body.newPassword !== undefined, ...read(id) });
 }

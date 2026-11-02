@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BadgeCheck, KeyRound, Loader2, Mail, MapPin, Pencil, Phone, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -21,7 +22,8 @@ async function call(url: string, method: string, body: unknown) {
 }
 
 export default function CustomerProfilePage() {
-  const { user, loading, refresh } = useAuth();
+  const { user, loading, refresh, signOut } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mode, setMode] = useState<'view' | 'details' | 'phone' | 'password'>('view');
@@ -75,7 +77,13 @@ export default function CustomerProfilePage() {
   }
   async function savePassword() {
     setBusy(true);
-    try { await call('/api/account/profile', 'PATCH', { currentPassword: current, newPassword: next }); setCurrent(''); setNext(''); done('Password changed'); }
+    try {
+      await call('/api/account/profile', 'PATCH', { currentPassword: current, newPassword: next });
+      setCurrent(''); setNext('');
+      toast({ title: 'Password changed', description: 'For your security, every device has been signed out. Please sign in with your new password.' });
+      await signOut();
+      router.push('/auth/login?changed=1');
+    }
     catch (e) { fail(e); } finally { setBusy(false); }
   }
 

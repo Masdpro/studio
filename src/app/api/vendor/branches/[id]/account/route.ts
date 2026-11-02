@@ -25,7 +25,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const passwordHash = await bcrypt.hash(password, 10);
 
   if (branch.accountUserId) {
-    db.update(users).set({ passwordHash }).where(eq(users.id, branch.accountUserId)).run();
+    const existing = db.select({ v: users.sessionVersion }).from(users).where(eq(users.id, branch.accountUserId)).get();
+    db.update(users).set({ passwordHash, sessionVersion: (existing?.v ?? 0) + 1 }).where(eq(users.id, branch.accountUserId)).run();
     return NextResponse.json({ ok: true, reset: true });
   }
   const email = String(body?.email ?? '').trim().toLowerCase();

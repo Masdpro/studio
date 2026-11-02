@@ -53,7 +53,7 @@ export function normalizeNigerianPhone(input: string): string | null {
   return m ? `+234${m[1]}` : null;
 }
 
-function recentCode(userId: string, channel: 'email' | 'phone') {
+function recentCode(userId: string, channel: 'email' | 'phone' | 'password_reset') {
   return db
     .select()
     .from(verificationCodes)
@@ -164,4 +164,41 @@ export function tradingBlockReason(userId: string): string | null {
   if (s.mayTrade) return null;
   if (s.approvalStatus === 'rejected') return 'Your verification was not approved. Open Account verification to see why and re-submit.';
   return 'Your account is still being verified. Finish Account verification and wait for admin approval.';
+}
+
+const RESET_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * "Forgot password": emails a one-hour reset link. Says nothing about whether
+ * the address has an account; callers always show the same reply.
+ */
+export async function sendPasswordReset(email: string): Promise<{ link?: string }> {
+  const user = db.select().from(users).where(eq(users.email, email.trim().toLowerCase())).get();
+  if (!user) return {};
+  const last = recentCode(user.id, 'password_reset');
+  if (last && Date.now() - last.createdAt.getTime() < RESEND_COOLDOWN_MS) return {};
+
+  db.delete(verificationCodes).where(and(eq(verificationCodes.userId, user.id), eq(verificationCodes.channel, 'password_reset'))).run();
+  const token = randomBytes(32).toString('hex');
+  db.insert(verificationCodes)
+    .values({ id: randomUUID(), userId: user.id, channel: 'password_reset', target: user.email, codeHash: sha256(token), expiresAt: new Date(Date.now() + RESET_TTL_MS), createdAt: new Date() })
+    .run();
+  const link = `${appUrl()}/auth/reset-password?token=${token}&uid=${encodeURIComponent(user.id)}`;
+  await sendEmail(user.email, 'Reset your Closebuy password', `Hi ${user.displayName ?? ''},\n\nSomeone (hopefully you) asked to reset your Closebuy password. Open this link within an hour to choose a new one:\n${link}\n\nIf this wasn't you, ignore this email; your password stays the same.`);
+  return { link };
+}
+
+/** Sets a new password from a reset link, then signs the account out everywhere. */
+export async function resetPasswordWithToken(userId: string, token: string, passwordHash: string): Promise<boolean> {
+  const row = recentCode(userId, 'password_reset');
+  if (!row || row.expiresAt.getTime() < Date.now() || !safeEqual(row.codeHash, sha256(token))) return false;
+  const user = db.select().from(users).where(eq(users.id, userId)).get();
+  if (!user) return false;
+  db.update(users)
+    .set({ passwordHash, sessionVersion: (user.sessionVersion ?? 0) + 1, emailVerifiedAt: user.emailVerifiedAt ?? new Date() })
+    .where(eq(users.id, userId))
+    .run();
+  db.delete(verificationCodes).where(eq(verificationCodes.id, row.id)).run();
+  await sendEmail(user.email, 'Your Closebuy password was changed', `Hi ${user.displayName ?? ''},\n\nYour password was just reset and every device was signed out. If this wasn't you, reset it again right away and contact support.`);
+  return true;
 }

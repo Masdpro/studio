@@ -24,6 +24,7 @@ export function useAuth() {
     const result = await nextAuthSignIn('credentials', { email, password, redirect: false });
     if (result?.error) {
       if (result.error.includes('EMAIL_NOT_VERIFIED')) throw new Error('EMAIL_NOT_VERIFIED');
+      if (result.error.includes('TOO_MANY_ATTEMPTS')) throw new Error('TOO_MANY_ATTEMPTS');
       throw new Error('Invalid email or password');
     }
   };

@@ -18,13 +18,14 @@ export const users = sqliteTable('users', {
   approvalStatus: text('approval_status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('approved'),
   approvalNote: text('approval_note'),
   address: text('address'), // customer's own delivery address, edited from the profile
+  sessionVersion: integer('session_version').notNull().default(0), // bumped on password change/reset to sign out every device
 });
 
 // One-time email links and phone codes. Only a hash of the secret is stored.
 export const verificationCodes = sqliteTable('verification_codes', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull(),
-  channel: text('channel', { enum: ['email', 'phone'] }).notNull(),
+  channel: text('channel', { enum: ['email', 'phone', 'password_reset'] }).notNull(),
   target: text('target').notNull(), // the email address or phone number being verified
   codeHash: text('code_hash').notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),

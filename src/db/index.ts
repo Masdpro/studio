@@ -16,6 +16,7 @@ sqlite.pragma('foreign_keys = ON');
 // Custom store links (/s/<slug>): add the column if this database predates it, and give existing vendors one.
 try { sqlite.exec('ALTER TABLE vendors ADD COLUMN slug TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE users ADD COLUMN address TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { sqlite.exec('ALTER TABLE vendor_branches ADD COLUMN account_user_id TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE vendor_branches ADD COLUMN image_url TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN branch_id TEXT'); } catch {}

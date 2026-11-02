@@ -36,6 +36,8 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const verified = searchParams.get('verified');
+  const reset = searchParams.get('reset');
+  const changed = searchParams.get('changed');
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -53,6 +55,10 @@ export function LoginForm() {
       router.push(isSafeCallback ? callbackUrl : '/');
       router.refresh();
     } catch (err) {
+      if (err instanceof Error && err.message === 'TOO_MANY_ATTEMPTS') {
+        setError('Too many wrong attempts. Please wait 15 minutes, or reset your password.');
+        return;
+      }
       if (err instanceof Error && err.message === 'EMAIL_NOT_VERIFIED') {
         setUnverifiedEmail(data.email);
         setError('Please confirm your email address before signing in.');
@@ -77,6 +83,11 @@ export function LoginForm() {
         {verified === '1' && (
           <Alert className="mb-4">
             <AlertDescription>Email confirmed. You can sign in now.</AlertDescription>
+          </Alert>
+        )}
+        {(reset === '1' || changed === '1') && (
+          <Alert className="mb-4">
+            <AlertDescription>Password updated. Sign in with your new password.</AlertDescription>
           </Alert>
         )}
         {verified === '0' && (
@@ -121,7 +132,10 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Password</FormLabel>
+                    <Link href="/auth/forgot-password" className="text-xs text-primary underline">Forgot password?</Link>
+                  </div>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -143,9 +157,11 @@ export function LoginForm() {
             Sign up
           </Link>
         </p>
-        <p className="text-xs">
-          Demo logins (password: password123): customer@closebuy.ng, vendor@closebuy.ng, agent@closebuy.ng, admin@closebuy.ng
-        </p>
+        {process.env.NODE_ENV !== 'production' && (
+          <p className="text-xs">
+            Demo logins (password: password123): customer@closebuy.ng, vendor@closebuy.ng, agent@closebuy.ng, admin@closebuy.ng
+          </p>
+        )}
       </CardFooter>
     </Card>
   );
