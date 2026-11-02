@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext';
 import { track } from '@/lib/track';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ProductOptionsPicker, hasOptions, selectionComplete, type ProductSelection } from '@/components/product/ProductOptionsPicker';
 
 interface FlashDealCardProps {
   product: Product;
@@ -18,10 +21,16 @@ interface FlashDealCardProps {
 export function FlashDealCard({ product }: FlashDealCardProps) {
   const { toast } = useToast();
   const { addItem } = useCart();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [selection, setSelection] = useState<ProductSelection>({});
 
   const handleAddToCart = () => {
+    // Colours/sizes must be chosen first.
+    if (hasOptions(product) && !selectionComplete(product, selection)) { setPickerOpen(true); return; }
     track('add_to_cart', { productId: product.id, vendorId: product.vendorId });
-    addItem(product);
+    addItem(product, 1, selection);
+    setSelection({});
+    setPickerOpen(false);
     toast({
       title: "Awoof Added!",
       description: `${product.name} at a special price added to cart.`,
@@ -58,9 +67,21 @@ export function FlashDealCard({ product }: FlashDealCardProps) {
       </div>
       <CardContent className="p-3">
         <Button onClick={handleAddToCart} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-          <ShoppingCart className="h-4 w-4 mr-2" /> Grab Deal
+          <ShoppingCart className="h-4 w-4 mr-2" /> {hasOptions(product) ? 'Choose options' : 'Grab Deal'}
         </Button>
       </CardContent>
+      <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setSelection({}); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{product.name}</DialogTitle>
+            <DialogDescription>Choose your options to grab this deal.</DialogDescription>
+          </DialogHeader>
+          <ProductOptionsPicker product={product} value={selection} onChange={setSelection} />
+          <Button onClick={handleAddToCart} disabled={!selectionComplete(product, selection)} className="w-full">
+            <ShoppingCart className="h-4 w-4 mr-2" /> Grab Deal
+          </Button>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

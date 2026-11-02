@@ -8,14 +8,16 @@ import {
   type ReactNode,
 } from 'react';
 import type { CartItem, Product } from '@/lib/types';
+import { cartLineKey } from '@/lib/cart-line';
 
 const STORAGE_KEY = 'closebuy-cart';
 
 type CartContextValue = {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (product: Product, quantity?: number, options?: { color?: string; size?: string }) => void;
+  /** `lineKey` is cartLineKey(item): the product plus its colour/size. */
+  updateQuantity: (lineKey: string, quantity: number) => void;
+  removeItem: (lineKey: string) => void;
   clear: () => void;
   subtotal: number;
   itemCount: number;
@@ -49,12 +51,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, hydrated]);
 
-  const addItem = (product: Product, quantity = 1) => {
+  const addItem = (product: Product, quantity = 1, options: { color?: string; size?: string } = {}) => {
+    const key = cartLineKey({ productId: product.id, ...options });
     setItems((prev) => {
-      const existing = prev.find((item) => item.productId === product.id);
+      const existing = prev.find((item) => cartLineKey(item) === key);
       if (existing) {
         return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          cartLineKey(item) === key ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
       return [
@@ -67,19 +70,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
           quantity,
           imageUrl: product.imageUrl,
           aiHint: product.aiHint,
+          ...(options.color ? { color: options.color } : {}),
+          ...(options.size ? { size: options.size } : {}),
         },
       ];
     });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (lineKey: string, quantity: number) => {
     setItems((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, quantity } : item)).filter((item) => item.quantity > 0)
+      prev.map((item) => (cartLineKey(item) === lineKey ? { ...item, quantity } : item)).filter((item) => item.quantity > 0)
     );
   };
 
-  const removeItem = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.productId !== productId));
+  const removeItem = (lineKey: string) => {
+    setItems((prev) => prev.filter((item) => cartLineKey(item) !== lineKey));
   };
 
   const clear = () => setItems([]);

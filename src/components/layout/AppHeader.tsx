@@ -45,7 +45,7 @@ export function AppHeader() {
         </div>
         {/* The full logo lives at the top of the sidebar on desktop; keep a compact one where the sidebar is hidden. */}
         <Link href={isAdmin ? '/admin' : '/'} className="flex items-center gap-1 md:hidden">
-          <Image src="/logo-mark.png" alt="" width={30} height={39} className="block" />
+          <Image src="/logo-mark-orange.png" alt="" width={30} height={39} className="block" />
           <span className="sr-only">Closebuy</span>
           <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
         </Link>

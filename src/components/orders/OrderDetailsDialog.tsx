@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { SafeImage } from '@/components/ui/safe-image';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Package, User, Home, Truck, DollarSign, ClipboardList, Landmark, ShoppingBag } from 'lucide-react';
@@ -65,7 +65,7 @@ export function OrderDetailsDialog({ order, isOpen, onOpenChange }: OrderDetails
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-grow pr-2">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-2">
           <div className="py-4 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -88,14 +88,31 @@ export function OrderDetailsDialog({ order, isOpen, onOpenChange }: OrderDetails
               </h4>
               <div className="space-y-3">
                 {order.items.map((item, index) => (
-                  <div key={item.productId + index} className="p-3 bg-muted/50 rounded-md text-sm">
-                    <div className="flex justify-between items-start">
-                      <p className="font-medium">{item.name} (x{item.quantity})</p>
-                      <p className="font-semibold">₦{(item.price * item.quantity).toLocaleString()}</p>
+                  <div key={item.productId + index} className="flex gap-3 p-3 bg-muted/50 rounded-md text-sm">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <SafeImage
+                        src={item.imageUrl || 'https://placehold.co/80x80.png'}
+                        alt={item.name}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        sizes="64px"
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      ₦{item.price.toLocaleString()} each
-                    </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="font-medium">{item.name} (x{item.quantity})</p>
+                        <p className="font-semibold shrink-0">₦{(item.price * item.quantity).toLocaleString()}</p>
+                      </div>
+                      {(item.color || item.size) && (
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {item.color && <Badge variant="secondary">Color: {item.color}</Badge>}
+                          {item.size && <Badge variant="secondary">Size: {item.size}</Badge>}
+                        </div>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        ₦{item.price.toLocaleString()} each
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -159,7 +176,7 @@ export function OrderDetailsDialog({ order, isOpen, onOpenChange }: OrderDetails
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="pt-4 border-t">
           <DialogClose asChild>

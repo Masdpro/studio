@@ -23,14 +23,20 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Trash2, Camera, ScanLine, XCircle, Loader2, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { identifyProductFromImage } from '@/ai/flows/identify-product-from-image';
+import { sanitizeOptions } from '@/lib/product-media';
+import { ProductMediaField } from '@/components/vendor/ProductMediaField';
 import { Separator } from '@/components/ui/separator';
 
 const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  imageUrl: z.string().url({ message: 'Please upload a file or enter a valid image URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
+  galleryImages: z.array(z.string()).optional(),
+  videoUrl: z.string().optional(),
   category: z.string().optional(),
+  colors: z.string().optional(),
+  sizes: z.string().optional(),
   aiHint: z.string().optional().refine(value => !value || value.split(' ').length <= 2, {
     message: "AI hint can have at most two words."
   }),
@@ -39,7 +45,7 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductUploadFormProps {
-  onProductAdd?: (product: ProductFormValues) => void;
+  onProductAdd?: (product: Omit<ProductFormValues, 'colors' | 'sizes'> & { colors: string[]; sizes: string[] }) => void;
 }
 
 export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
@@ -54,7 +60,11 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
       description: '',
       price: 0,
       imageUrl: '',
+      galleryImages: [],
+      videoUrl: '',
       category: '',
+      colors: '',
+      sizes: '',
       aiHint: '',
     },
   });
@@ -187,7 +197,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
   function onSubmit(data: ProductFormValues) {
     console.log('New product data:', data);
     if (onProductAdd) {
-      onProductAdd(data);
+      onProductAdd({ ...data, colors: sanitizeOptions(data.colors), sizes: sanitizeOptions(data.sizes) });
     }
     toast({
       title: 'Product Added!',
@@ -348,53 +358,53 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             name="imageUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Product Image</FormLabel>
+                <FormLabel>Product Photos &amp; Video</FormLabel>
                 <FormControl>
-                  <div className="space-y-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={(e) => handleFileChange(e, field.onChange)}
-                    />
-                    {selectedFileName && (
-                      <p className="text-sm text-muted-foreground">
-                        Selected file: {selectedFileName}
-                      </p>
-                    )}
-                  </div>
+                  <ProductMediaField
+                    images={[field.value, ...(form.watch('galleryImages') ?? [])].filter((u): u is string => !!u)}
+                    video={form.watch('videoUrl') ?? ''}
+                    onChange={(imgs, vid) => {
+                      field.onChange(imgs[0] ?? '');
+                      form.setValue('galleryImages', imgs.slice(1), { shouldDirty: true });
+                      form.setValue('videoUrl', vid, { shouldDirty: true });
+                    }}
+                  />
                 </FormControl>
-                {field.value && (
-                  <div className="mt-4 relative w-32 h-32 border rounded-md overflow-hidden">
-                    <SafeImage
-                      src={field.value}
-                      alt="Product Preview"
-                      fill={true}
-                      style={{ objectFit: 'cover' }}
-                      data-ai-hint={field.value.startsWith('data:') ? "product preview" : (form.getValues('aiHint') || "product item")}
-                      sizes="128px"
-                    />
-                  </div>
-                )}
-                {field.value && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleClearImage(field.onChange)}
-                      className="text-destructive hover:bg-destructive/10 mt-1"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Clear Image
-                    </Button>
-                )}
-                <FormDescription>
-                  Upload a photo from your device.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="colors"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Colors (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Red, Blue, Black" {...field} />
+                  </FormControl>
+                  <FormDescription>Separate with commas. Customers must pick one.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="sizes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sizes (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="S, M, L, XL" {...field} />
+                  </FormControl>
+                  <FormDescription>Separate with commas. Customers must pick one.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="category"

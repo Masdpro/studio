@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { track, getSessionId } from '@/lib/track';
 import { useRouter } from 'next/navigation';
+import { cartLineKey } from '@/lib/cart-line';
 import { CartItem } from './CartItem';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -188,7 +189,7 @@ export function ShoppingCartView() {
           <div className="space-y-4">
             {cartItems.map((item) => (
               <CartItem
-                key={item.productId}
+                key={cartLineKey(item)}
                 item={item}
                 onQuantityChange={updateQuantity}
                 onRemove={handleRemoveItem}

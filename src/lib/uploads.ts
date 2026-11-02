@@ -36,3 +36,15 @@ export function detectDocumentExtension(buf: Buffer): keyof typeof DOCUMENT_CONT
   if (buf.length >= 5 && buf.subarray(0, 5).toString('ascii') === '%PDF-') return 'pdf';
   return detectImageExtension(buf);
 }
+
+/** Product videos: one short clip per product (MP4 or WebM). */
+export const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+export const VIDEO_CONTENT_TYPES: Record<string, string> = { mp4: 'video/mp4', webm: 'video/webm' };
+
+/** Identifies MP4 / WebM from the file's own bytes. QuickTime (.mov) is rejected: it doesn't play in most browsers. */
+export function detectVideoExtension(buf: Buffer): keyof typeof VIDEO_CONTENT_TYPES | null {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return 'webm';
+  if (buf.subarray(4, 8).toString('ascii') === 'ftyp' && buf.subarray(8, 12).toString('ascii') !== 'qt  ') return 'mp4';
+  return null;
+}

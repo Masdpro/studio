@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { track } from '@/lib/track';
 import { ProductCard } from '@/components/product/ProductCard';
 import { FlashDealCard } from '@/components/product/FlashDealCard';
+import { cn } from '@/lib/utils';
+import { DealsScroller } from '@/components/home/DealsScroller';
 import type { Product, Vendor, Market, VendorBranch } from '@/lib/types';
 import { vendorInLocation, vendorMatchesQuery } from '@/lib/vendor-search';
 import { getSavedAddress, saveAddress, getAddressHistory, rememberAddress, forgetAddress, type SavedAddress } from '@/lib/delivery-address';
@@ -14,7 +16,7 @@ import { VendorResultCard } from '@/components/vendor/VendorResultCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
+import { ChevronDown, Search, Store, MapPin, LocateFixed, AlertCircle, ExternalLink, ShoppingBag, Zap, Flame, Smartphone, Apple } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -441,6 +443,16 @@ export default function HomePageClient({
     });
   }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating, initialBranches]);
 
+  // The Awoof row can be folded away; the choice is remembered in this browser.
+  const [dealsOpen, setDealsOpen] = useState(true);
+  useEffect(() => {
+    try { if (localStorage.getItem('closebuy-deals-open') === '0') setDealsOpen(false); } catch { /* storage unavailable */ }
+  }, []);
+  const toggleDeals = () => setDealsOpen((o) => {
+    const next = !o;
+    try { localStorage.setItem('closebuy-deals-open', next ? '1' : '0'); } catch { /* ignore */ }
+    return next;
+  });
   const flashDeals = useMemo(() => {
     return sampleProducts.filter(p => p.isAwoof);
   }, []);
@@ -622,21 +634,28 @@ export default function HomePageClient({
             {/* Awoof Deals Horizontal Scroll */}
             {flashDeals.length > 0 && searchTerm === '' && (
               <section className="relative">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Zap className="h-6 w-6 text-red-600 fill-current" />
-                    Awoof Deals of the Day
+                <div className={cn('flex items-center justify-between', dealsOpen && 'mb-4')}>
+                  <h2 className="text-2xl font-bold">
+                    <button type="button" onClick={toggleDeals} aria-expanded={dealsOpen} aria-controls="awoof-deals" className="flex items-center gap-2 text-left">
+                      <Zap className="h-6 w-6 text-red-600 fill-current" />
+                      Awoof Deals of the Day
+                      <ChevronDown className={cn('h-5 w-5 text-muted-foreground transition-transform', !dealsOpen && '-rotate-90')} aria-hidden />
+                    </button>
                   </h2>
-                  <Badge variant="outline" className="border-red-600 text-red-600">Limited Time</Badge>
-                </div>
-                <ScrollArea className="w-full whitespace-nowrap rounded-md">
-                  <div className="flex w-max space-x-6 p-1">
-                    {flashDeals.map((product) => (
-                      <FlashDealCard key={product.id} product={product} />
-                    ))}
+                  <div className="flex items-center gap-2">
+                    {!dealsOpen && <span className="text-xs text-muted-foreground">{flashDeals.length} deals</span>}
+                    <Badge variant="outline" className="border-red-600 text-red-600">Limited Time</Badge>
                   </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                </div>
+                {dealsOpen && (
+                  <div id="awoof-deals">
+                    <DealsScroller>
+                      {flashDeals.map((product) => (
+                        <FlashDealCard key={product.id} product={product} />
+                      ))}
+                    </DealsScroller>
+                  </div>
+                )}
               </section>
             )}
 
@@ -666,6 +685,7 @@ export default function HomePageClient({
                         vendorStreetAddress={vendorStreetAddress}
                         vendorCity={vendorCity}
                         vendorCountry={vendorCountry}
+                        vendorMarketId={vendor?.marketId}
                         onViewVendorProfile={handleViewVendorProfile}
                       />
                     );

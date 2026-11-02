@@ -8,7 +8,7 @@ import type { Product } from '@/lib/types';
 // Fields a vendor may edit on their own product. Deliberately excludes id and
 // vendorId — a vendor must never be able to reassign a product to a
 // different account via this endpoint.
-const EDITABLE_FIELDS = ['name', 'description', 'price', 'discountPrice', 'imageUrl', 'category', 'aiHint', 'isAwoof'] as const;
+const EDITABLE_FIELDS = ['name', 'description', 'price', 'discountPrice', 'imageUrl', 'category', 'aiHint', 'isAwoof', 'galleryImages', 'videoUrl', 'colors', 'sizes'] as const;
 
 function pickEditableFields(body: Record<string, unknown>): Partial<Product> {
   const result: Partial<Product> = {};
@@ -37,7 +37,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
   if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
   const body = await request.json();
-  await updateProduct(productId, pickEditableFields(body));
+  const fields = pickEditableFields(body);
+  if (fields.imageUrl === '') fields.imageUrl = 'https://placehold.co/600x400.png'; // imageUrl is always rendered
+  await updateProduct(productId, fields);
   return NextResponse.json({ ok: true });
 }
 

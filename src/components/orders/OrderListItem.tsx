@@ -103,7 +103,7 @@ export function OrderListItem({
   onMarkAsReadyForPickup,
   onScanForCustomerPickup,
 }: OrderListItemProps) {
-  const itemSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
+  const itemSummary = order.items.map(item => `${item.name} (x${item.quantity}${item.color ? `, ${item.color}` : ''}${item.size ? `, ${item.size}` : ''})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
 
   const [reviewSubmitted, setReviewSubmitted] = useState(false);

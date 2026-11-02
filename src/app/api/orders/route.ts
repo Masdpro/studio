@@ -69,7 +69,9 @@ export async function POST(request: Request) {
   for (const item of items) {
     const vendorId = item.vendorId ?? 'unknown-vendor';
     if (!itemsByVendor.has(vendorId)) itemsByVendor.set(vendorId, []);
-    itemsByVendor.get(vendorId)!.push(item);
+    const clean = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : undefined);
+    const { color, size, ...rest } = item;
+    itemsByVendor.get(vendorId)!.push({ ...rest, ...(clean(color) ? { color: clean(color) } : {}), ...(clean(size) ? { size: clean(size) } : {}) });
   }
 
   // Resolve each vendor sub-order's total up front so we know the grand total

@@ -98,6 +98,10 @@ export const products = sqliteTable('products', {
   aiHint: text('ai_hint'),
   isAwoof: integer('is_awoof', { mode: 'boolean' }).default(false),
   branchId: text('branch_id'), // set when the product belongs to one branch only
+  galleryJson: text('gallery_json'), // JSON array of extra photo URLs (the main one is imageUrl)
+  videoUrl: text('video_url'),
+  colorsJson: text('colors_json'), // JSON array of colour choices
+  sizesJson: text('sizes_json'), // JSON array of size choices
 });
 
 export const orders = sqliteTable('orders', {

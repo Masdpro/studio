@@ -61,6 +61,10 @@ export type Product = {
   aiHint?: string; // For more specific image hints
   isAwoof?: boolean; // Marking it as a flash deal
   branchId?: string; // set when the product belongs to one branch only
+  galleryImages?: string[]; // extra photos shown on the product details (imageUrl is the main one)
+  videoUrl?: string; // optional product video
+  colors?: string[]; // colours the vendor offers (customer must pick one)
+  sizes?: string[]; // sizes the vendor offers (customer must pick one)
 };
 
 export type CartItem = {
@@ -71,6 +75,8 @@ export type CartItem = {
   quantity: number;
   imageUrl?: string;
   aiHint?: string;
+  color?: string; // chosen colour, when the product offers colours
+  size?: string; // chosen size, when the product offers sizes
 };
 
 export type Order = {

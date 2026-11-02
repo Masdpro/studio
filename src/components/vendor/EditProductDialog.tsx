@@ -28,15 +28,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2 } from 'lucide-react';
 import type { Product } from '@/lib/types';
-import { SafeImage } from '@/components/ui/safe-image';
+import { ProductMediaField } from '@/components/vendor/ProductMediaField';
 
 const editProductSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
   discountPrice: z.coerce.number().positive().optional().or(z.literal(NaN)),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
+  galleryImages: z.array(z.string()).optional(),
+  videoUrl: z.string().optional(),
   category: z.string().optional(),
+  colors: z.string().optional(),
+  sizes: z.string().optional(),
 });
 
 type EditProductFormValues = z.infer<typeof editProductSchema>;
@@ -55,7 +59,11 @@ function productToFormValues(product: Product | null): EditProductFormValues {
     price: product?.price ?? 0,
     discountPrice: product?.discountPrice ?? undefined,
     imageUrl: product?.imageUrl ?? '',
+    galleryImages: product?.galleryImages ?? [],
+    videoUrl: product?.videoUrl ?? '',
     category: product?.category ?? '',
+    colors: (product?.colors ?? []).join(', '),
+    sizes: (product?.sizes ?? []).join(', '),
   };
 }
 
@@ -190,31 +198,52 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Image</FormLabel>
+                  <FormLabel>Product Photos &amp; Video</FormLabel>
                   <FormControl>
-                    <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, field.onChange)} />
+                    <ProductMediaField
+                      images={[field.value, ...(form.watch('galleryImages') ?? [])].filter((u): u is string => !!u)}
+                      video={form.watch('videoUrl') ?? ''}
+                      onChange={(imgs, vid) => {
+                        field.onChange(imgs[0] ?? '');
+                        form.setValue('galleryImages', imgs.slice(1), { shouldDirty: true });
+                        form.setValue('videoUrl', vid, { shouldDirty: true });
+                      }}
+                    />
                   </FormControl>
-                  {field.value && (
-                    <div className="mt-2 flex items-center gap-3">
-                      <div className="relative w-20 h-20 border rounded-md overflow-hidden shrink-0">
-                        <SafeImage src={field.value} alt="Product preview" fill style={{ objectFit: 'cover' }} sizes="80px" />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => field.onChange('')}
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Remove Image
-                      </Button>
-                    </div>
-                  )}
-                  <FormDescription>Upload a photo from your device.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="colors"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Colors (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Red, Blue, Black" {...field} />
+                    </FormControl>
+                    <FormDescription>Separate with commas. Customers must pick one.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sizes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sizes (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="S, M, L, XL" {...field} />
+                    </FormControl>
+                    <FormDescription>Separate with commas. Customers must pick one.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="category"

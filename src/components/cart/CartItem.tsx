@@ -5,6 +5,7 @@ import { SafeImage } from '@/components/ui/safe-image';
 import type { CartItem as CartItemType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cartLineKey } from '@/lib/cart-line';
 import { MinusCircle, PlusCircle, Trash2 } from 'lucide-react';
 
 interface CartItemProps {
@@ -14,20 +15,21 @@ interface CartItemProps {
 }
 
 export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
+  const lineKey = cartLineKey(item);
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuantity = parseInt(e.target.value, 10);
     if (!isNaN(newQuantity) && newQuantity >= 0) {
-      onQuantityChange(item.productId, newQuantity);
+      onQuantityChange(lineKey, newQuantity);
     }
   };
 
   const incrementQuantity = () => {
-    onQuantityChange(item.productId, item.quantity + 1);
+    onQuantityChange(lineKey, item.quantity + 1);
   };
 
   const decrementQuantity = () => {
     if (item.quantity > 0) {
-      onQuantityChange(item.productId, item.quantity - 1);
+      onQuantityChange(lineKey, item.quantity - 1);
     }
   };
 
@@ -46,6 +48,9 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
 
       <div className="flex-grow flex flex-col gap-1 sm:gap-2">
         <h3 className="font-semibold text-base break-words">{item.name}</h3>
+        {(item.color || item.size) && (
+          <p className="text-xs text-muted-foreground">{[item.color && `Color: ${item.color}`, item.size && `Size: ${item.size}`].filter(Boolean).join(' · ')}</p>
+        )}
 
         <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto_auto] sm:items-center sm:gap-x-4 gap-y-2">
           <div className="sm:col-start-1 text-left">
@@ -73,7 +78,7 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
           </div>
           
           <div className="sm:col-start-4 sm:justify-self-end flex justify-end sm:justify-self-end w-full sm:w-auto">
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-8 w-8" onClick={() => onRemove(item.productId)}>
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-8 w-8" onClick={() => onRemove(lineKey)}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>

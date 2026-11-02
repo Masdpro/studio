@@ -112,7 +112,7 @@ export function AppSidebar() {
       {/* Logo pinned to the top: only the menu below scrolls. */}
       <SidebarHeader className="h-16 shrink-0 justify-center border-b px-4">
         <Link href={role === 'admin' ? '/admin' : '/'} className="flex items-center gap-2">
-          <Image src="/logo-mark.png" alt="" width={30} height={39} className="block shrink-0" />
+          <Image src="/logo-mark-orange.png" alt="" width={30} height={39} className="block shrink-0" />
           <span className="text-xl font-bold text-primary group-data-[collapsible=icon]:hidden">Closebuy</span>
           <span className="sr-only">Closebuy home</span>
         </Link>

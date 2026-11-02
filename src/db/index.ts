@@ -19,6 +19,10 @@ try { sqlite.exec('ALTER TABLE users ADD COLUMN address TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE vendor_branches ADD COLUMN account_user_id TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE vendor_branches ADD COLUMN image_url TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN branch_id TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE products ADD COLUMN gallery_json TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE products ADD COLUMN video_url TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE products ADD COLUMN colors_json TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE products ADD COLUMN sizes_json TEXT'); } catch {}
 try {
   sqlite.exec('CREATE UNIQUE INDEX IF NOT EXISTS vendors_slug_unique ON vendors(slug)');
   const missing = sqlite.prepare('SELECT id, business_name AS name FROM vendors WHERE slug IS NULL').all() as { id: string; name: string }[];
