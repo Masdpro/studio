@@ -12,8 +12,8 @@ export async function POST(request: Request) {
   }
 
   const { amount } = (await request.json()) as { amount: number };
-  if (typeof amount !== 'number' || !(amount > 0)) {
-    return NextResponse.json({ error: 'A positive amount is required.' }, { status: 400 });
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 100 || amount > 1_000_000) {
+    return NextResponse.json({ error: 'Top up between ₦100 and ₦1,000,000.' }, { status: 400 });
   }
 
   const reference = await createPendingWalletFunding(session.user.id, amount);

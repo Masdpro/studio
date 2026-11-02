@@ -67,6 +67,20 @@ export async function createOrder(data: Omit<Order, 'id' | 'createdAt'>): Promis
   return id;
 }
 
+/**
+ * Moves an order from one status to another only if it is still in the
+ * expected status. Returns false when someone else changed it first, so a
+ * double click or two people acting at once can't, say, refund twice.
+ */
+export function transitionOrderStatus(orderId: string, from: Order['status'], to: Order['status'], extra: Partial<Order> = {}): boolean {
+  const { items, ...rest } = extra;
+  const res = db.update(ordersTable)
+    .set({ status: to, ...(items ? { itemsJson: JSON.stringify(items) } : {}), ...(rest as any) })
+    .where(and(eq(ordersTable.id, orderId), eq(ordersTable.status, from)))
+    .run();
+  return res.changes === 1;
+}
+
 export async function updateOrderStatus(orderId: string, status: Order['status'], extra: Partial<Order> = {}): Promise<void> {
   const { items, ...rest } = extra;
   db.update(ordersTable)

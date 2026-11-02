@@ -56,7 +56,7 @@ export default function BranchOrdersPage() {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, actingAs: 'vendor' }),
       });
       return res.ok;
     },
@@ -69,6 +69,19 @@ export default function BranchOrdersPage() {
       if (ok) {
         setDisplayedVendorOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'Processing' } : o)));
         toast({ title: 'Order Status Updated', description: `Order ${orderId} is now being processed.` });
+      }
+    },
+    [toast, updateOrder]
+  );
+
+  const handleDeclineOrder = useCallback(
+    async (orderId: string) => {
+      const ok = await updateOrder(orderId, 'Cancelled');
+      if (ok) {
+        setDisplayedVendorOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'Cancelled' } : o)));
+        toast({ title: 'Order declined', description: 'The customer has been refunded and notified.' });
+      } else {
+        toast({ title: 'Could not decline order', description: 'It may have moved on already. Please refresh.', variant: 'destructive' });
       }
     },
     [toast, updateOrder]
@@ -118,6 +131,7 @@ export default function BranchOrdersPage() {
             userRole="vendor"
             onAttendToOrder={handleAttendToOrder}
             onMarkAsReadyForPickup={handleMarkAsReadyForPickup}
+            onDeclineOrder={handleDeclineOrder}
           />
     </div>
   );

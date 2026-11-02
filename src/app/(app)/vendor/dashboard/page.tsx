@@ -62,7 +62,7 @@ export default function VendorDashboardPage() {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, actingAs: 'vendor' }),
       });
       return res.ok;
     },

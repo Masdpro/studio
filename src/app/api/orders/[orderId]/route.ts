@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { tradingBlockReason } from '@/lib/verification';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getOrderById, updateOrderStatus } from '@/lib/services/orders';
+import { getOrderById, transitionOrderStatus } from '@/lib/services/orders';
+import { creditWallet } from '@/lib/services/wallets';
+import { releaseStock } from '@/lib/services/products';
 import { createNotification } from '@/lib/services/notifications';
 import type { Order } from '@/lib/types';
 
@@ -51,7 +53,32 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
   return NextResponse.json({ order });
 }
 
-/** Updates an order's status. Only the customer, vendor, or assigned delivery agent may do so. */
+type Actor = 'customer' | 'vendor' | 'agent';
+
+/**
+ * Who may move an order from which status to which. Anything not listed is
+ * refused, so nobody can skip steps (e.g. a customer marking their own order
+ * "Delivered") or reopen a finished order.
+ */
+const ALLOWED: Record<Actor, Partial<Record<Order['status'], Order['status'][]>>> = {
+  customer: {
+    Pending: ['Cancelled'],
+    Processing: ['Cancelled'],
+    ReadyForCustomerPickup: ['PickedUpByCustomer'],
+  },
+  vendor: {
+    Pending: ['Processing', 'Cancelled'],
+    Processing: ['ReadyForPickup', 'ReadyForCustomerPickup', 'Cancelled'],
+  },
+  agent: {
+    ReadyForPickup: ['AcceptedByAgent'],
+    AcceptedByAgent: ['PickedUpByAgent'],
+    PickedUpByAgent: ['Delivered'],
+    'Out for Delivery': ['Delivered'],
+  },
+};
+
+/** Updates an order's status, following the rules above. Cancelling refunds the customer and restocks the items. */
 export async function PATCH(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
 
@@ -65,37 +92,80 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
     return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
   }
 
-  const { id: userId, role } = session.user;
-  const isParticipant = order.customerId === userId || order.vendorId === userId || order.deliveryAgentId === userId;
-  // An unassigned delivery is claimable by any delivery agent, not just an existing participant.
+  const body = await request.json().catch(() => ({}));
+  const { status, actingAs } = body as { status?: Order['status']; actingAs?: Actor };
+  if (!status) {
+    return NextResponse.json({ error: 'A new status is required.' }, { status: 400 });
+  }
+
+  const userId = session.user.id;
+  const branch = getBranchForUser(userId);
+  const isVendorSide = order.vendorId === userId || (!!branch && branch.vendorId === order.vendorId && order.branchId === branch.id);
+  const isAssignedAgent = !!order.deliveryAgentId && order.deliveryAgentId === userId;
+  // An unassigned delivery is claimable by any delivery agent.
   const isClaimingUnassignedDelivery =
-    userHasRole(userId, 'delivery_agent') && !order.deliveryAgentId && order.status === 'ReadyForPickup';
-  if (!isParticipant && !isClaimingUnassignedDelivery) {
+    status === 'AcceptedByAgent' && userHasRole(userId, 'delivery_agent') && !order.deliveryAgentId && order.status === 'ReadyForPickup';
+
+  const actors: Actor[] = [];
+  if (order.customerId === userId) actors.push('customer');
+  if (isVendorSide) actors.push('vendor');
+  if (isAssignedAgent || isClaimingUnassignedDelivery) actors.push('agent');
+  if (actors.length === 0) {
     return NextResponse.json({ error: 'You do not have access to this order.' }, { status: 403 });
+  }
+
+  // Someone can be both buyer and seller of an order (e.g. testing their own shop): the screen says which role it's acting in.
+  const preferred = actingAs && actors.includes(actingAs) ? [actingAs, ...actors.filter((a) => a !== actingAs)] : actors;
+  const actor = preferred.find((a) => ALLOWED[a][order.status]?.includes(status));
+  if (!actor) {
+    return NextResponse.json({ error: `This order can't be moved from "${order.status}" to "${status}".` }, { status: 409 });
+  }
+  // The "ready" step must match how the customer chose to receive the order.
+  if (status === 'ReadyForPickup' && order.deliveryPreference !== 'delivery') {
+    return NextResponse.json({ error: 'This order is for customer pickup, not delivery.' }, { status: 409 });
+  }
+  if (status === 'ReadyForCustomerPickup' && order.deliveryPreference !== 'pickup') {
+    return NextResponse.json({ error: 'This order is for delivery, not customer pickup.' }, { status: 409 });
   }
   if (isClaimingUnassignedDelivery) {
     const blocked = tradingBlockReason(userId);
     if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { status } = body as { status: Order['status'] };
-  if (!status) {
-    return NextResponse.json({ error: 'A new status is required.' }, { status: 400 });
+  // Only the agent id of the caller themselves is ever written besides status.
+  const extra = isClaimingUnassignedDelivery ? { deliveryAgentId: userId } : {};
+  if (!transitionOrderStatus(orderId, order.status, status, extra)) {
+    return NextResponse.json({ error: 'This order was just updated by someone else. Please refresh.' }, { status: 409 });
   }
 
-  // The only field besides status any transition ever needs to set is which
-  // agent is claiming an unassigned delivery — and that must always be the
-  // caller themselves, never a client-supplied id. Every other field on the
-  // order (totalAmount, vendorId, customerId, ...) is server-computed and
-  // must never be settable from this endpoint.
-  const extra = isClaimingUnassignedDelivery ? { deliveryAgentId: userId } : {};
+  let refunded = 0;
+  if (status === 'Cancelled') {
+    // Give the money back and put the items back in stock.
+    refunded = order.totalAmount;
+    await creditWallet(order.customerId, refunded);
+    const qty = new Map<string, number>();
+    for (const i of order.items) qty.set(i.productId, (qty.get(i.productId) ?? 0) + i.quantity);
+    releaseStock(Array.from(qty.entries()).map(([productId, quantity]) => ({ productId, quantity })));
 
-  await updateOrderStatus(orderId, status, extra);
-
-  // Notify the customer when someone else (vendor/agent) moves their order
-  // along — not when they triggered the change themselves (e.g. cancelling).
-  if (order.customerId !== userId) {
+    const by = actor === 'customer' ? 'You cancelled' : 'The vendor cancelled';
+    await createNotification({
+      userId: order.customerId,
+      message: `${by} your order. ₦${refunded.toLocaleString()} has been refunded to your wallet.`,
+      category: 'Transaction',
+      link: '/orders',
+      iconName: 'XCircle',
+    });
+    if (actor === 'customer') {
+      await createNotification({
+        userId: order.vendorId,
+        message: `A customer cancelled their ₦${order.totalAmount.toLocaleString()} order.`,
+        category: 'Activity',
+        link: '/vendor/orders',
+        iconName: 'XCircle',
+      });
+    }
+  } else if (actor !== 'customer') {
+    // Tell the customer when the vendor or agent moves their order along.
     const message = STATUS_MESSAGES[status];
     if (message) {
       await createNotification({
@@ -107,6 +177,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
       });
     }
   }
+  if (actor === 'customer' && status === 'PickedUpByCustomer') {
+    await createNotification({
+      userId: order.vendorId,
+      message: 'A customer confirmed they collected their order.',
+      category: 'Activity',
+      link: '/vendor/orders',
+      iconName: 'CheckCircle',
+    });
+  }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, refunded });
 }

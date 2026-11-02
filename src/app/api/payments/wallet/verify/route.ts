@@ -38,6 +38,11 @@ export async function GET(request: Request) {
       await markWalletFundingFailed(reference);
       return NextResponse.json({ success: false, error: 'Payment was not successful.' });
     }
+    // Only credit what was actually paid for: the charged amount must match the top-up we started.
+    if (Math.round(result.amountNaira * 100) < Math.round(transaction.amount * 100)) {
+      await markWalletFundingFailed(reference);
+      return NextResponse.json({ success: false, error: 'The amount paid does not match this top-up.' });
+    }
     const { newBalance } = await completeWalletFunding(reference);
     return NextResponse.json({ success: true, newBalance, amount: transaction.amount });
   } catch (err) {

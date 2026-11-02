@@ -12,6 +12,7 @@ import { ReviewDialog } from '@/components/reviews/ReviewDialog';
 import React, { useState, useMemo } from 'react';
 import { OrderDetailsDialog } from './OrderDetailsDialog';
 import { sampleReviews } from '@/lib/mockData';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface OrderListItemProps {
   order: Order;
@@ -22,6 +23,7 @@ interface OrderListItemProps {
   onCancelOrder?: (orderId: string) => void;
   onAttendToOrder?: (orderId: string) => void;
   onMarkAsReadyForPickup?: (orderId: string) => void;
+  onDeclineOrder?: (orderId: string) => void;
   onScanForCustomerPickup?: (orderId: string) => void;
 }
 
@@ -101,8 +103,11 @@ export function OrderListItem({
   onCancelOrder,
   onAttendToOrder,
   onMarkAsReadyForPickup,
+  onDeclineOrder,
   onScanForCustomerPickup,
 }: OrderListItemProps) {
+  // Cancelling / declining refunds the customer and can't be undone, so ask first.
+  const [confirming, setConfirming] = useState<null | 'cancel' | 'decline'>(null);
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity}${item.color ? `, ${item.color}` : ''}${item.size ? `, ${item.size}` : ''})`).join(', ');
   const displayDate = format(new Date(order.createdAt), 'PPpp');
 
@@ -160,6 +165,7 @@ export function OrderListItem({
   const canLeaveReview = userRole === 'customer' && (order.status === 'Delivered' || order.status === 'PickedUpByCustomer');
   const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   const canCustomerCancel = userRole === 'customer' && (order.status === 'Pending' || order.status === 'Processing') && onCancelOrder;
+  const canVendorDecline = userRole === 'vendor' && (order.status === 'Pending' || order.status === 'Processing') && onDeclineOrder;
 
   const handleViewDetailsClick = () => {
     setIsDetailsDialogOpen(true);
@@ -340,11 +346,18 @@ export function OrderListItem({
               </Button>
             )}
 
+            {canVendorDecline && (
+              <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" onClick={() => setConfirming('decline')}>
+                <Ban className="h-4 w-4 mr-1 sm:mr-2" />
+                Decline
+              </Button>
+            )}
+
             {canCustomerCancel && (
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => onCancelOrder && onCancelOrder(order.id)}
+                onClick={() => setConfirming('cancel')}
               >
                 <Ban className="h-4 w-4 mr-1 sm:mr-2" />
                 Cancel Order
@@ -386,6 +399,31 @@ export function OrderListItem({
           </div>
         </CardFooter>
       </Card>
+      <AlertDialog open={confirming !== null} onOpenChange={(o) => { if (!o) setConfirming(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirming === 'decline' ? 'Decline this order?' : 'Cancel this order?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirming === 'decline'
+                ? `The customer will be refunded ₦${order.totalAmount.toLocaleString()} to their wallet and told you couldn't fulfil it. This can't be undone.`
+                : `₦${order.totalAmount.toLocaleString()} will be refunded to your wallet. This can't be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep order</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirming === 'decline') onDeclineOrder?.(order.id);
+                else onCancelOrder?.(order.id);
+                setConfirming(null);
+              }}
+            >
+              {confirming === 'decline' ? 'Decline order' : 'Cancel order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {isDetailsDialogOpen && (
         <OrderDetailsDialog
           order={order}

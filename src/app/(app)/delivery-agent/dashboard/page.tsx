@@ -64,7 +64,7 @@ export default function DeliveryAgentDashboardPage() {
     const res = await fetch(`/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, ...extra }),
+      body: JSON.stringify({ status, ...extra, actingAs: 'agent' }),
     });
     return res.ok;
   }, []);

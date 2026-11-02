@@ -51,16 +51,20 @@ export default function CustomerOrdersPage() {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Cancelled' }),
+        body: JSON.stringify({ status: 'Cancelled', actingAs: 'customer' }),
       });
       if (res.ok) {
+        const { refunded } = (await res.json().catch(() => ({}))) as { refunded?: number };
         setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'Cancelled' } : o)));
+        window.dispatchEvent(new Event('wallet:updated'));
+        window.dispatchEvent(new Event('notifications:updated'));
         toast({
           title: 'Order Cancelled',
-          description: `Order ${orderId} has been cancelled.`,
+          description: refunded ? `₦${refunded.toLocaleString()} has been refunded to your wallet.` : 'Your order has been cancelled.',
         });
       } else {
-        toast({ title: 'Could not cancel order', variant: 'destructive' });
+        const { error } = (await res.json().catch(() => ({}))) as { error?: string };
+        toast({ title: 'Could not cancel order', description: error, variant: 'destructive' });
       }
     },
     [toast]
@@ -77,7 +81,7 @@ export default function CustomerOrdersPage() {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'PickedUpByCustomer' }),
+        body: JSON.stringify({ status: 'PickedUpByCustomer', actingAs: 'customer' }),
       });
       if (res.ok) {
         setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'PickedUpByCustomer' } : o)));
