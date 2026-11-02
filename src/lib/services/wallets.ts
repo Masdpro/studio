@@ -21,11 +21,19 @@ export async function creditWallet(userId: string, amount: number): Promise<numb
   return newBalance;
 }
 
-/** Throws if the wallet doesn't have enough balance. */
+/** Thrown by debitWallet so callers can tell "not enough money" apart from other failures. */
+export class InsufficientFundsError extends Error {
+  constructor(public balance: number, public needed: number) {
+    super(`Insufficient wallet balance: have ₦${balance.toLocaleString()}, need ₦${needed.toLocaleString()}.`);
+    this.name = 'InsufficientFundsError';
+  }
+}
+
+/** Throws InsufficientFundsError if the wallet doesn't have enough balance. */
 export async function debitWallet(userId: string, amount: number): Promise<number> {
   const wallet = await getOrCreateWallet(userId);
   if (wallet.balance < amount) {
-    throw new Error(`Insufficient wallet balance: have ₦${wallet.balance.toLocaleString()}, need ₦${amount.toLocaleString()}.`);
+    throw new InsufficientFundsError(wallet.balance, amount);
   }
   const newBalance = wallet.balance - amount;
   db.update(walletsTable).set({ balance: newBalance }).where(eq(walletsTable.userId, userId)).run();

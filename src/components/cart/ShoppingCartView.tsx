@@ -8,7 +8,7 @@ import { CartItem } from './CartItem';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Loader2, MapPin } from 'lucide-react';
+import { ShoppingBag, Loader2, MapPin, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,6 +28,8 @@ export function ShoppingCartView() {
   const [isDeliverySelected, setIsDeliverySelected] = useState(true);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  // Set when checkout fails for lack of funds; shown inline (the cart sheet is modal, so a toast button can't be clicked).
+  const [fundsShort, setFundsShort] = useState<{ balance: number; needed: number; shortfall: number } | null>(null);
   const { toast } = useToast();
 
   // Vendors in the cart that have several branches: let the customer choose where to collect from.
@@ -101,6 +103,8 @@ export function ShoppingCartView() {
 
   const deliveryFee = isDeliverySelected ? 1500 : 0;
   const total = subtotal + deliveryFee;
+  // A changed cart or delivery choice means a different total — drop the stale warning.
+  useEffect(() => { setFundsShort(null); }, [total]);
 
   const handleProceedToCheckout = async () => {
     if (cartItems.length === 0) {
@@ -135,6 +139,7 @@ export function ShoppingCartView() {
 
     track('checkout_start');
     setIsPlacingOrder(true);
+    setFundsShort(null);
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -148,8 +153,16 @@ export function ShoppingCartView() {
         }),
       });
       if (!res.ok) {
-        const { error } = await res.json().catch(() => ({ error: 'Failed to place order.' }));
-        throw new Error(error ?? 'Failed to place order.');
+        const data = await res.json().catch(() => ({ error: 'Failed to place order.' }));
+        if (data?.code === 'INSUFFICIENT_FUNDS') {
+          setFundsShort({
+            balance: Number(data.balance) || 0,
+            needed: Number(data.needed) || 0,
+            shortfall: Math.ceil(Number(data.shortfall) || 0),
+          });
+          return;
+        }
+        throw new Error(data?.error ?? 'Failed to place order.');
       }
 
       if (isDeliverySelected) rememberAddress({ address: deliveryAddress.trim() });
@@ -269,6 +282,24 @@ export function ShoppingCartView() {
             <span>Total</span>
             <span>₦{total.toLocaleString()}</span>
           </div>
+          {fundsShort && (
+            <div role="alert" className="mt-1.5 rounded-md border border-destructive/40 bg-destructive/10 p-2.5 text-xs">
+              <p className="font-semibold text-destructive">Not enough in your wallet</p>
+              <p className="mt-0.5 text-muted-foreground">
+                Your wallet has ₦{fundsShort.balance.toLocaleString()} but this order costs ₦{fundsShort.needed.toLocaleString()}.
+                Top up at least ₦{fundsShort.shortfall.toLocaleString()} to place it.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2 w-full"
+                onClick={() => window.dispatchEvent(new CustomEvent('wallet:open', { detail: { amount: fundsShort.shortfall } }))}
+              >
+                <Wallet className="mr-2 h-4 w-4" />Top up ₦{fundsShort.shortfall.toLocaleString()}
+              </Button>
+            </div>
+          )}
           <Button
             size="lg"
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-1.5"

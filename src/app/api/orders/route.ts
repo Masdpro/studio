@@ -11,7 +11,7 @@ import {
   getUnassignedReadyForPickupOrders,
 } from '@/lib/services/orders';
 import { getVendorById } from '@/lib/services/vendors';
-import { debitWallet } from '@/lib/services/wallets';
+import { debitWallet, InsufficientFundsError } from '@/lib/services/wallets';
 import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
 import { recordEvent } from '@/lib/services/events';
@@ -117,6 +117,12 @@ export async function POST(request: Request) {
   try {
     await debitWallet(session.user.id, grandTotal);
   } catch (err) {
+    if (err instanceof InsufficientFundsError) {
+      return NextResponse.json(
+        { error: err.message, code: 'INSUFFICIENT_FUNDS', balance: err.balance, needed: err.needed, shortfall: err.needed - err.balance },
+        { status: 402 }
+      );
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Payment failed.' },
       { status: 402 }

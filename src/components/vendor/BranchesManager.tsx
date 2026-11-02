@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { VendorBranch } from '@/lib/types';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { BranchAccountControl } from '@/components/vendor/BranchAccountControl';
+import { SafeImage } from '@/components/ui/safe-image';
 
 const STATUSES = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 const NO_MARKET = 'none';
@@ -95,7 +96,12 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
           <p className="text-sm text-muted-foreground py-4 text-center">No additional branches yet.</p>
         ) : branches.map((b) => (
           <div key={b.id} className="rounded-md border p-3 flex items-start justify-between gap-3">
-            <div className="space-y-1 min-w-0">
+            {b.imageUrl && (
+              <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
+                <SafeImage src={b.imageUrl} alt={`${b.name} photo`} fill sizes="80px" className="object-cover" />
+              </div>
+            )}
+            <div className="space-y-1 min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium">{b.name}</span>
                 {b.status && <Badge variant={b.status === 'Open' ? 'default' : 'secondary'}>{b.status}</Badge>}

@@ -37,6 +37,7 @@ export function UserWalletDisplay() {
   const searchParams = useSearchParams();
   const [balance, setBalance] = useState(0);
   const [addAmount, setAddAmount] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [isFundingWallet, setIsFundingWallet] = useState(false);
   const [buyVoucherAmount, setBuyVoucherAmount] = useState('');
   const [redeemVoucherCode, setRedeemVoucherCode] = useState('');
@@ -63,6 +64,20 @@ export function UserWalletDisplay() {
     // callback page (and checkout, after a debit) tells us to refetch.
     window.addEventListener('wallet:updated', fetchBalance);
     return () => window.removeEventListener('wallet:updated', fetchBalance);
+  }, []);
+
+  // Checkout fires wallet:open (with the shortfall) when the balance is too low,
+  // so the customer lands straight on "Add Funds" with the amount filled in.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onOpen = (e: Event) => {
+      const amount = (e as CustomEvent<{ amount?: number }>).detail?.amount;
+      if (amount && amount > 0) setAddAmount(String(amount));
+      // Let the cart sheet finish closing first, or its focus-return closes the popover again.
+      timer = setTimeout(() => { fetchBalance(); setIsOpen(true); }, 350);
+    };
+    window.addEventListener('wallet:open', onOpen);
+    return () => { window.removeEventListener('wallet:open', onOpen); if (timer) clearTimeout(timer); };
   }, []);
 
   // Shared by both the same-tab redirect-back path below and the new-tab
@@ -305,7 +320,8 @@ export function UserWalletDisplay() {
   }
 
   return (
-    <Popover onOpenChange={(open) => {
+    <Popover open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
       if (open) {
         fetchBalance();
       } else {

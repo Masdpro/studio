@@ -30,6 +30,13 @@ import { Badge } from '@/components/ui/badge';
 export function AppHeader() {
   const [isCartSheetOpen, setIsCartSheetOpen] = useState(false);
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+
+  // Checkout's "Top up wallet" opens the wallet popover in the header; close the cart sheet so it's visible.
+  useEffect(() => {
+    const closeCart = () => setIsCartSheetOpen(false);
+    window.addEventListener('wallet:open', closeCart);
+    return () => window.removeEventListener('wallet:open', closeCart);
+  }, []);
   const { itemCount } = useCart();
   // Admins only use the admin panel: no wallet, cart or shopping tabs.
   const isAdmin = useAuth().role === 'admin';
