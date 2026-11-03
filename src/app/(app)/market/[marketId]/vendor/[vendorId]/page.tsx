@@ -5,6 +5,9 @@ import { getProductsByVendor } from '@/lib/services/products';
 import { getBranchesByVendor } from '@/lib/services/branches';
 import { VendorStorefront } from '@/components/vendor/VendorStorefront';
 
+// Always read the latest shops and products from the database (never a copy made at build time).
+export const dynamic = 'force-dynamic';
+
 export default async function MarketVendorPage({
   params,
 }: {

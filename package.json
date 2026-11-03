@@ -16,9 +16,12 @@
     "backfill-verified": "tsx scripts/backfill-verified.ts",
     "seed-analytics": "tsx scripts/seed-analytics.ts",
     "seed-branches": "tsx scripts/seed-branches.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
     "@genkit-ai/googleai": "1.28.0",
     "@genkit-ai/next": "1.28.0",
     "@hookform/resolvers": "^4.1.3",

@@ -5,11 +5,12 @@ import { and, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { Product } from '@/lib/types';
 import { sampleProductsForMockOrders } from '@/lib/mockData';
+import { useSampleData } from '@/lib/sample-mode';
 import { sanitizeGallery, sanitizeVideo, sanitizeOptions, sanitizeStock } from '@/lib/product-media';
 
 export async function getProducts(opts: { includeSuspended?: boolean } = {}): Promise<Product[]> {
   const rows = db.select().from(productsTable).all();
-  if (rows.length === 0) return sampleProductsForMockOrders;
+  if (rows.length === 0 && useSampleData) return sampleProductsForMockOrders;
   const hidden = opts.includeSuspended ? new Set<string>() : suspendedVendorIds();
   // Products that belong to a single branch only show on that vendor's store page; suspended shops don't show at all.
   return rows.filter((r) => !r.branchId && !hidden.has(r.vendorId)).map(rowToProduct);
@@ -30,13 +31,14 @@ export async function getMainProductsByVendor(vendorId: string): Promise<Product
 
 export async function getProductsByVendor(vendorId: string): Promise<Product[]> {
   const rows = db.select().from(productsTable).where(eq(productsTable.vendorId, vendorId)).all();
-  if (rows.length === 0) return sampleProductsForMockOrders.filter((p) => p.vendorId === vendorId);
+  if (rows.length === 0 && useSampleData) return sampleProductsForMockOrders.filter((p) => p.vendorId === vendorId);
   return rows.map(rowToProduct);
 }
 
 export async function getProductById(productId: string): Promise<Product | undefined> {
   const row = db.select().from(productsTable).where(eq(productsTable.id, productId)).get();
   if (row) return rowToProduct(row);
+  if (!useSampleData) return undefined;
   return sampleProductsForMockOrders.find((p) => p.id === productId);
 }
 

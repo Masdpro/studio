@@ -7,6 +7,9 @@ import { SafeImage } from '@/components/ui/safe-image';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronRight, Clock, MapPin, Store } from 'lucide-react';
 
+// Always read the latest shops and products from the database (never a copy made at build time).
+export const dynamic = 'force-dynamic';
+
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const { marketId } = await params;
   const market = await getMarketById(marketId);

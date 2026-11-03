@@ -4,30 +4,32 @@ import { vendors as vendorsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Vendor } from '@/lib/types';
 import { sampleVendors } from '@/lib/mockData';
+import { useSampleData } from '@/lib/sample-mode';
 import { slugify } from '@/lib/slug';
 
 export async function getVendors(): Promise<Vendor[]> {
   const rows = db.select().from(vendorsTable).all();
-  if (rows.length === 0) return sampleVendors;
+  if (rows.length === 0 && useSampleData) return sampleVendors;
   return rows.map(rowToVendor);
 }
 
 export async function getVendorById(vendorId: string): Promise<Vendor | undefined> {
   const row = db.select().from(vendorsTable).where(eq(vendorsTable.id, vendorId)).get();
   if (row) return rowToVendor(row);
+  if (!useSampleData) return undefined;
   return sampleVendors.find((v) => v.id === vendorId);
 }
 
 export async function getVendorsByLocationTag(locationTag: string): Promise<Vendor[]> {
   const rows = db.select().from(vendorsTable).where(eq(vendorsTable.locationTag, locationTag)).all();
-  if (rows.length === 0) return sampleVendors.filter((v) => v.locationTag === locationTag);
+  if (rows.length === 0 && useSampleData) return sampleVendors.filter((v) => v.locationTag === locationTag);
   return rows.map(rowToVendor);
 }
 
 /** Vendors whose stall sits inside the given local market. */
 export async function getVendorsByMarketId(marketId: string): Promise<Vendor[]> {
   const rows = db.select().from(vendorsTable).where(eq(vendorsTable.marketId, marketId)).all();
-  if (rows.length === 0) return sampleVendors.filter((v) => v.marketId === marketId);
+  if (rows.length === 0 && useSampleData) return sampleVendors.filter((v) => v.marketId === marketId);
   return rows.map(rowToVendor);
 }
 

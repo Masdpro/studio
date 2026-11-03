@@ -1,0 +1,12 @@
+# Litestream copies every change to the SQLite database to Cloudflare R2 within seconds,
+# and restores it onto a fresh machine. Values come from the Fly.io secrets.
+dbs:
+  - path: ${DATABASE_URL}
+    replica:
+      type: s3
+      bucket: ${R2_BUCKET}
+      path: litestream/closebuy
+      endpoint: ${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+      region: auto
+      access-key-id: ${R2_ACCESS_KEY_ID}
+      secret-access-key: ${R2_SECRET_ACCESS_KEY}

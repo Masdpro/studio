@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
 import { authOptions } from '@/lib/auth';
 import { userHasRole } from '@/lib/roles';
-import { UPLOAD_DIR, MAX_UPLOAD_BYTES, UPLOAD_URL_PREFIX, detectImageExtension } from '@/lib/uploads';
+import { MAX_UPLOAD_BYTES, UPLOAD_URL_PREFIX, detectImageExtension, CONTENT_TYPES } from '@/lib/uploads';
+import { saveFile } from '@/lib/storage';
 
 const REG_UPLOADS = new Map<string, number[]>();
 
@@ -34,7 +33,6 @@ export async function POST(request: Request) {
   const ext = detectImageExtension(buffer);
   if (!ext) return NextResponse.json({ error: 'Only JPG, PNG, GIF or WebP images are allowed.' }, { status: 415 });
   const name = `${randomUUID()}.${ext}`;
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, name), buffer);
+  await saveFile('public', name, buffer, CONTENT_TYPES[ext]);
   return NextResponse.json({ url: `${UPLOAD_URL_PREFIX}${name}` }, { status: 201 });
 }

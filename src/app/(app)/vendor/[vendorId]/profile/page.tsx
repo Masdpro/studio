@@ -8,6 +8,9 @@ import { Store, Mail, Phone, MapPin, Globe, ArrowLeft, Clock, Power, CheckCircle
 import type { Vendor } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
+// Always read the latest shops and products from the database (never a copy made at build time).
+export const dynamic = 'force-dynamic';
+
 const getStatusBadgeVariant = (status?: Vendor['status']): React.ComponentProps<typeof Badge>['variant'] => {
   switch (status) {
     case 'Open': return 'default';

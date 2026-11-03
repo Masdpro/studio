@@ -5,16 +5,17 @@ import { eq, desc, and, isNull } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { Order, CartItem } from '@/lib/types';
 import { masterSampleOrders } from '@/lib/mockData';
+import { useSampleData } from '@/lib/sample-mode';
 
 export async function getOrdersForCustomer(customerId: string): Promise<Order[]> {
   const rows = db.select().from(ordersTable).where(eq(ordersTable.customerId, customerId)).orderBy(desc(ordersTable.createdAt)).all();
-  if (rows.length === 0) return masterSampleOrders.filter((o) => o.customerId === customerId);
+  if (rows.length === 0 && useSampleData) return masterSampleOrders.filter((o) => o.customerId === customerId);
   return rows.map(rowToOrder);
 }
 
 export async function getOrdersForVendor(vendorId: string): Promise<Order[]> {
   const rows = db.select().from(ordersTable).where(eq(ordersTable.vendorId, vendorId)).orderBy(desc(ordersTable.createdAt)).all();
-  if (rows.length === 0) return masterSampleOrders.filter((o) => o.vendorId === vendorId);
+  if (rows.length === 0 && useSampleData) return masterSampleOrders.filter((o) => o.vendorId === vendorId);
   return rows.map(rowToOrder);
 }
 
@@ -25,7 +26,7 @@ export async function getOrdersForBranch(branchId: string): Promise<Order[]> {
 
 export async function getOrdersForDeliveryAgent(agentId: string): Promise<Order[]> {
   const rows = db.select().from(ordersTable).where(eq(ordersTable.deliveryAgentId, agentId)).all();
-  if (rows.length === 0) return masterSampleOrders.filter((o) => o.deliveryAgentId === agentId);
+  if (rows.length === 0 && useSampleData) return masterSampleOrders.filter((o) => o.deliveryAgentId === agentId);
   return rows.map(rowToOrder);
 }
 

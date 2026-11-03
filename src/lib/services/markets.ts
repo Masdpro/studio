@@ -5,23 +5,25 @@ import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { Market } from '@/lib/types';
 import { sampleMarkets } from '@/lib/mockData';
+import { useSampleData } from '@/lib/sample-mode';
 
 /** Reads all markets. Falls back to bundled sample data if the table is empty (e.g. before `npm run db:seed`). */
 export async function getMarkets(): Promise<Market[]> {
   const rows = db.select().from(marketsTable).all();
-  if (rows.length === 0) return sampleMarkets;
+  if (rows.length === 0 && useSampleData) return sampleMarkets;
   return rows.map(rowToMarket);
 }
 
 export async function getMarketsByLocationTag(locationTag: string): Promise<Market[]> {
   const rows = db.select().from(marketsTable).where(eq(marketsTable.locationTag, locationTag)).all();
-  if (rows.length === 0) return sampleMarkets.filter((m) => m.locationTag === locationTag);
+  if (rows.length === 0 && useSampleData) return sampleMarkets.filter((m) => m.locationTag === locationTag);
   return rows.map(rowToMarket);
 }
 
 export async function getMarketById(marketId: string): Promise<Market | undefined> {
   const row = db.select().from(marketsTable).where(eq(marketsTable.id, marketId)).get();
   if (row) return rowToMarket(row);
+  if (!useSampleData) return undefined;
   return sampleMarkets.find((m) => m.id === marketId);
 }
 

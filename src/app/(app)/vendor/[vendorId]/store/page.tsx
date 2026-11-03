@@ -1,6 +1,9 @@
 import { notFound, redirect } from 'next/navigation';
 import { getVendorById } from '@/lib/services/vendors';
 
+// Always read the latest shops and products from the database (never a copy made at build time).
+export const dynamic = 'force-dynamic';
+
 /** Vendors are shown inside Closebuy only: this old address goes to the vendor's Closebuy store page. */
 export default async function VendorStoreRedirect({ params }: { params: Promise<{ vendorId: string }> }) {
   const { vendorId } = await params;

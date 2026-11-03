@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+dev.db
+dev.db-*
+*.db
+*.db-*
+uploads
+.env
+.env.*
+!.env.example
+*.tgz
+.idx
+.vscode
+.modified

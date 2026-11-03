@@ -3,16 +3,18 @@ import { deliveryAgents as agentsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { DeliveryAgent } from '@/lib/types';
 import { sampleDeliveryAgents } from '@/lib/mockData';
+import { useSampleData } from '@/lib/sample-mode';
 
 export async function getDeliveryAgents(): Promise<DeliveryAgent[]> {
   const rows = db.select().from(agentsTable).all();
-  if (rows.length === 0) return sampleDeliveryAgents;
+  if (rows.length === 0 && useSampleData) return sampleDeliveryAgents;
   return rows.map(rowToAgent);
 }
 
 export async function getDeliveryAgentById(agentId: string): Promise<DeliveryAgent | undefined> {
   const row = db.select().from(agentsTable).where(eq(agentsTable.id, agentId)).get();
   if (row) return rowToAgent(row);
+  if (!useSampleData) return undefined;
   return sampleDeliveryAgents.find((a) => a.id === agentId);
 }
 

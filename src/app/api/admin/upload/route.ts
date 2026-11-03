@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
 import { requireAdminSession } from '@/lib/admin-guard';
-import { UPLOAD_DIR, MAX_UPLOAD_BYTES, UPLOAD_URL_PREFIX, detectImageExtension } from '@/lib/uploads';
+import { MAX_UPLOAD_BYTES, UPLOAD_URL_PREFIX, detectImageExtension, CONTENT_TYPES } from '@/lib/uploads';
+import { saveFile } from '@/lib/storage';
 
 /** Accepts one image (multipart field "file") and returns the URL to store on a product, vendor, market or agent. */
 export async function POST(request: Request) {
@@ -31,7 +30,6 @@ export async function POST(request: Request) {
   }
 
   const name = `${randomUUID()}.${ext}`;
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, name), buffer);
+  await saveFile('public', name, buffer, CONTENT_TYPES[ext]);
   return NextResponse.json({ url: `${UPLOAD_URL_PREFIX}${name}` }, { status: 201 });
 }

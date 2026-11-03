@@ -12,6 +12,8 @@ import { slugify } from '../lib/slug';
 const sqlite = new Database(process.env.DATABASE_URL ?? 'dev.db');
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
+// Litestream reads the database while the app writes; wait briefly instead of failing if they overlap.
+sqlite.pragma('busy_timeout = 5000');
 
 // Custom store links (/s/<slug>): add the column if this database predates it, and give existing vendors one.
 try { sqlite.exec('ALTER TABLE vendors ADD COLUMN slug TEXT'); } catch {}

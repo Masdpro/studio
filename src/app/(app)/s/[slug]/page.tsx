@@ -6,6 +6,9 @@ import { getMarkets } from '@/lib/services/markets';
 import { tradingBlockReason } from '@/lib/verification';
 import { VendorStorefront } from '@/components/vendor/VendorStorefront';
 
+// Always read the latest shops and products from the database (never a copy made at build time).
+export const dynamic = 'force-dynamic';
+
 /** A vendor's own Closebuy link (/s/<name>): shows only that vendor's products. */
 export default async function VendorLinkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

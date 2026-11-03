@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
 import { authOptions } from '@/lib/auth';
 import { getBranchForUser, userHasRole } from '@/lib/roles';
-import { UPLOAD_DIR, MAX_VIDEO_BYTES, UPLOAD_URL_PREFIX, detectVideoExtension } from '@/lib/uploads';
+import { MAX_VIDEO_BYTES, UPLOAD_URL_PREFIX, detectVideoExtension, VIDEO_CONTENT_TYPES } from '@/lib/uploads';
+import { saveFile } from '@/lib/storage';
 
 /** A vendor (or branch account) uploads one product video (multipart field "file"); returns its URL. */
 export async function POST(request: Request) {
@@ -26,7 +25,6 @@ export async function POST(request: Request) {
   const ext = detectVideoExtension(buffer);
   if (!ext) return NextResponse.json({ error: 'Only MP4 or WebM videos are allowed.' }, { status: 415 });
   const name = `${randomUUID()}.${ext}`;
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, name), buffer);
+  await saveFile('public', name, buffer, VIDEO_CONTENT_TYPES[ext]);
   return NextResponse.json({ url: `${UPLOAD_URL_PREFIX}${name}` }, { status: 201 });
 }

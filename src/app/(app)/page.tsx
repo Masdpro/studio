@@ -5,6 +5,9 @@ import { getVendors } from '@/lib/services/vendors';
 import { getMarkets } from '@/lib/services/markets';
 import { getAllBranches } from '@/lib/services/branches';
 
+// Always read the latest shops and products from the database (never a copy made at build time).
+export const dynamic = 'force-dynamic';
+
 // Server component: fetches from the database (falling back to bundled
 // sample data if the tables are empty) and hands the results to the
 // client component, which owns all the interactive filtering/search state.

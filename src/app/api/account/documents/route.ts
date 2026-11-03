@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { mkdir, unlink, writeFile } from 'fs/promises';
-import path from 'path';
 import { and, eq } from 'drizzle-orm';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/db';
 import { users, verificationDocuments } from '@/db/schema';
-import { DOCUMENT_CONTENT_TYPES, MAX_DOCUMENT_BYTES, PRIVATE_UPLOAD_DIR, detectDocumentExtension } from '@/lib/uploads';
+import { DOCUMENT_CONTENT_TYPES, MAX_DOCUMENT_BYTES, detectDocumentExtension } from '@/lib/uploads';
+import { deleteFile, saveFile } from '@/lib/storage';
 import { requiredDocumentsFor, type DocumentKind } from '@/lib/verification';
 
 /** Vendors and agents upload their ID / business documents here (multipart: "file" + "kind"). */
@@ -37,13 +36,12 @@ export async function POST(request: Request) {
   }
 
   const fileName = `${randomUUID()}.${ext}`;
-  await mkdir(PRIVATE_UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(PRIVATE_UPLOAD_DIR, fileName), buffer);
+  await saveFile('private', fileName, buffer, DOCUMENT_CONTENT_TYPES[ext]);
 
   // One file per document type: a new upload replaces the old one.
   const old = db.select().from(verificationDocuments).where(and(eq(verificationDocuments.userId, userId), eq(verificationDocuments.kind, kind))).all();
   db.delete(verificationDocuments).where(and(eq(verificationDocuments.userId, userId), eq(verificationDocuments.kind, kind))).run();
-  for (const o of old) await unlink(path.join(PRIVATE_UPLOAD_DIR, o.fileName)).catch(() => {});
+  for (const o of old) await deleteFile('private', o.fileName);
 
   const id = randomUUID();
   db.insert(verificationDocuments).values({ id, userId, kind, fileName, contentType: DOCUMENT_CONTENT_TYPES[ext], createdAt: new Date() }).run();

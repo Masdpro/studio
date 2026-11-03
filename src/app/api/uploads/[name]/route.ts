@@ -1,9 +1,8 @@
-import { readFile } from 'fs/promises';
-import path from 'path';
-import { UPLOAD_DIR, CONTENT_TYPES, VIDEO_CONTENT_TYPES } from '@/lib/uploads';
+import { CONTENT_TYPES, VIDEO_CONTENT_TYPES } from '@/lib/uploads';
+import { readStoredFile } from '@/lib/storage';
 
-// Only names this app generates (uuid + known extension) are ever read from disk,
-// so a crafted name can't traverse out of the uploads folder.
+// Only names this app generates (uuid + known extension) are ever looked up,
+// so a crafted name can't reach anything else in storage.
 const SAFE_NAME = /^[0-9a-f-]{36}\.(jpg|png|gif|webp|mp4|webm)$/;
 
 export async function GET(request: Request, { params }: { params: Promise<{ name: string }> }) {
@@ -17,23 +16,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ name
     'Accept-Ranges': 'bytes',
   };
 
-  try {
-    const data = await readFile(path.join(UPLOAD_DIR, name));
-    // Videos need byte-range responses so browsers can seek and start playing before the whole file arrives.
-    const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') ?? '');
-    if (range && (range[1] || range[2])) {
-      let start = range[1] ? Number(range[1]) : data.length - Number(range[2]);
-      let end = range[1] && range[2] ? Number(range[2]) : data.length - 1;
-      start = Math.max(0, start);
-      end = Math.min(end, data.length - 1);
-      if (start > end) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${data.length}` } });
-      return new Response(new Uint8Array(data.subarray(start, end + 1)), {
-        status: 206,
-        headers: { ...headers, 'Content-Range': `bytes ${start}-${end}/${data.length}`, 'Content-Length': String(end - start + 1) },
-      });
-    }
-    return new Response(new Uint8Array(data), { headers: { ...headers, 'Content-Length': String(data.length) } });
-  } catch {
-    return new Response('Not found', { status: 404 });
-  }
+  // Videos need byte-range responses so browsers can seek and start playing before the whole file arrives.
+  const file = await readStoredFile('public', name, request.headers.get('range'));
+  if (file === null) return new Response('Not found', { status: 404 });
+  if (file === 'unsatisfiable') return new Response(null, { status: 416 });
+  return new Response(file.body as BodyInit, {
+    status: file.status,
+    headers: { ...headers, 'Content-Length': String(file.body.length), ...(file.contentRange ? { 'Content-Range': file.contentRange } : {}) },
+  });
 }
