@@ -13,6 +13,7 @@ import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, Cl
 import { useToast } from '@/hooks/use-toast';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now, consider a dedicated AgentWalletWidget
 import { OrderListItem } from '@/components/orders/OrderListItem';
+import { DeliveryCodeDialog } from '@/components/orders/DeliveryCode';
 import { BarcodeScannerDialog, type ScanPurpose } from '@/components/delivery/BarcodeScannerDialog';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
@@ -80,6 +81,8 @@ export default function DeliveryAgentDashboardPage() {
       });
     }
   };
+
+  const [codeOrderId, setCodeOrderId] = useState<string | null>(null);
 
   const openScanner = (orderId: string, purpose: ScanPurpose) => {
     setCurrentScanOrderId(orderId);
@@ -230,7 +233,7 @@ export default function DeliveryAgentDashboardPage() {
             My Active Deliveries
           </CardTitle>
           <CardDescription>
-            Manage your ongoing deliveries. Scan packages at pickup and delivery.
+            Manage your ongoing deliveries. Scan packages at pickup, and enter the customer's code to complete each delivery.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -244,7 +247,7 @@ export default function DeliveryAgentDashboardPage() {
                   order={order}
                   userRole="delivery_agent"
                   onScanForPickup={() => openScanner(order.id, 'pickup')}
-                  onScanForDelivery={() => openScanner(order.id, 'delivery')}
+                  onScanForDelivery={() => setCodeOrderId(order.id)}
                 />
               ))}
             </div>
@@ -303,6 +306,19 @@ export default function DeliveryAgentDashboardPage() {
         </>
       )}
 
+      {codeOrderId && (
+        <DeliveryCodeDialog
+          orderId={codeOrderId}
+          open={!!codeOrderId}
+          onOpenChange={(o) => !o && setCodeOrderId(null)}
+          onDelivered={() => {
+            const id = codeOrderId;
+            setAllOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: 'Delivered' } : o)));
+            toast({ title: 'Delivery confirmed', description: 'Your delivery fee is now in your wallet.' });
+            window.dispatchEvent(new Event('wallet:updated'));
+          }}
+        />
+      )}
       {currentScanOrderId && currentScanPurpose && (
         <BarcodeScannerDialog
           open={isScannerOpen}

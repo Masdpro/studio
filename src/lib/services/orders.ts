@@ -2,7 +2,7 @@
 import { db } from '@/db';
 import { orders as ordersTable } from '@/db/schema';
 import { eq, desc, and, isNull } from 'drizzle-orm';
-import { randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'crypto';
 import type { Order, CartItem } from '@/lib/types';
 import { masterSampleOrders } from '@/lib/mockData';
 import { useSampleData } from '@/lib/sample-mode';
@@ -45,8 +45,11 @@ export async function getOrderById(orderId: string): Promise<Order | undefined> 
   return row ? rowToOrder(row) : undefined;
 }
 
-export async function createOrder(data: Omit<Order, 'id' | 'createdAt'>): Promise<string> {
-  const id = randomUUID();
+/** Four digits the customer gives the delivery agent once they've checked the goods. */
+export const newDeliveryCode = () => String(randomInt(0, 10000)).padStart(4, '0');
+
+export async function createOrder(data: Omit<Order, 'id' | 'createdAt'> & { id?: string }): Promise<string> {
+  const id = data.id ?? randomUUID();
   db.insert(ordersTable)
     .values({
       id,
@@ -63,6 +66,7 @@ export async function createOrder(data: Omit<Order, 'id' | 'createdAt'>): Promis
       deliveryAgentId: data.deliveryAgentId,
       deliveryPreference: data.deliveryPreference,
       branchId: data.branchId ?? null,
+      deliveryCode: data.deliveryPreference === 'delivery' ? newDeliveryCode() : null,
     })
     .run();
   return id;

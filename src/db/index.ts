@@ -30,6 +30,17 @@ try { sqlite.exec('ALTER TABLE products ADD COLUMN video_url TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN colors_json TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN sizes_json TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN stock INTEGER'); } catch {}
+// Wallet ledger, bank accounts, withdrawals and delivery codes (also in drizzle/0002_wallet_ledger.sql,
+// which production applies first; this keeps a local dev.db that was built with `drizzle-kit push` working).
+try { sqlite.exec('ALTER TABLE orders ADD COLUMN delivery_code TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE orders ADD COLUMN delivery_code_attempts INTEGER NOT NULL DEFAULT 0'); } catch {}
+try {
+  sqlite.exec(`CREATE TABLE IF NOT EXISTS wallet_transactions (id TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL, type TEXT NOT NULL, amount REAL NOT NULL, balance_after REAL NOT NULL, fee REAL, order_id TEXT, description TEXT NOT NULL, created_at INTEGER NOT NULL);
+    CREATE INDEX IF NOT EXISTS wallet_transactions_user_created ON wallet_transactions (user_id, created_at);
+    CREATE TABLE IF NOT EXISTS bank_accounts (user_id TEXT PRIMARY KEY NOT NULL, bank_code TEXT NOT NULL, bank_name TEXT NOT NULL, account_number TEXT NOT NULL, account_name TEXT NOT NULL, recipient_code TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS withdrawals (id TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL, amount REAL NOT NULL, fee REAL NOT NULL, net REAL NOT NULL, status TEXT NOT NULL DEFAULT 'pending', transfer_code TEXT, failure_reason TEXT, bank_name TEXT NOT NULL, account_number TEXT NOT NULL, account_name TEXT NOT NULL, created_at INTEGER NOT NULL, completed_at INTEGER);
+    CREATE INDEX IF NOT EXISTS withdrawals_user_created ON withdrawals (user_id, created_at);`);
+} catch {}
 try {
   sqlite.exec('CREATE UNIQUE INDEX IF NOT EXISTS vendors_slug_unique ON vendors(slug)');
   const missing = sqlite.prepare('SELECT id, business_name AS name FROM vendors WHERE slug IS NULL').all() as { id: string; name: string }[];

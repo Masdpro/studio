@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { verifyPaystackTransaction } from '@/lib/paystack';
 import { getPaymentTransaction, completeWalletFunding } from '@/lib/services/wallets';
+import { settleWithdrawal } from '@/lib/services/withdrawals';
+import { verifyTransfer } from '@/lib/paystack';
 
 /**
  * Paystack calls this when a payment succeeds, so a top-up is credited even if
@@ -32,7 +34,20 @@ export async function POST(request: Request) {
   }
 
   const reference = event.data?.reference;
-  if (event.event !== 'charge.success' || !reference) return NextResponse.json({ ok: true });
+  if (!reference) return NextResponse.json({ ok: true });
+
+  // Payouts to vendors / agents: confirm with Paystack, then record the outcome (failed ones are refunded to the wallet).
+  if (event.event?.startsWith('transfer.') && reference.startsWith('wd_')) {
+    try {
+      const t = await verifyTransfer(reference);
+      if (t.status === 'success' || t.status === 'failed' || t.status === 'reversed') await settleWithdrawal(reference, t.status, t.reason);
+    } catch {
+      return NextResponse.json({ error: 'Could not verify the transfer.' }, { status: 500 }); // Paystack will retry
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (event.event !== 'charge.success') return NextResponse.json({ ok: true });
 
   const transaction = await getPaymentTransaction(reference);
   // Not one of our wallet top-ups (or already credited): acknowledge so Paystack stops retrying.

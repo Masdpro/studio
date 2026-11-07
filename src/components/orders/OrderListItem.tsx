@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck, ScanLine, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarcodeDisplay } from './BarcodeDisplay';
+import { CustomerDeliveryCode } from './DeliveryCode';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
 import React, { useState, useMemo } from 'react';
 import { OrderDetailsDialog } from './OrderDetailsDialog';
@@ -138,7 +139,7 @@ export function OrderListItem({
   const showVendorAgentPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'delivery' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
   const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
 
-  const showCustomerDeliveryBarcode = userRole === 'customer' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
+  const showCustomerDeliveryBarcode = userRole === 'customer' && order.deliveryPreference === 'delivery' && (order.status === 'AcceptedByAgent' || order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   const canCustomerScanForPickup = userRole === 'customer' && order.status === 'ReadyForCustomerPickup' && onScanForCustomerPickup;
 
   const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
@@ -227,7 +228,7 @@ export function OrderListItem({
                 </div>
               )}
               {showCustomerDeliveryBarcode && (
-                <BarcodeDisplay orderId={order.id} label="Barcode for Delivery Confirmation" />
+                <CustomerDeliveryCode orderId={order.id} />
               )}
             </>
           )}
@@ -342,7 +343,7 @@ export function OrderListItem({
             )}
             {userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery') && onScanForDelivery && (
               <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => onScanForDelivery(order.id)}>
-                <ShieldCheck className="h-4 w-4 mr-2" /> Scan at Delivery
+                <ShieldCheck className="h-4 w-4 mr-2" /> Enter delivery code
               </Button>
             )}
 

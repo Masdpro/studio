@@ -128,6 +128,8 @@ export const orders = sqliteTable('orders', {
   agentLongitude: real('agent_longitude'),
   agentLocationUpdatedAt: integer('agent_location_updated_at', { mode: 'timestamp' }),
   branchId: text('branch_id'), // which vendor branch the order is collected from (null = main address)
+  deliveryCode: text('delivery_code'), // 4 digits the customer gives the agent after checking the goods
+  deliveryCodeAttempts: integer('delivery_code_attempts').notNull().default(0),
 });
 
 export const reviews = sqliteTable('reviews', {
@@ -234,4 +236,49 @@ export const vendorBranches = sqliteTable('vendor_branches', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   imageUrl: text('image_url'), // storefront photo
   accountUserId: text('account_user_id'), // the branch's own login (a customer account)
+});
+
+// Every change to a wallet balance, newest last. `id` is a deterministic key per event
+// (e.g. "sale:<orderId>") so the same event can never be applied twice.
+export const walletTransactions = sqliteTable('wallet_transactions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  type: text('type', {
+    enum: ['funding', 'purchase', 'refund', 'sale', 'delivery_earning', 'earning_reversal', 'withdrawal', 'withdrawal_reversal', 'adjustment'],
+  }).notNull(),
+  amount: real('amount').notNull(), // Naira: positive = money in, negative = money out
+  balanceAfter: real('balance_after').notNull(),
+  fee: real('fee'), // Closebuy service fee kept from a sale, or the transfer fee on a withdrawal
+  orderId: text('order_id'),
+  description: text('description').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+// Where a vendor's / agent's withdrawals are paid. Verified with Paystack before saving.
+export const bankAccounts = sqliteTable('bank_accounts', {
+  userId: text('user_id').primaryKey(),
+  bankCode: text('bank_code').notNull(),
+  bankName: text('bank_name').notNull(),
+  accountNumber: text('account_number').notNull(),
+  accountName: text('account_name').notNull(),
+  recipientCode: text('recipient_code').notNull(), // Paystack transfer recipient
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+// One row per payout to a bank account (a Paystack transfer).
+export const withdrawals = sqliteTable('withdrawals', {
+  id: text('id').primaryKey(), // our transfer reference, sent to Paystack
+  userId: text('user_id').notNull(),
+  amount: real('amount').notNull(), // taken from the wallet
+  fee: real('fee').notNull(), // transfer fee
+  net: real('net').notNull(), // sent to the bank
+  status: text('status', { enum: ['pending', 'success', 'failed', 'reversed'] }).notNull().default('pending'),
+  transferCode: text('transfer_code'),
+  failureReason: text('failure_reason'),
+  bankName: text('bank_name').notNull(),
+  accountNumber: text('account_number').notNull(),
+  accountName: text('account_name').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
 });

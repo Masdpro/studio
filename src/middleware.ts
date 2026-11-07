@@ -18,6 +18,7 @@ const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_age
   { prefix: '/profile', role: true },
   { prefix: '/account', role: true },
   { prefix: '/notifications', role: true },
+  { prefix: '/wallet', role: true },
 ];
 
 export async function middleware(request: NextRequest) {
@@ -53,5 +54,6 @@ export const config = {
     '/profile',
     '/account/:path*',
     '/notifications',
+    '/wallet',
   ],
 };

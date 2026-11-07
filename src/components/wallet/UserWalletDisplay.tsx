@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Wallet, CreditCard, Gift, CheckCircle, Copy as CopyIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -339,7 +340,10 @@ export function UserWalletDisplay() {
       <PopoverContent className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">My Wallet (Naira)</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium leading-none">My Wallet (Naira)</h4>
+              <Link href="/wallet" className="text-xs font-medium text-primary underline" onClick={() => setIsOpen(false)}>History &amp; withdrawals</Link>
+            </div>
             <p className="text-sm text-muted-foreground">
               Your current account balance.
             </p>

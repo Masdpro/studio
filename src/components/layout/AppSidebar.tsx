@@ -5,7 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag, Receipt, Users } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Wallet, Banknote } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -22,6 +22,7 @@ import {
 const customerNavItems = [
   { href: '/shop', label: 'Home', icon: Home, tooltip: "Browse Products" },
   { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
+  { href: '/wallet', label: 'Wallet', icon: Wallet, tooltip: "Balance, history and withdrawals" },
 ];
 
 const customerErrandItems = [
@@ -64,6 +65,7 @@ const adminItems = [
   { href: '/admin/verifications', label: 'Verifications', icon: ShieldCheck, tooltip: "Review vendor and agent verifications" },
   { href: '/admin/orders', label: 'Orders', icon: Receipt, tooltip: "All orders and refunds" },
   { href: '/admin/users', label: 'Users', icon: Users, tooltip: "Look up and suspend accounts" },
+  { href: '/admin/payouts', label: 'Payouts', icon: Banknote, tooltip: "Vendor and agent withdrawals" },
 ];
 
 type NavItem = { href: string; label: string; icon: React.ComponentType; tooltip: string };

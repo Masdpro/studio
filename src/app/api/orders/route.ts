@@ -11,7 +11,9 @@ import {
   getUnassignedReadyForPickupOrders,
 } from '@/lib/services/orders';
 import { getVendorById } from '@/lib/services/vendors';
-import { debitWallet, InsufficientFundsError } from '@/lib/services/wallets';
+import { applyEntry, InsufficientFundsError } from '@/lib/services/wallets';
+import { db } from '@/db';
+import { randomUUID } from 'crypto';
 import { createNotification } from '@/lib/services/notifications';
 import type { CartItem } from '@/lib/types';
 import { recordEvent } from '@/lib/services/events';
@@ -152,6 +154,8 @@ export async function POST(request: Request) {
         deliveryFee,
         branchId: branch?.id,
         branchName: branch?.name,
+        orderId: randomUUID(),
+        vendorName: vendor?.businessName ?? 'a vendor',
         pickupAddress: branch
           ? `${vendor?.businessName ?? 'Vendor'} (${branch.name}), ${branch.streetAddress}, ${branch.city}`
           : vendor
@@ -176,7 +180,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    await debitWallet(session.user.id, grandTotal);
+    // One wallet entry per order, all or nothing.
+    db.transaction((tx) => {
+      for (const o of vendorOrders) {
+        applyEntry(tx, {
+          id: `purchase:${o.orderId}`,
+          userId: session.user.id,
+          type: 'purchase',
+          amount: -o.totalAmount,
+          requireFunds: true,
+          orderId: o.orderId,
+          description: `Order from ${o.vendorName}`,
+        });
+      }
+    });
   } catch (err) {
     releaseStock(stockLines);
     if (err instanceof InsufficientFundsError) {
@@ -194,6 +211,7 @@ export async function POST(request: Request) {
   const orderIds: string[] = [];
   for (const order of vendorOrders) {
     const orderId = await createOrder({
+      id: order.orderId,
       customerId: session.user.id,
       vendorId: order.vendorId,
       items: order.vendorItems,

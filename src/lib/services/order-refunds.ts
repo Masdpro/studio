@@ -1,5 +1,6 @@
 import type { Order } from '@/lib/types';
-import { creditWallet } from '@/lib/services/wallets';
+import { postEntry } from '@/lib/services/wallets';
+import { reverseOrderEarnings } from '@/lib/services/earnings';
 import { releaseStock } from '@/lib/services/products';
 import { createNotification } from '@/lib/services/notifications';
 
@@ -12,7 +13,16 @@ const GOODS_STILL_AT_SHOP: Order['status'][] = ['Pending', 'Processing', 'ReadyF
  */
 export async function refundCancelledOrder(order: Order, by: 'customer' | 'vendor' | 'admin', reason?: string): Promise<number> {
   const refunded = order.totalAmount;
-  await creditWallet(order.customerId, refunded);
+  postEntry({
+    id: `refund:${order.id}`,
+    userId: order.customerId,
+    type: 'refund',
+    amount: refunded,
+    orderId: order.id,
+    description: `Refund · order #${order.id.slice(0, 8).toUpperCase()} cancelled`,
+  });
+  // If the vendor / agent had already been paid for it (support cancelling a finished order), take that back.
+  if (order.status === 'Delivered' || order.status === 'PickedUpByCustomer') await reverseOrderEarnings(order, reason);
   if (GOODS_STILL_AT_SHOP.includes(order.status)) {
     const qty = new Map<string, number>();
     for (const i of order.items) qty.set(i.productId, (qty.get(i.productId) ?? 0) + i.quantity);

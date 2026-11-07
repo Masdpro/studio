@@ -5,6 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getOrderById, transitionOrderStatus } from '@/lib/services/orders';
 import { refundCancelledOrder } from '@/lib/services/order-refunds';
+import { creditOrderEarnings } from '@/lib/services/earnings';
+import { checkDeliveryCode, getDeliveryCode } from '@/lib/services/delivery-codes';
 import { createNotification } from '@/lib/services/notifications';
 import type { Order } from '@/lib/types';
 
@@ -92,7 +94,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   }
 
   const body = await request.json().catch(() => ({}));
-  const { status, actingAs } = body as { status?: Order['status']; actingAs?: Actor };
+  const { status, actingAs, deliveryCode } = body as { status?: Order['status']; actingAs?: Actor; deliveryCode?: string };
   if (!status) {
     return NextResponse.json({ error: 'A new status is required.' }, { status: 400 });
   }
@@ -131,6 +133,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
     if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
   }
 
+  // Delivery is only complete when the customer, having checked the goods, gives the agent their code.
+  if (status === 'Delivered') {
+    const check = checkDeliveryCode(order.id, deliveryCode);
+    if (!check.ok) return NextResponse.json({ error: check.error, code: 'DELIVERY_CODE' }, { status: 400 });
+  }
+
   // Only the agent id of the caller themselves is ever written besides status.
   const extra = isClaimingUnassignedDelivery ? { deliveryAgentId: userId } : {};
   if (!transitionOrderStatus(orderId, order.status, status, extra)) {
@@ -138,12 +146,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   }
 
   let refunded = 0;
+  if (status === 'Delivered' || status === 'PickedUpByCustomer') {
+    // Order complete: pay the vendor (and the agent) straight into their wallets.
+    await creditOrderEarnings({ ...order, status });
+  }
+  if (status === 'PickedUpByAgent') {
+    const code = getDeliveryCode(order.id);
+    await createNotification({
+      userId: order.customerId,
+      message: `Your order is on its way. Check your items when they arrive, then give the agent your delivery code: ${code}. Don't share it before then.`,
+      category: 'Activity',
+      link: '/orders',
+      iconName: 'Truck',
+    });
+  }
   if (status === 'Cancelled') {
     // Give the money back, put the items back in stock and tell both sides.
     refunded = await refundCancelledOrder(order, actor === 'customer' ? 'customer' : 'vendor');
   } else if (actor !== 'customer') {
     // Tell the customer when the vendor or agent moves their order along.
-    const message = STATUS_MESSAGES[status];
+    const message = status === 'PickedUpByAgent' ? undefined : STATUS_MESSAGES[status];
     if (message) {
       await createNotification({
         userId: order.customerId,
