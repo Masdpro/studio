@@ -21,7 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
 
   if (action === 'approve') {
     if (!state.readyForReview) {
-      return NextResponse.json({ error: 'Email, phone and all documents must be completed before approval.' }, { status: 409 });
+      return NextResponse.json({ error: state.phoneRequired ? 'Email, phone and all documents must be completed before approval.' : 'Email and all documents must be completed before approval.' }, { status: 409 });
     }
     db.update(users).set({ approvalStatus: 'approved', approvalNote: null }).where(eq(users.id, userId)).run();
     await createNotification({ userId, message: 'Your Closebuy account has been verified. You can now start trading.', category: 'Activity', link: '/account/verification' });

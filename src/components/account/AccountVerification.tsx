@@ -15,6 +15,7 @@ export type VerificationState = {
   emailVerified: boolean;
   phone: string | null;
   phoneVerified: boolean;
+  phoneRequired: boolean;
   needsReview: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   approvalNote: string | null;
@@ -115,7 +116,7 @@ export function AccountVerification() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {state.needsReview && state.approvalStatus === 'approved' && state.phoneVerified && (
+        {state.needsReview && state.approvalStatus === 'approved' && (state.phoneVerified || !state.phoneRequired) && (
           <Alert>
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>You are verified</AlertTitle>
@@ -134,9 +135,13 @@ export function AccountVerification() {
           <p className="text-sm text-muted-foreground">{state.emailVerified ? `${state.email} is confirmed.` : 'Enter the code we emailed you.'}</p>
         </Step>
 
-        <Step done={state.phoneVerified} title="Phone number">
+        <Step done={state.phoneVerified || !state.phoneRequired} title="Phone number">
           {state.phoneVerified ? (
             <p className="text-sm text-muted-foreground">{state.phone} is verified.</p>
+          ) : !state.phoneRequired ? (
+            <p className="text-sm text-muted-foreground">
+              {state.phone ? `${state.phone} is saved on your account.` : 'No phone number yet.'} Phone verification by SMS isn&apos;t switched on yet, so there&apos;s nothing to do here for now.
+            </p>
           ) : (
             <>
               <div className="flex flex-col sm:flex-row gap-2">

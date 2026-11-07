@@ -162,6 +162,18 @@ export function confirmPhoneCode(userId: string, code: string): { ok: boolean; e
   return { ok: true };
 }
 
+/**
+ * Whether vendors / agents must verify their phone by SMS before approval and trading.
+ * PHONE_VERIFICATION=on|off forces it; otherwise it switches on by itself once SMS is
+ * configured (TERMII_API_KEY and TERMII_SENDER_ID set).
+ */
+export function phoneVerificationRequired(): boolean {
+  const flag = process.env.PHONE_VERIFICATION?.toLowerCase();
+  if (flag === 'on') return true;
+  if (flag === 'off') return false;
+  return !!(process.env.TERMII_API_KEY && process.env.TERMII_SENDER_ID);
+}
+
 export function getVerificationState(userId: string) {
   const user = db.select().from(users).where(eq(users.id, userId)).get();
   if (!user) return null;
@@ -171,6 +183,8 @@ export function getVerificationState(userId: string) {
   const submitted = new Set(documents.map((d) => d.kind));
   const needsReview = roles.includes('vendor') || roles.includes('delivery_agent');
   const documentsComplete = required.every((k) => submitted.has(k));
+  const phoneRequired = phoneVerificationRequired();
+  const phoneOk = !phoneRequired || !!user.phoneVerifiedAt;
   return {
     role: roles.includes('vendor') ? 'vendor' : roles.includes('delivery_agent') ? 'delivery_agent' : user.role,
     roles,
@@ -178,15 +192,16 @@ export function getVerificationState(userId: string) {
     emailVerified: !!user.emailVerifiedAt,
     phone: user.phone,
     phoneVerified: !!user.phoneVerifiedAt,
+    phoneRequired,
     needsReview,
     approvalStatus: user.approvalStatus,
     approvalNote: user.approvalNote,
     requiredDocuments: required.map((kind) => ({ kind, label: DOCUMENT_LABELS[kind], uploaded: submitted.has(kind), id: documents.find((d) => d.kind === kind)?.id ?? null })),
     documentsComplete,
     // Everything an admin needs before they can approve:
-    readyForReview: !needsReview ? true : !!user.emailVerifiedAt && !!user.phoneVerifiedAt && documentsComplete,
+    readyForReview: !needsReview ? true : !!user.emailVerifiedAt && phoneOk && documentsComplete,
     // Vendors / agents may only trade once approved.
-    mayTrade: !needsReview || (user.approvalStatus === 'approved' && !!user.phoneVerifiedAt),
+    mayTrade: !needsReview || (user.approvalStatus === 'approved' && phoneOk),
   };
 }
 

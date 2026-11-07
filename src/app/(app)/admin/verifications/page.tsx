@@ -84,7 +84,7 @@ export default function AdminVerificationsPage() {
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <Check ok={a.emailVerified} label="Email" />
-          <Check ok={a.phoneVerified} label="Phone" />
+          <Check ok={a.phoneVerified || !a.phoneRequired} label={a.phoneVerified || a.phoneRequired ? 'Phone' : 'Phone (not required yet)'} />
           <Check ok={a.documentsComplete} label="Documents" />
         </div>
         <div className="flex flex-wrap gap-2">
