@@ -9,7 +9,6 @@ export const SITE = {
   phoneHref: 'tel:+2348128064945',
   whatsappHref: 'https://wa.me/2348128064945',
   address: ['29 Lawani Street, Onike', 'Lagos Mainland, Lagos', 'Nigeria'],
-  deliveryFee: 1500,
   policiesUpdated: '7 November 2026',
 } as const;
 

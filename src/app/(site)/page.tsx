@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const STEPS = [
   { icon: Search, title: 'Find what you need', body: 'Browse products from verified vendors and local markets near you, by area or by shop.' },
   { icon: Wallet, title: 'Pay securely', body: 'Top up your Closebuy wallet by card or bank transfer through Paystack, then check out in one tap.' },
-  { icon: Truck, title: 'Get it delivered or pick it up', body: `A local delivery agent brings it to your door (flat ₦${SITE.deliveryFee.toLocaleString()}), or collect it from the shop yourself.` },
+  { icon: Truck, title: 'Get it delivered or pick it up', body: 'A local delivery agent brings it to your door, or you collect it from the shop yourself.' },
 ];
 
 const PROMISES = [
@@ -56,19 +56,17 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             ))}
           </ul>
         </div>
-        <figure className="relative">
-          <div className="overflow-hidden rounded-2xl border shadow-lg">
-            <Image src="/markets/lagos.jpg" alt="Shoppers and traders at a busy Lagos market" width={800} height={500} priority className="h-auto w-full object-cover" />
-          </div>
-          <div className="absolute -bottom-5 left-4 flex items-center gap-3 rounded-xl border bg-card px-4 py-3 shadow-md">
-            <Truck className="h-6 w-6 text-primary" />
-            <div className="text-sm"><div className="font-semibold">Local delivery</div><div className="text-muted-foreground">by riders in your area</div></div>
-          </div>
-          <figcaption className="mt-12 text-right text-[11px] text-muted-foreground">
-            Photo: Balogun Market, Lagos, by Yellowcrunchy,{' '}
-            <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>
-          </figcaption>
-        </figure>
+        <div className="overflow-hidden rounded-2xl border shadow-lg">
+          <Image
+            src="/hero-illustration.svg"
+            alt="A Closebuy rider delivering an order from neighbourhood shops to a customer"
+            width={800}
+            height={490}
+            priority
+            unoptimized
+            className="h-auto w-full"
+          />
+        </div>
       </section>
 
       {/* How it works */}

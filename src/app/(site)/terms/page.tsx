@@ -23,7 +23,7 @@ export default function TermsPage() {
 
       <h2>3. Orders and prices</h2>
       <ul>
-        <li>Prices are set by vendors and shown in Naira. Delivery is charged at the rate shown at checkout (currently a flat ₦{SITE.deliveryFee.toLocaleString()} per order).</li>
+        <li>Prices are set by vendors and shown in Naira. Any delivery charge is shown at checkout before you pay.</li>
         <li>An order is placed when you check out and the total is taken from your wallet. The vendor then accepts and prepares it, or cancels it if they cannot fulfil it.</li>
         <li>Cancellations and refunds follow our <Link href="/refunds">Refund &amp; Cancellation Policy</Link>.</li>
       </ul>
