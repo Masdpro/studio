@@ -67,9 +67,9 @@ export async function verifyPaystackTransaction(reference: string): Promise<{
 // ---------------------------------------------------------------------------
 // Transfers (payouts to vendors' and agents' bank accounts)
 //
-// Needs, in the Paystack dashboard: Transfers enabled on the business, and
-// "Confirm transfers before sending" (OTP) turned OFF under Settings → Preferences,
-// so the API can send them. Transfers are paid from the Paystack balance.
+// Needs Transfers enabled on the Paystack business. Transfers are paid from the Paystack balance.
+// With transfer OTP on (Closebuy's setting), Paystack holds each transfer until an admin types
+// the OTP it sends the business owner; see finalizeTransfer.
 //
 // For local testing only (never in production), PAYSTACK_SIMULATE_TRANSFERS=true
 // fakes these calls so the withdrawal flow can be exercised without real money.
@@ -133,7 +133,7 @@ export async function createTransferRecipient(p: { name: string; accountNumber: 
 export type TransferStatus = 'success' | 'pending' | 'failed' | 'reversed' | 'otp';
 
 export async function initiateTransfer(p: { amountNaira: number; recipientCode: string; reference: string; reason: string }): Promise<{ status: TransferStatus; transferCode: string }> {
-  if (simulate()) return { status: 'pending', transferCode: `TRF_test_${p.reference}` };
+  if (simulate()) return { status: 'otp', transferCode: `TRF_test_${p.reference}` };
   const data = await paystackPost('/transfer', {
     source: 'balance',
     amount: Math.round(p.amountNaira * 100),
@@ -149,4 +149,20 @@ export async function verifyTransfer(reference: string): Promise<{ status: Trans
   if (simulate()) return { status: 'success' };
   const data = await paystackGet(`/transfer/verify/${encodeURIComponent(reference)}`);
   return { status: data.data.status, reason: data.data.gateway_response ?? data.data.reason };
+}
+
+/** Completes a transfer that Paystack is holding for the OTP it sent the business owner. */
+export async function finalizeTransfer(transferCode: string, otp: string): Promise<{ status: TransferStatus }> {
+  if (simulate()) {
+    if (otp !== '123456') throw new Error('Invalid OTP');
+    return { status: 'pending' };
+  }
+  const data = await paystackPost('/transfer/finalize_transfer', { transfer_code: transferCode, otp });
+  return { status: data.data.status };
+}
+
+/** Asks Paystack to send the transfer OTP again. */
+export async function resendTransferOtp(transferCode: string): Promise<void> {
+  if (simulate()) return;
+  await paystackPost('/transfer/resend_otp', { transfer_code: transferCode, reason: 'transfer' });
 }

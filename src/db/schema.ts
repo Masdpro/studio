@@ -273,7 +273,9 @@ export const withdrawals = sqliteTable('withdrawals', {
   amount: real('amount').notNull(), // taken from the wallet
   fee: real('fee').notNull(), // transfer fee
   net: real('net').notNull(), // sent to the bank
-  status: text('status', { enum: ['pending', 'success', 'failed', 'reversed'] }).notNull().default('pending'),
+  // awaiting_approval → (admin approves) → awaiting_otp → (admin enters Paystack OTP) → pending → success | failed | reversed;
+  // or rejected by an admin. Failed / reversed / rejected ones are refunded to the wallet.
+  status: text('status', { enum: ['awaiting_approval', 'awaiting_otp', 'pending', 'success', 'failed', 'reversed', 'rejected'] }).notNull().default('awaiting_approval'),
   transferCode: text('transfer_code'),
   failureReason: text('failure_reason'),
   bankName: text('bank_name').notNull(),

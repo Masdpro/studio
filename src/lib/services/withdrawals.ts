@@ -1,12 +1,15 @@
 import { db } from '@/db';
 import { bankAccounts, users, walletTransactions, withdrawals, wallets } from '@/db/schema';
 import { and, desc, eq, inArray } from 'drizzle-orm';
+
+/** Withdrawals that are still in progress (money held from the wallet, not yet paid or refunded). */
+export const OPEN_STATUSES = ['awaiting_approval', 'awaiting_otp', 'pending'] as const;
 import { randomUUID } from 'crypto';
 import { applyEntry, postEntry, InsufficientFundsError } from '@/lib/services/wallets';
 import { createNotification } from '@/lib/services/notifications';
 import { getUserRoles } from '@/lib/roles';
 import { getVerificationState } from '@/lib/verification';
-import { createTransferRecipient, initiateTransfer, listBanks, resolveBankAccount, verifyTransfer } from '@/lib/paystack';
+import { createTransferRecipient, finalizeTransfer, initiateTransfer, listBanks, resendTransferOtp, resolveBankAccount, verifyTransfer } from '@/lib/paystack';
 import { sendEmail } from '@/lib/notify';
 import { renderEmail } from '@/lib/email-template';
 
@@ -113,8 +116,8 @@ async function notifyAdmins(message: string) {
 }
 
 /**
- * Takes the amount from the wallet and sends it (less the transfer fee) to the user's bank
- * through Paystack. If Paystack refuses, the money goes straight back into the wallet.
+ * Holds the amount from the wallet and queues the withdrawal for an admin to approve.
+ * Nothing is sent to the bank until an admin approves it and confirms Paystack's OTP.
  */
 export async function requestWithdrawal(userId: string, amountInput: number) {
   const amount = round2(amountInput);
@@ -126,10 +129,10 @@ export async function requestWithdrawal(userId: string, amountInput: number) {
   const net = round2(amount - fee);
   const reference = `wd_${randomUUID().replace(/-/g, '')}`;
 
-  // Checks and the debit happen together, so two requests at once can't both pass.
+  // Checks and the hold happen together, so two requests at once can't both pass.
   db.transaction((tx) => {
-    const pending = tx.select({ id: withdrawals.id }).from(withdrawals).where(and(eq(withdrawals.userId, userId), eq(withdrawals.status, 'pending'))).get();
-    if (pending) throw new Error('You already have a withdrawal on its way. Try again when it has arrived.');
+    const open = tx.select({ id: withdrawals.id }).from(withdrawals).where(and(eq(withdrawals.userId, userId), inArray(withdrawals.status, [...OPEN_STATUSES]))).get();
+    if (open) throw new Error('You already have a withdrawal in progress. You can make another once it has been paid.');
     const { withdrawable } = getEarningsSummary(userId, tx);
     if (amount > withdrawable) throw new Error(`You can withdraw up to ${naira(withdrawable)} right now.`);
     applyEntry(tx, {
@@ -147,7 +150,7 @@ export async function requestWithdrawal(userId: string, amountInput: number) {
       amount,
       fee,
       net,
-      status: 'pending',
+      status: 'awaiting_approval',
       bankName: bank.bankName,
       accountNumber: bank.accountNumber,
       accountName: bank.accountName,
@@ -155,26 +158,85 @@ export async function requestWithdrawal(userId: string, amountInput: number) {
     }).run();
   });
 
-  try {
-    const result = await initiateTransfer({ amountNaira: net, recipientCode: bank.recipientCode, reference, reason: 'Closebuy earnings' });
-    db.update(withdrawals).set({ transferCode: result.transferCode }).where(eq(withdrawals.id, reference)).run();
-    if (result.status === 'success') await settleWithdrawal(reference, 'success');
-    else if (result.status === 'failed' || result.status === 'reversed') await settleWithdrawal(reference, result.status, 'Paystack declined the transfer.');
-    else if (result.status === 'otp') {
-      await settleWithdrawal(reference, 'failed', 'Transfers need OTP confirmation in Paystack; turn that off under Settings → Preferences.');
-    }
-  } catch (err) {
-    await settleWithdrawal(reference, 'failed', err instanceof Error ? err.message : 'Could not reach Paystack.');
-  }
+  const who = db.select({ name: users.displayName, email: users.email }).from(users).where(eq(users.id, userId)).get();
+  await notifyAdmins(`${who?.name ?? who?.email ?? 'A vendor'} asked to withdraw ${naira(amount)}. Approve it on the Payouts page.`);
   return db.select().from(withdrawals).where(eq(withdrawals.id, reference)).get()!;
 }
 
+function getWithdrawal(reference: string) {
+  const w = db.select().from(withdrawals).where(eq(withdrawals.id, reference)).get();
+  if (!w) throw new Error('Withdrawal not found.');
+  return w;
+}
+
+/** Admin approves: asks Paystack to send the transfer. Paystack then texts/emails the owner an OTP to confirm it. */
+export async function approveWithdrawal(reference: string) {
+  const w = getWithdrawal(reference);
+  if (w.status !== 'awaiting_approval') throw new Error('This withdrawal is no longer waiting for approval.');
+  const user = db.select().from(users).where(eq(users.id, w.userId)).get();
+  if (user?.suspendedAt) throw new Error('This account is suspended. Decline the withdrawal instead.');
+  const bank = getBankAccount(w.userId);
+  if (!bank) throw new Error('This person has no payout bank account any more. Decline the withdrawal instead.');
+  // Claim it first so a double click can't start two transfers.
+  const claimed = db.update(withdrawals).set({ status: 'pending' }).where(and(eq(withdrawals.id, reference), eq(withdrawals.status, 'awaiting_approval'))).run();
+  if (claimed.changes !== 1) throw new Error('This withdrawal is no longer waiting for approval.');
+
+  try {
+    const result = await initiateTransfer({ amountNaira: w.net, recipientCode: bank.recipientCode, reference, reason: 'Closebuy earnings' });
+    db.update(withdrawals).set({ transferCode: result.transferCode }).where(eq(withdrawals.id, reference)).run();
+    if (result.status === 'otp') {
+      db.update(withdrawals).set({ status: 'awaiting_otp' }).where(eq(withdrawals.id, reference)).run();
+    } else if (result.status === 'success') {
+      await settleWithdrawal(reference, 'success');
+    } else if (result.status === 'failed' || result.status === 'reversed') {
+      await settleWithdrawal(reference, result.status, 'Paystack declined the transfer.');
+    }
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Could not reach Paystack.';
+    await settleWithdrawal(reference, 'failed', reason);
+    throw new Error(`Paystack refused the transfer: ${reason} The money is back in their wallet.`);
+  }
+  return getWithdrawal(reference);
+}
+
+/** Admin types the OTP Paystack sent; the transfer is released to the bank. */
+export async function confirmWithdrawalOtp(reference: string, otp: string) {
+  const w = getWithdrawal(reference);
+  if (w.status !== 'awaiting_otp' || !w.transferCode) throw new Error('This withdrawal is not waiting for an OTP.');
+  const code = String(otp ?? '').trim();
+  if (!/^\d{4,8}$/.test(code)) throw new Error('Enter the OTP Paystack sent you.');
+  let status;
+  try {
+    ({ status } = await finalizeTransfer(w.transferCode, code));
+  } catch (err) {
+    throw new Error(err instanceof Error ? err.message : 'Paystack did not accept the OTP.');
+  }
+  db.update(withdrawals).set({ status: 'pending' }).where(and(eq(withdrawals.id, reference), eq(withdrawals.status, 'awaiting_otp'))).run();
+  if (status === 'success') await settleWithdrawal(reference, 'success');
+  else if (status === 'failed' || status === 'reversed') await settleWithdrawal(reference, status, 'Paystack declined the transfer.');
+  return getWithdrawal(reference);
+}
+
+export async function resendWithdrawalOtp(reference: string) {
+  const w = getWithdrawal(reference);
+  if (w.status !== 'awaiting_otp' || !w.transferCode) throw new Error('This withdrawal is not waiting for an OTP.');
+  await resendTransferOtp(w.transferCode);
+}
+
+/** Admin declines: the held money goes back to the wallet. */
+export async function rejectWithdrawal(reference: string, reason: string) {
+  const w = getWithdrawal(reference);
+  if (w.status !== 'awaiting_approval' && w.status !== 'awaiting_otp') throw new Error('This withdrawal can no longer be declined.');
+  await settleWithdrawal(reference, 'rejected', reason);
+  return getWithdrawal(reference);
+}
+
 /** Records how a withdrawal ended. A failed or reversed one puts the money back. Runs once per withdrawal. */
-export async function settleWithdrawal(reference: string, outcome: 'success' | 'failed' | 'reversed', reason?: string) {
+export async function settleWithdrawal(reference: string, outcome: 'success' | 'failed' | 'reversed' | 'rejected', reason?: string) {
   const w = db.select().from(withdrawals).where(eq(withdrawals.id, reference)).get();
   if (!w) return;
   // A success can still be reversed by the bank later; anything else is final.
-  if (!(w.status === 'pending' || (w.status === 'success' && outcome === 'reversed'))) return;
+  if (!((OPEN_STATUSES as readonly string[]).includes(w.status) || (w.status === 'success' && outcome === 'reversed'))) return;
   const claimed = db.update(withdrawals)
     .set({ status: outcome, failureReason: outcome === 'success' ? null : reason ?? null, completedAt: new Date() })
     .where(and(eq(withdrawals.id, reference), eq(withdrawals.status, w.status)))
@@ -190,16 +252,20 @@ export async function settleWithdrawal(reference: string, outcome: 'success' | '
     userId: w.userId,
     type: 'withdrawal_reversal',
     amount: w.amount,
-    description: `Withdrawal to ${w.bankName} ${maskAccount(w.accountNumber)} didn't go through · returned to wallet`,
+    description: outcome === 'rejected'
+      ? `Withdrawal declined${reason ? ` (${reason})` : ''} · returned to wallet`
+      : `Withdrawal to ${w.bankName} ${maskAccount(w.accountNumber)} didn't go through · returned to wallet`,
   });
   await createNotification({
     userId: w.userId,
-    message: `Your ${naira(w.amount)} withdrawal didn't go through, so the money is back in your wallet. You can try again later.`,
+    message: outcome === 'rejected'
+      ? `Your ${naira(w.amount)} withdrawal was declined${reason ? `: ${reason}` : ''}. The money is back in your wallet.`
+      : `Your ${naira(w.amount)} withdrawal didn't go through, so the money is back in your wallet. You can try again later.`,
     category: 'Transaction',
     link: '/wallet',
     iconName: 'XCircle',
   });
-  await notifyAdmins(`A ${naira(w.amount)} withdrawal failed (${reason ?? outcome}). Check the Paystack balance and transfer settings.`);
+  if (outcome !== 'rejected') await notifyAdmins(`A ${naira(w.amount)} withdrawal failed (${reason ?? outcome}). Check the Paystack balance and transfer settings.`);
 }
 
 /** Re-checks withdrawals still pending with Paystack (in case a webhook was missed). */

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, Banknote, Building2, Loader2, Wallet } from 'lucide-react';
 
 type Entry = { id: string; type: string; amount: number; balanceAfter: number; fee: number | null; orderId: string | null; description: string; createdAt: number };
-type WithdrawalRow = { id: string; amount: number; fee: number; net: number; status: 'pending' | 'success' | 'failed' | 'reversed'; failureReason: string | null; bankName: string; accountNumber: string; createdAt: number };
+type WithdrawalRow = { id: string; amount: number; fee: number; net: number; status: 'awaiting_approval' | 'awaiting_otp' | 'pending' | 'success' | 'failed' | 'reversed' | 'rejected'; failureReason: string | null; bankName: string; accountNumber: string; createdAt: number };
 type Payouts =
   | { earner: false }
   | {
@@ -44,12 +44,23 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<WithdrawalRow['status'], string> = {
+  awaiting_approval: 'bg-amber-100 text-amber-800 border-amber-300',
+  awaiting_otp: 'bg-amber-100 text-amber-800 border-amber-300',
+  rejected: 'bg-red-100 text-red-800 border-red-300',
   pending: 'bg-amber-100 text-amber-800 border-amber-300',
   success: 'bg-green-100 text-green-800 border-green-300',
   failed: 'bg-red-100 text-red-800 border-red-300',
   reversed: 'bg-red-100 text-red-800 border-red-300',
 };
-const STATUS_LABEL: Record<WithdrawalRow['status'], string> = { pending: 'On its way', success: 'Paid', failed: 'Failed · refunded', reversed: 'Reversed · refunded' };
+const STATUS_LABEL: Record<WithdrawalRow['status'], string> = {
+  awaiting_approval: 'Awaiting approval',
+  awaiting_otp: 'Being processed',
+  pending: 'On its way',
+  success: 'Paid',
+  failed: 'Failed · refunded',
+  reversed: 'Reversed · refunded',
+  rejected: 'Declined · refunded',
+};
 
 export function WalletView() {
   const { toast } = useToast();
@@ -176,7 +187,7 @@ function EarningsCard({
 
   const value = Number(amount.replace(/,/g, ''));
   const fee = value > 0 ? transferFee(value) : 0;
-  const pending = withdrawals.some((w) => w.status === 'pending');
+  const pending = withdrawals.some((w) => w.status === 'pending' || w.status === 'awaiting_approval' || w.status === 'awaiting_otp');
 
   async function withdraw(e: React.FormEvent) {
     e.preventDefault();
@@ -191,7 +202,7 @@ function EarningsCard({
         setError(body.error ?? 'Could not start the withdrawal.');
       } else {
         setAmount('');
-        toast({ title: body.withdrawal?.status === 'success' ? 'Withdrawal sent' : 'Withdrawal on its way', description: `${naira(body.withdrawal.net)} is being sent to your bank account.` });
+        toast({ title: 'Withdrawal requested', description: `${naira(body.withdrawal.net)} will be sent to your bank account once Closebuy approves it.` });
       }
       onChanged();
     } finally {
@@ -206,7 +217,7 @@ function EarningsCard({
           <Banknote className="h-5 w-5 text-primary" /> Earnings & withdrawals
         </CardTitle>
         <CardDescription>
-          Earnings arrive as soon as an order is delivered or collected.
+          Earnings arrive as soon as an order is delivered or collected. Withdrawals are checked and approved by Closebuy, usually within a working day.
           {data.serviceFeePercent > 0 ? ` A ${data.serviceFeePercent}% Closebuy service fee is taken from each sale.` : ''}
         </CardDescription>
       </CardHeader>
@@ -285,7 +296,7 @@ function EarningsCard({
                 Transfer fee {naira(fee)} · you receive <span className="font-medium text-foreground">{naira(Math.max(0, value - fee))}</span> in {bankAccount.bankName} {bankAccount.accountNumber}
               </p>
             )}
-            {pending && <p className="text-xs text-muted-foreground">A withdrawal is on its way. You can make another once it arrives.</p>}
+            {pending && <p className="text-xs text-muted-foreground">A withdrawal is in progress. You can make another once it has been paid.</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
           </form>
         ) : null}
@@ -301,7 +312,9 @@ function EarningsCard({
                     <p className="text-xs text-muted-foreground">
                       {when(w.createdAt)} · {naira(w.amount)} incl. {naira(w.fee)} fee
                     </p>
-                    {w.failureReason && w.status !== 'success' && <p className="text-xs text-muted-foreground">Money returned to your wallet.</p>}
+                    {(w.status === 'failed' || w.status === 'reversed' || w.status === 'rejected') && (
+                      <p className="text-xs text-muted-foreground">{w.status === 'rejected' && w.failureReason ? `${w.failureReason}. ` : ''}Money returned to your wallet.</p>
+                    )}
                   </div>
                   <Badge variant="outline" className={cn('shrink-0', STATUS_STYLE[w.status])}>
                     {STATUS_LABEL[w.status]}
