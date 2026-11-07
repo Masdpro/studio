@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -91,12 +92,25 @@ export function VendorRegistrationForm() {
         router.push('/account/verification');
         return;
       }
-      const { devCode } = await signUp(contactEmail, password ?? "", 'vendor', data.businessName, {
+      const { devCode, emailVerified, addedToExisting } = await signUp(contactEmail, password ?? "", 'vendor', data.businessName, {
         phone: data.phone,
         profile: { contactEmail, ...vendorProfile },
       });
+      if (emailVerified) {
+        // Existing, already-confirmed account: the new profile was added to it, so sign straight in.
+        toast({ title: 'Added to your Closebuy account', description: 'Opening your verification page.' });
+        setRedirecting(true);
+        try {
+          await signIn(contactEmail, password ?? "");
+          router.push('/account/verification');
+          router.refresh();
+        } catch {
+          router.push('/auth/login?callbackUrl=%2Faccount%2Fverification');
+        }
+        return;
+      }
       toast({
-        title: 'Registration Submitted!',
+        title: addedToExisting ? 'Added to your Closebuy account' : 'Registration Submitted!',
         description: 'Enter the code we emailed you to continue to verification.',
       });
       setPending({ email: contactEmail, password: password ?? "", devCode });
@@ -142,7 +156,15 @@ export function VendorRegistrationForm() {
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {/reset your password/.test(error) && (
+                <>
+                  {' '}
+                  <Link href="/auth/forgot-password" className="font-medium underline">Reset password</Link>
+                </>
+              )}
+            </AlertDescription>
           </Alert>
         )}
         <Form {...form}>
@@ -195,8 +217,11 @@ export function VendorRegistrationForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="At least 8 characters" {...field} />
+                    <Input type="password" placeholder="At least 8 characters" autoComplete="current-password" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    Already shop on Closebuy? Use the same email and password and we&apos;ll add your business to that account, so one login covers everything.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
