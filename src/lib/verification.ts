@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, verificationCodes, verificationDocuments } from '@/db/schema';
 import { sendEmail, sendSms } from '@/lib/notify';
+import { renderEmail } from '@/lib/email-template';
 
 export type DocumentKind = 'business_proof' | 'store_photo' | 'government_id' | 'selfie';
 
@@ -35,7 +36,7 @@ export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   selfie: 'A clear selfie of your face',
 };
 
-const EMAIL_TTL_MS = 24 * 60 * 60 * 1000;
+const EMAIL_TTL_MS = 30 * 60 * 1000;
 const PHONE_TTL_MS = 10 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -62,28 +63,60 @@ function recentCode(userId: string, channel: 'email' | 'phone' | 'password_reset
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
 }
 
-/** Creates a fresh email verification link for the user and "sends" it. Returns the link for dev display. */
-export async function sendEmailVerification(userId: string): Promise<{ link: string } | { error: string; retryInSeconds: number }> {
+/** Emails the user a fresh 6-digit confirmation code (valid 30 minutes). Returns the code for dev display. */
+export async function sendEmailVerification(userId: string): Promise<{ code: string } | { error: string; retryInSeconds: number }> {
   const user = db.select().from(users).where(eq(users.id, userId)).get();
   if (!user) return { error: 'Unknown user.', retryInSeconds: 0 };
 
   const last = recentCode(userId, 'email');
   if (last && Date.now() - last.createdAt.getTime() < RESEND_COOLDOWN_MS) {
-    return { error: 'Please wait a minute before asking for another link.', retryInSeconds: Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - last.createdAt.getTime())) / 1000) };
+    return { error: 'Please wait a minute before asking for another code.', retryInSeconds: Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - last.createdAt.getTime())) / 1000) };
   }
+  // Wrong guesses carry over to the next code for an hour, so asking for fresh codes cannot reset the limit.
+  const carried = last && Date.now() - last.createdAt.getTime() < HOUR_MS ? last.attempts : 0;
 
   db.delete(verificationCodes).where(and(eq(verificationCodes.userId, userId), eq(verificationCodes.channel, 'email'))).run();
-  const token = randomBytes(32).toString('hex');
+  const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   db.insert(verificationCodes)
-    .values({ id: randomUUID(), userId, channel: 'email', target: user.email, codeHash: sha256(token), expiresAt: new Date(Date.now() + EMAIL_TTL_MS), createdAt: new Date() })
+    .values({ id: randomUUID(), userId, channel: 'email', target: user.email, codeHash: sha256(code), attempts: carried, expiresAt: new Date(Date.now() + EMAIL_TTL_MS), createdAt: new Date() })
     .run();
 
-  const link = `${appUrl()}/api/auth/verify-email?token=${token}&uid=${encodeURIComponent(userId)}`;
-  await sendEmail(user.email, 'Confirm your Closebuy email address', `Hi ${user.displayName ?? ''},\n\nConfirm your email by opening this link (valid for 24 hours):\n${link}`);
-  return { link };
+  await sendEmail(
+    user.email,
+    `${code} is your Closebuy confirmation code`,
+    renderEmail({
+      greetingName: user.displayName,
+      intro: ['Welcome to Closebuy! Enter this code on the confirmation page to activate your account.'],
+      code,
+      codeNote: 'The code expires in 30 minutes.',
+      outro: ["Didn't sign up for Closebuy? You can ignore this email. Never share this code with anyone."],
+    }),
+  );
+  return { code };
 }
 
-/** Marks the email verified if the link is valid. */
+/**
+ * Checks an emailed code for the account with this address. Errors are the same whether
+ * or not the address has an account, so this can't be used to discover who has signed up.
+ */
+export function confirmEmailCode(email: string, code: string): { ok: boolean; error?: string } {
+  const generic = 'That code is not right or has expired. Check the latest email or ask for a new code.';
+  const user = db.select().from(users).where(eq(users.email, email.trim().toLowerCase())).get();
+  if (!user) return { ok: false, error: generic };
+  if (user.emailVerifiedAt) return { ok: true };
+  const row = recentCode(user.id, 'email');
+  if (!row || row.expiresAt.getTime() < Date.now()) return { ok: false, error: generic };
+  if (row.attempts >= MAX_ATTEMPTS) return { ok: false, error: 'Too many wrong attempts. Wait an hour, then ask for a new code.' };
+  if (!safeEqual(row.codeHash, sha256(code.trim()))) {
+    db.update(verificationCodes).set({ attempts: row.attempts + 1 }).where(eq(verificationCodes.id, row.id)).run();
+    return { ok: false, error: generic };
+  }
+  db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, user.id)).run();
+  db.delete(verificationCodes).where(eq(verificationCodes.id, row.id)).run();
+  return { ok: true };
+}
+
+/** Marks the email verified from a link sent before the switch to codes (kept so those links still work). */
 export function confirmEmailToken(userId: string, token: string): boolean {
   const row = recentCode(userId, 'email');
   if (!row || row.expiresAt.getTime() < Date.now() || !safeEqual(row.codeHash, sha256(token))) return false;
@@ -184,7 +217,16 @@ export async function sendPasswordReset(email: string): Promise<{ link?: string 
     .values({ id: randomUUID(), userId: user.id, channel: 'password_reset', target: user.email, codeHash: sha256(token), expiresAt: new Date(Date.now() + RESET_TTL_MS), createdAt: new Date() })
     .run();
   const link = `${appUrl()}/auth/reset-password?token=${token}&uid=${encodeURIComponent(user.id)}`;
-  await sendEmail(user.email, 'Reset your Closebuy password', `Hi ${user.displayName ?? ''},\n\nSomeone (hopefully you) asked to reset your Closebuy password. Open this link within an hour to choose a new one:\n${link}\n\nIf this wasn't you, ignore this email; your password stays the same.`);
+  await sendEmail(
+    user.email,
+    'Reset your Closebuy password',
+    renderEmail({
+      greetingName: user.displayName,
+      intro: ['Someone (hopefully you) asked to reset your Closebuy password. Tap the button below within an hour to choose a new one.'],
+      button: { label: 'Choose a new password', url: link },
+      outro: ["If this wasn't you, ignore this email; your password stays the same."],
+    }),
+  );
   return { link };
 }
 
@@ -206,7 +248,12 @@ export async function sendAdminInvite(userId: string, invitedBy: string): Promis
   await sendEmail(
     user.email,
     "You've been added as a Closebuy admin",
-    `Hi ${user.displayName ?? ''},\n\n${invitedBy} has added you as an admin on Closebuy. Open this link within 3 days to choose your password:\n${link}\n\nThen sign in at ${appUrl()}/auth/login with this email address.\n\nIf you weren't expecting this, ignore this email.`,
+    renderEmail({
+      greetingName: user.displayName,
+      intro: [`${invitedBy} has added you as an admin on Closebuy. Tap the button below within 3 days to choose your password, then sign in with this email address.`],
+      button: { label: 'Set up my admin account', url: link },
+      outro: ["If you weren't expecting this, ignore this email."],
+    }),
   );
   return { link };
 }
@@ -222,6 +269,14 @@ export async function resetPasswordWithToken(userId: string, token: string, pass
     .where(eq(users.id, userId))
     .run();
   db.delete(verificationCodes).where(eq(verificationCodes.id, row.id)).run();
-  await sendEmail(user.email, 'Your Closebuy password was changed', `Hi ${user.displayName ?? ''},\n\nYour password was just reset and every device was signed out. If this wasn't you, reset it again right away and contact support.`);
+  await sendEmail(
+    user.email,
+    'Your Closebuy password was changed',
+    renderEmail({
+      greetingName: user.displayName,
+      intro: ['Your password was just reset and every device was signed out.'],
+      outro: ["If this wasn't you, reset it again right away and contact support@cbuyapp.com."],
+    }),
+  );
   return true;
 }

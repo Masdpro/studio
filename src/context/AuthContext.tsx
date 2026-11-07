@@ -33,7 +33,7 @@ export function useAuth() {
   /**
    * Creates the account but does NOT sign in: the user must confirm their email first.
    * `extra` carries a phone number and (for vendors/agents) the business/agent profile.
-   * Returns a dev-only `devLink` to show on screen, since no real emails are sent yet.
+   * Returns a dev-only `devCode` to show on screen, since no real emails are sent yet.
    */
   const signUp = async (
     email: string,
@@ -41,7 +41,7 @@ export function useAuth() {
     role: UserRole,
     displayName?: string,
     extra?: { phone?: string; profile?: Record<string, unknown> },
-  ): Promise<{ devLink?: string }> => {
+  ): Promise<{ devCode?: string }> => {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -51,8 +51,8 @@ export function useAuth() {
       const { error } = await res.json().catch(() => ({ error: 'Registration failed' }));
       throw new Error(error ?? 'Registration failed');
     }
-    const { devLink } = await res.json().catch(() => ({}));
-    return { devLink };
+    const { devCode } = await res.json().catch(() => ({}));
+    return { devCode };
   };
 
   const signOut = () => nextAuthSignOut({ redirect: false });

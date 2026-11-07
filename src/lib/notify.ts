@@ -8,7 +8,10 @@
  * A failed send is logged, never thrown, so a provider outage can't break
  * sign-up or checkout; the user can ask for a new link/code.
  */
-export async function sendEmail(to: string, subject: string, body: string): Promise<void> {
+import type { EmailContent } from '@/lib/email-template';
+
+export async function sendEmail(to: string, subject: string, content: string | EmailContent): Promise<void> {
+  const { text: body, html } = typeof content === 'string' ? { text: content, html: undefined } : content;
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM; // e.g. "Closebuy <no-reply@closebuy.ng>" (domain verified in Resend)
   if (!key || !from) {
@@ -19,7 +22,7 @@ export async function sendEmail(to: string, subject: string, body: string): Prom
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [to], subject, text: body }),
+      body: JSON.stringify({ from, to: [to], subject, text: body, ...(html ? { html } : {}) }),
     });
     if (!res.ok) console.error(`[email] Resend refused the message to ${to}: ${res.status} ${await res.text()}`);
   } catch (err) {

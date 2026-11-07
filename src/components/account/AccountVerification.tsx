@@ -131,7 +131,7 @@ export function AccountVerification() {
         )}
 
         <Step done={state.emailVerified} title="Email address">
-          <p className="text-sm text-muted-foreground">{state.emailVerified ? `${state.email} is confirmed.` : 'Open the link we emailed you.'}</p>
+          <p className="text-sm text-muted-foreground">{state.emailVerified ? `${state.email} is confirmed.` : 'Enter the code we emailed you.'}</p>
         </Step>
 
         <Step done={state.phoneVerified} title="Phone number">

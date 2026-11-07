@@ -79,7 +79,7 @@ export function DeliveryAgentRegistrationForm() {
         router.push('/account/verification');
         return;
       }
-      const { devLink } = await signUp(email, password ?? "", 'delivery_agent', data.name, {
+      const { devCode } = await signUp(email, password ?? "", 'delivery_agent', data.name, {
         phone: data.phone,
         profile: { email, ...agentProfile },
       });
@@ -87,7 +87,7 @@ export function DeliveryAgentRegistrationForm() {
         title: 'Registration Submitted!',
         description: 'Confirm your email, then upload your documents for review.',
       });
-      goToCheckEmail(router, email, devLink);
+      goToCheckEmail(router, email, devCode);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setError(msg);

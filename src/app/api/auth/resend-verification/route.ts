@@ -9,10 +9,10 @@ import { exposeDevCodes } from '@/lib/notify';
 export async function POST(request: Request) {
   const { email } = (await request.json().catch(() => ({}))) as { email?: string };
   const user = email ? db.select().from(users).where(eq(users.email, email.trim().toLowerCase())).get() : null;
-  let devLink: string | undefined;
+  let devCode: string | undefined;
   if (user && !user.emailVerifiedAt) {
     const sent = await sendEmailVerification(user.id);
-    if (exposeDevCodes && 'link' in sent) devLink = sent.link;
+    if (exposeDevCodes && 'code' in sent) devCode = sent.code;
   }
-  return NextResponse.json({ ok: true, devLink });
+  return NextResponse.json({ ok: true, devCode });
 }

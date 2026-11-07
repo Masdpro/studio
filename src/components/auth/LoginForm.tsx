@@ -97,7 +97,7 @@ export function LoginForm() {
         {verified === '0' && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>That confirmation link is invalid or has expired. Sign in to request a new one.</AlertDescription>
+            <AlertDescription>That confirmation link is invalid or has expired. Sign in to get a new code.</AlertDescription>
           </Alert>
         )}
         {error && (
@@ -109,7 +109,7 @@ export function LoginForm() {
                 <>
                   {' '}
                   <Link href={`/auth/check-email?email=${encodeURIComponent(unverifiedEmail)}`} className="underline font-medium">
-                    Send me a new link
+                    Enter my code
                   </Link>
                 </>
               )}

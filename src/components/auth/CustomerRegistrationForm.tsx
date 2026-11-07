@@ -51,8 +51,8 @@ export function CustomerRegistrationForm() {
     setError(null);
     setIsLoading(true);
     try {
-      const { devLink } = await signUp(data.email, data.password, 'customer', data.displayName);
-      goToCheckEmail(router, data.email, devLink);
+      const { devCode } = await signUp(data.email, data.password, 'customer', data.displayName);
+      goToCheckEmail(router, data.email, devCode);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {

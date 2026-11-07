@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
-import { confirmEmailToken } from '@/lib/verification';
+import { confirmEmailCode, confirmEmailToken } from '@/lib/verification';
 
-/** The link in the verification email lands here, then bounces to the sign-in page. */
+/** POST { email, code }: checks the 6-digit code from the confirmation email. */
+export async function POST(request: Request) {
+  const { email, code } = (await request.json().catch(() => ({}))) as { email?: string; code?: string };
+  if (!email || !code || !/^\d{6}$/.test(code.trim())) {
+    return NextResponse.json({ error: 'Enter the 6-digit code from the email.' }, { status: 400 });
+  }
+  const result = confirmEmailCode(email, code);
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+  return NextResponse.json({ ok: true });
+}
+
+/** Older confirmation emails carried a link; it still lands here and bounces to the sign-in page. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token') ?? '';

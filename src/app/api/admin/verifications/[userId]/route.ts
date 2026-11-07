@@ -6,6 +6,8 @@ import { users } from '@/db/schema';
 import { getVerificationState } from '@/lib/verification';
 import { createNotification } from '@/lib/services/notifications';
 import { sendEmail } from '@/lib/notify';
+import { renderEmail } from '@/lib/email-template';
+import { appUrl } from '@/lib/verification';
 
 /** PATCH { action: 'approve' } or { action: 'reject', note } */
 export async function PATCH(request: Request, { params }: { params: Promise<{ userId: string }> }) {
@@ -23,7 +25,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
     }
     db.update(users).set({ approvalStatus: 'approved', approvalNote: null }).where(eq(users.id, userId)).run();
     await createNotification({ userId, message: 'Your Closebuy account has been verified. You can now start trading.', category: 'Activity', link: '/account/verification' });
-    await sendEmail(user.email, 'Your Closebuy account is approved', 'Good news — your account has been verified and you can now start trading on Closebuy.');
+    await sendEmail(
+      user.email,
+      'Your Closebuy account is approved',
+      renderEmail({
+        greetingName: user.displayName,
+        intro: ['Good news — your account has been verified and you can now start trading on Closebuy.'],
+        button: { label: 'Open Closebuy', url: `${appUrl()}/auth/login` },
+      }),
+    );
     return NextResponse.json({ ok: true });
   }
 
@@ -32,7 +42,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
     if (reason.length < 5) return NextResponse.json({ error: 'Give the user a short reason so they can fix it.' }, { status: 400 });
     db.update(users).set({ approvalStatus: 'rejected', approvalNote: reason }).where(eq(users.id, userId)).run();
     await createNotification({ userId, message: `Your verification needs attention: ${reason}`, category: 'Activity', link: '/account/verification' });
-    await sendEmail(user.email, 'Your Closebuy verification needs attention', `We could not approve your account yet.\n\nReason: ${reason}\n\nPlease sign in, fix this under Account verification and re-submit.`);
+    await sendEmail(
+      user.email,
+      'Your Closebuy verification needs attention',
+      renderEmail({
+        greetingName: user.displayName,
+        intro: ['We could not approve your account yet.', `Reason: ${reason}`, 'Please sign in, fix this under Account verification and re-submit.'],
+        button: { label: 'Sign in to Closebuy', url: `${appUrl()}/auth/login?callbackUrl=${encodeURIComponent('/account/verification')}` },
+      }),
+    );
     return NextResponse.json({ ok: true });
   }
 

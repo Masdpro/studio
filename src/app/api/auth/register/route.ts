@@ -87,7 +87,7 @@ export async function POST(request: Request) {
   if (role === 'delivery_agent' && profile) await upsertDeliveryAgent(id, pick(profile, AGENT_FIELDS) as any);
 
   const sent = await sendEmailVerification(id);
-  // In development the link is returned so it can be shown on screen (nothing is really emailed).
-  const devLink = exposeDevCodes && 'link' in sent ? sent.link : undefined;
-  return NextResponse.json({ id, email, role, devLink }, { status: 201 });
+  // In development the code is returned so it can be shown on screen (nothing is really emailed).
+  const devCode = exposeDevCodes && 'code' in sent ? sent.code : undefined;
+  return NextResponse.json({ id, email, role, devCode }, { status: 201 });
 }

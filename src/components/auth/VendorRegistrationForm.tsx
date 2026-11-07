@@ -87,7 +87,7 @@ export function VendorRegistrationForm() {
         router.push('/account/verification');
         return;
       }
-      const { devLink } = await signUp(contactEmail, password ?? "", 'vendor', data.businessName, {
+      const { devCode } = await signUp(contactEmail, password ?? "", 'vendor', data.businessName, {
         phone: data.phone,
         profile: { contactEmail, ...vendorProfile },
       });
@@ -95,7 +95,7 @@ export function VendorRegistrationForm() {
         title: 'Registration Submitted!',
         description: 'Confirm your email, then upload your documents for review.',
       });
-      goToCheckEmail(router, contactEmail, devLink);
+      goToCheckEmail(router, contactEmail, devCode);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setError(msg);
