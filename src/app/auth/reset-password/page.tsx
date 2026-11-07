@@ -74,13 +74,32 @@ function ResetForm() {
   );
 }
 
+function ResetHeading({ invite }: { invite: boolean }) {
+  return invite ? (
+    <>
+      <CardTitle className="flex items-center gap-2 text-2xl"><KeyRound className="h-6 w-6 text-primary" />Welcome to the Closebuy team</CardTitle>
+      <CardDescription>You&apos;ve been added as an admin. Choose a password, then sign in with your work email.</CardDescription>
+    </>
+  ) : (
+    <>
+      <CardTitle className="flex items-center gap-2 text-2xl"><KeyRound className="h-6 w-6 text-primary" />Choose a new password</CardTitle>
+      <CardDescription>After this, you&apos;ll be signed out on every device and can sign in with the new password.</CardDescription>
+    </>
+  );
+}
+
+function ResetHeadingFromLink() {
+  return <ResetHeading invite={useSearchParams().get('invite') === '1'} />;
+}
+
 export default function ResetPasswordPage() {
   return (
     <div className="container mx-auto py-12">
       <Card className="w-full max-w-md mx-auto">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl"><KeyRound className="h-6 w-6 text-primary" />Choose a new password</CardTitle>
-          <CardDescription>After this, you&apos;ll be signed out on every device and can sign in with the new password.</CardDescription>
+          <Suspense fallback={<ResetHeading invite={false} />}>
+            <ResetHeadingFromLink />
+          </Suspense>
         </CardHeader>
         <CardContent>
           <Suspense>

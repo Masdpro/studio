@@ -21,6 +21,7 @@ try { sqlite.exec('ALTER TABLE users ADD COLUMN address TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { sqlite.exec('ALTER TABLE users ADD COLUMN suspended_at INTEGER'); } catch {}
 try { sqlite.exec('ALTER TABLE users ADD COLUMN suspended_reason TEXT'); } catch {}
+try { sqlite.exec('ALTER TABLE users ADD COLUMN is_super_admin INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { sqlite.exec('ALTER TABLE vendor_branches ADD COLUMN account_user_id TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE vendor_branches ADD COLUMN image_url TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN branch_id TEXT'); } catch {}

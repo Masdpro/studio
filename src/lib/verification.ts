@@ -188,6 +188,29 @@ export async function sendPasswordReset(email: string): Promise<{ link?: string 
   return { link };
 }
 
+const INVITE_TTL_MS = 72 * 60 * 60 * 1000;
+
+/**
+ * Emails a new admin a link (valid 3 days) to choose their own password. Uses the same
+ * one-time-link mechanism as password resets; any earlier unused link stops working.
+ */
+export async function sendAdminInvite(userId: string, invitedBy: string): Promise<{ link: string } | null> {
+  const user = db.select().from(users).where(eq(users.id, userId)).get();
+  if (!user) return null;
+  db.delete(verificationCodes).where(and(eq(verificationCodes.userId, user.id), eq(verificationCodes.channel, 'password_reset'))).run();
+  const token = randomBytes(32).toString('hex');
+  db.insert(verificationCodes)
+    .values({ id: randomUUID(), userId: user.id, channel: 'password_reset', target: user.email, codeHash: sha256(token), expiresAt: new Date(Date.now() + INVITE_TTL_MS), createdAt: new Date() })
+    .run();
+  const link = `${appUrl()}/auth/reset-password?token=${token}&uid=${encodeURIComponent(user.id)}&invite=1`;
+  await sendEmail(
+    user.email,
+    "You've been added as a Closebuy admin",
+    `Hi ${user.displayName ?? ''},\n\n${invitedBy} has added you as an admin on Closebuy. Open this link within 3 days to choose your password:\n${link}\n\nThen sign in at ${appUrl()}/auth/login with this email address.\n\nIf you weren't expecting this, ignore this email.`,
+  );
+  return { link };
+}
+
 /** Sets a new password from a reset link, then signs the account out everywhere. */
 export async function resetPasswordWithToken(userId: string, token: string, passwordHash: string): Promise<boolean> {
   const row = recentCode(userId, 'password_reset');
