@@ -25,6 +25,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Bike, UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
+import { DEFAULT_COUNTRY } from '@/lib/places';
+import { CityInput, CountrySelect } from '@/components/forms/PlaceFields';
 
 const deliveryAgentRegistrationSchema = z.object({
   name: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
@@ -56,7 +58,7 @@ export function DeliveryAgentRegistrationForm() {
       phone: '',
       streetAddress: '',
       city: '',
-      country: '',
+      country: DEFAULT_COUNTRY,
       vehicleDetails: '',
     },
   });
@@ -190,7 +192,7 @@ export function DeliveryAgentRegistrationForm() {
                 <FormItem>
                   <FormLabel>City</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your City" {...field} />
+                    <CityInput country={form.watch('country')} value={field.value ?? ''} onValueChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -203,7 +205,7 @@ export function DeliveryAgentRegistrationForm() {
                 <FormItem>
                   <FormLabel>Country</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your Country" {...field} />
+                    <CountrySelect value={field.value ?? ''} onValueChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

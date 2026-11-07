@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import type { Market, Vendor } from '@/lib/types';
+import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
 
 const NO_MARKET_VALUE = '__none__';
 
@@ -188,7 +189,7 @@ export function VendorFormDialog({ vendor, markets, open, onOpenChange, onSaved 
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="E.g., Lagos Island, Lagos" {...field} />
+                          <CityInput country={form.watch('country')} value={field.value ?? ''} onValueChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -201,7 +202,7 @@ export function VendorFormDialog({ vendor, markets, open, onOpenChange, onSaved 
                       <FormItem>
                         <FormLabel>Country</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nigeria" {...field} />
+                          <CountrySelect value={field.value ?? ''} onValueChange={field.onChange} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -251,7 +252,7 @@ export function VendorFormDialog({ vendor, markets, open, onOpenChange, onSaved 
                     <FormItem>
                       <FormLabel>Operating Hours (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="E.g., 9 AM - 6 PM, Mon-Sat" {...field} />
+                        <OperatingHoursInput value={field.value ?? ''} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

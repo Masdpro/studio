@@ -14,6 +14,7 @@ import type { VendorBranch } from '@/lib/types';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { BranchAccountControl } from '@/components/vendor/BranchAccountControl';
 import { SafeImage } from '@/components/ui/safe-image';
+import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
 
 const STATUSES = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 const NO_MARKET = 'none';
@@ -136,8 +137,8 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
             <div><Label htmlFor="b-name">Branch name</Label><Input id="b-name" value={form.name} onChange={set('name')} placeholder="e.g. Wuse 2 branch" /></div>
             <div><Label htmlFor="b-street">Street address</Label><Input id="b-street" value={form.streetAddress} onChange={set('streetAddress')} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label htmlFor="b-city">City</Label><Input id="b-city" value={form.city} onChange={set('city')} /></div>
-              <div><Label htmlFor="b-country">Country</Label><Input id="b-country" value={form.country} onChange={set('country')} /></div>
+              <div><Label htmlFor="b-city">City</Label><CityInput id="b-city" country={form.country} value={form.city} onValueChange={(v) => setForm((f) => ({ ...f, city: v }))} /></div>
+              <div><Label htmlFor="b-country">Country</Label><CountrySelect id="b-country" value={form.country} onValueChange={(v) => setForm((f) => ({ ...f, country: v }))} /></div>
             </div>
             <div>
               <Label htmlFor="b-tag">Area (used by the city/area filter)</Label>
@@ -154,10 +155,8 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label htmlFor="b-phone">Branch phone</Label><Input id="b-phone" value={form.phone} onChange={set('phone')} /></div>
-              <div><Label htmlFor="b-hours">Opening hours</Label><Input id="b-hours" value={form.operatingHours} onChange={set('operatingHours')} placeholder="9 AM - 6 PM, Mon-Sat" /></div>
-            </div>
+            <div><Label htmlFor="b-phone">Branch phone</Label><Input id="b-phone" value={form.phone} onChange={set('phone')} /></div>
+            <div><Label>Opening hours</Label><OperatingHoursInput value={form.operatingHours} onChange={(v) => setForm((f) => ({ ...f, operatingHours: v }))} /></div>
             <div>
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>

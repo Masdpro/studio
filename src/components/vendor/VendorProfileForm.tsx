@@ -22,6 +22,8 @@ import type { Vendor } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
+import { DEFAULT_COUNTRY } from '@/lib/places';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -35,7 +37,7 @@ const vendorProfileSchema = z.object({
   bio: z.string().optional(),
   imageUrl: z.string().optional(),
   externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  operatingHours: z.string().min(5, { message: "Please provide operating hours (e.g., 9 AM - 5 PM, Mon-Fri)." }).optional(),
+  operatingHours: z.string().min(5, { message: "Choose the days and times you are open." }).optional(),
   status: z.enum(vendorStatusOptions).optional(),
 });
 
@@ -53,7 +55,7 @@ function vendorToFormValues(vendor?: Vendor): VendorProfileFormValues {
     phone: vendor?.phone || '',
     streetAddress: vendor?.streetAddress || '',
     city: vendor?.city || '',
-    country: vendor?.country || '',
+    country: vendor?.country || DEFAULT_COUNTRY,
     imageUrl: vendor?.imageUrl || '',
     bio: '', // Assuming bio is not part of initial Vendor type for simplicity
     externalStoreUrl: vendor?.externalStoreUrl || '',
@@ -181,7 +183,7 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
             <FormItem>
               <FormLabel>City</FormLabel>
               <FormControl>
-                <Input placeholder="Your City" {...field} />
+                <CityInput country={form.watch('country')} value={field.value ?? ''} onValueChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -194,7 +196,7 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
             <FormItem>
               <FormLabel>Country</FormLabel>
               <FormControl>
-                <Input placeholder="Your Country" {...field} />
+                <CountrySelect value={field.value ?? ''} onValueChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -207,7 +209,7 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
             <FormItem>
               <FormLabel>Physical Store Operating Hours</FormLabel>
               <FormControl>
-                <Input placeholder="E.g., 9 AM - 5 PM, Mon-Fri" {...field} />
+                <OperatingHoursInput value={field.value ?? ''} onChange={field.onChange} />
               </FormControl>
                <FormDescription>
                     Let customers know your general physical store hours. Your status below determines if you are taking orders on Closebuy.

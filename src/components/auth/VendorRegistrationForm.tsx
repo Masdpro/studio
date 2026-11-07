@@ -24,7 +24,10 @@ import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
+import { DEFAULT_HOURS } from '@/lib/opening-hours';
+import { DEFAULT_COUNTRY } from '@/lib/places';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -38,7 +41,7 @@ const vendorRegistrationSchema = z.object({
   country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
   imageUrl: z.string().optional(),
   externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  operatingHours: z.string().min(5, { message: "Please provide operating hours (e.g., 9 AM - 5 PM, Mon-Fri)." }),
+  operatingHours: z.string().min(5, { message: "Choose the days and times you are open." }),
   status: z.enum(vendorStatusOptions, { required_error: "Please select a status." }),
 });
 
@@ -61,10 +64,10 @@ export function VendorRegistrationForm() {
       phone: '',
       streetAddress: '',
       city: '',
-      country: '',
+      country: DEFAULT_COUNTRY,
       imageUrl: '',
       externalStoreUrl: '',
-      operatingHours: '',
+      operatingHours: DEFAULT_HOURS,
       status: 'Open',
     },
   });
@@ -212,7 +215,7 @@ export function VendorRegistrationForm() {
                 <FormItem>
                   <FormLabel>City</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your City" {...field} />
+                    <CityInput country={form.watch('country')} value={field.value ?? ''} onValueChange={field.onChange} onBlur={field.onBlur} name={field.name} ref={field.ref} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,7 +228,7 @@ export function VendorRegistrationForm() {
                 <FormItem>
                   <FormLabel>Country</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your Country" {...field} />
+                    <CountrySelect value={field.value ?? ''} onValueChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -238,10 +241,10 @@ export function VendorRegistrationForm() {
                 <FormItem>
                   <FormLabel>Operating Hours</FormLabel>
                   <FormControl>
-                    <Input placeholder="E.g., 9 AM - 5 PM, Mon-Fri" {...field} />
+                    <OperatingHoursInput value={field.value ?? ''} onChange={field.onChange} />
                   </FormControl>
                   <FormDescription>
-                    Let customers know when you are open.
+                    Tap a preset, then adjust the days and times if you need to.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
