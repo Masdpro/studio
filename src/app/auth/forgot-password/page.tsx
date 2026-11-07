@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
               </AlertDescription>
             </Alert>
           ) : (
-            <form onSubmit={submit} className="space-y-4">
+            <form method="post" onSubmit={submit} className="space-y-4">
               {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
               <div className="space-y-2">
                 <Label htmlFor="fp-email">Email</Label>

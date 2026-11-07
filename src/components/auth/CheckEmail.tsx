@@ -12,9 +12,22 @@ import { Mail, Loader2, FlaskConical, AlertCircle } from 'lucide-react';
 
 const DEV_CODE_KEY = 'closebuyDevVerifyCode';
 
+/** The standalone /auth/check-email page: email comes from the URL, and success leads to sign-in. */
 export function CheckEmail() {
-  const router = useRouter();
   const initialEmail = useSearchParams().get('email') ?? '';
+  return <EmailCodeVerification initialEmail={initialEmail} />;
+}
+
+type Props = {
+  initialEmail: string;
+  /** Called after the code is accepted. Without it, the user is sent to the sign-in page. */
+  onVerified?: () => Promise<void> | void;
+  /** Dev-only code returned by sign-up, shown on screen when real emails aren't sent. */
+  devCode?: string;
+};
+
+export function EmailCodeVerification({ initialEmail, onVerified, devCode: devCodeProp }: Props) {
+  const router = useRouter();
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
@@ -24,10 +37,14 @@ export function CheckEmail() {
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
+    if (devCodeProp) {
+      setDevCode(devCodeProp);
+      return;
+    }
     try {
       setDevCode(sessionStorage.getItem(DEV_CODE_KEY));
     } catch {}
-  }, []);
+  }, [devCodeProp]);
 
   async function resend() {
     setSending(true);
@@ -71,15 +88,23 @@ export function CheckEmail() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error ?? 'That code did not work. Try again.');
+        setChecking(false);
         return;
       }
       try {
         sessionStorage.removeItem(DEV_CODE_KEY);
       } catch {}
+      if (onVerified) {
+        setMessage('Email confirmed. Signing you in…');
+        await onVerified();
+        return; // keep the button busy while the next page loads
+      }
       router.push('/auth/login?verified=1');
-    } finally {
-      setChecking(false);
+      return;
+    } catch {
+      setError('Something went wrong. Please try again.');
     }
+    setChecking(false);
   }
 
   return (
@@ -115,7 +140,7 @@ export function CheckEmail() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <form onSubmit={verify} className="space-y-4">
+        <form method="post" onSubmit={verify} className="space-y-4">
           {!initialEmail && (
             <div className="space-y-2">
               <Label htmlFor="verify-email">Email</Label>

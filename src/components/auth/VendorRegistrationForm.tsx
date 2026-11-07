@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
-import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
+import { EmailCodeVerification } from '@/components/auth/CheckEmail';
 import { DEFAULT_HOURS } from '@/lib/opening-hours';
 import { DEFAULT_COUNTRY } from '@/lib/places';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
@@ -50,7 +50,8 @@ type VendorRegistrationFormValues = z.infer<typeof vendorRegistrationSchema>;
 export function VendorRegistrationForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const { signUp, user, refresh } = useAuth();
+  const { signUp, signIn, user, refresh } = useAuth();
+  const [pending, setPending] = useState<{ email: string; password: string; devCode?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
@@ -96,9 +97,10 @@ export function VendorRegistrationForm() {
       });
       toast({
         title: 'Registration Submitted!',
-        description: 'Confirm your email, then upload your documents for review.',
+        description: 'Enter the code we emailed you to continue to verification.',
       });
-      goToCheckEmail(router, contactEmail, devCode);
+      setPending({ email: contactEmail, password: password ?? "", devCode });
+      window.scrollTo({ top: 0 });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setError(msg);
@@ -107,6 +109,24 @@ export function VendorRegistrationForm() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (pending) {
+    return (
+      <EmailCodeVerification
+        initialEmail={pending.email}
+        devCode={pending.devCode}
+        onVerified={async () => {
+          try {
+            await signIn(pending.email, pending.password);
+            router.push('/account/verification');
+            router.refresh();
+          } catch {
+            router.push('/auth/login?verified=1');
+          }
+        }}
+      />
+    );
   }
 
   return (
@@ -126,7 +146,7 @@ export function VendorRegistrationForm() {
           </Alert>
         )}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
           control={form.control}
           name="imageUrl"

@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { goToCheckEmail } from '@/components/auth/goToCheckEmail';
+import { EmailCodeVerification } from '@/components/auth/CheckEmail';
 
 const customerRegistrationSchema = z
   .object({
@@ -38,7 +38,8 @@ type CustomerRegistrationFormValues = z.infer<typeof customerRegistrationSchema>
 
 export function CustomerRegistrationForm() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, signIn } = useAuth();
+  const [pending, setPending] = useState<{ email: string; password: string; devCode?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,12 +53,31 @@ export function CustomerRegistrationForm() {
     setIsLoading(true);
     try {
       const { devCode } = await signUp(data.email, data.password, 'customer', data.displayName);
-      goToCheckEmail(router, data.email, devCode);
+      setPending({ email: data.email, password: data.password, devCode });
+      window.scrollTo({ top: 0 });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (pending) {
+    return (
+      <EmailCodeVerification
+        initialEmail={pending.email}
+        devCode={pending.devCode}
+        onVerified={async () => {
+          try {
+            await signIn(pending.email, pending.password);
+            router.push('/shop');
+            router.refresh();
+          } catch {
+            router.push('/auth/login?verified=1');
+          }
+        }}
+      />
+    );
   }
 
   return (
@@ -77,7 +97,7 @@ export function CustomerRegistrationForm() {
           </Alert>
         )}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="displayName"

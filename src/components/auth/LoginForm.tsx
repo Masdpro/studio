@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LogIn, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { postLoginDestination } from '@/lib/post-login';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address.' }),
@@ -52,7 +53,7 @@ export function LoginForm() {
       await signIn(data.email, data.password);
       const callbackUrl = searchParams.get('callbackUrl');
       const isSafeCallback = callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//');
-      router.push(isSafeCallback ? callbackUrl : '/shop');
+      router.push(isSafeCallback ? callbackUrl : await postLoginDestination());
       router.refresh();
     } catch (err) {
       if (err instanceof Error && err.message === 'ACCOUNT_SUSPENDED') {
@@ -117,7 +118,7 @@ export function LoginForm() {
           </Alert>
         )}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"

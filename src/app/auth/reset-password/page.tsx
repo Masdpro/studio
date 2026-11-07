@@ -50,7 +50,7 @@ function ResetForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form method="post" onSubmit={submit} className="space-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>
