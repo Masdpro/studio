@@ -100,7 +100,7 @@ export function UserWalletDisplay() {
     }
   };
 
-  // Paystack redirects back to "/" with ?reference=... after a wallet top-up.
+  // Paystack redirects back to "/shop" with ?reference=... after a wallet top-up.
   // Normally that's the popup tab handleAddFunds opened — its only job is to
   // close itself, since the original tab is already polling and will show
   // the toast/balance update there. window.close() silently no-ops on a tab
@@ -128,7 +128,7 @@ export function UserWalletDisplay() {
           });
         })
         .finally(() => {
-          router.replace('/', { scroll: false });
+          router.replace('/shop', { scroll: false });
         });
     }, 300);
 

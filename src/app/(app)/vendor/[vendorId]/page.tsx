@@ -13,5 +13,5 @@ export default async function VendorPage({ params }: { params: Promise<{ vendorI
   const vendor = await getVendorById(vendorId);
   if (!vendor) notFound();
   const [products, branches, markets] = await Promise.all([getProductsByVendor(vendorId), getBranchesByVendor(vendorId), getMarkets()]);
-  return <VendorStorefront vendor={vendor} branches={branches} products={products} markets={markets} back={{ href: '/', label: 'Back to home' }} />;
+  return <VendorStorefront vendor={vendor} branches={branches} products={products} markets={markets} back={{ href: '/shop', label: 'Back to home' }} />;
 }

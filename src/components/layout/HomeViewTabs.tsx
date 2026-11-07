@@ -21,12 +21,12 @@ export function HomeViewTabs({ className }: { className?: string }) {
   const router = useRouter();
   const view = parseHomeView(useSearchParams().get('view'));
 
-  if (pathname !== '/') return null;
+  if (pathname !== '/shop') return null;
 
   return (
     <Tabs
       value={view}
-      onValueChange={(next) => router.replace(next === 'markets' ? '/?view=markets' : '/', { scroll: false })}
+      onValueChange={(next) => router.replace(next === 'markets' ? '/shop?view=markets' : '/shop', { scroll: false })}
       className={className}
     >
       <TabsList className="h-9 w-full bg-muted p-1">

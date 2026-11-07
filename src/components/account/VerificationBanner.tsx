@@ -24,7 +24,7 @@ export function VerificationBanner() {
       .catch(() => {});
   }, [user, roles, pathname]);
 
-  if (!state || state.mayTrade || pathname === '/' || pathname.startsWith('/account/verification')) return null;
+  if (!state || state.mayTrade || pathname === '/shop' || pathname.startsWith('/account/verification')) return null;
 
   const text =
     state.approvalStatus === 'rejected'

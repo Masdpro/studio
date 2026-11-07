@@ -52,7 +52,7 @@ export function LoginForm() {
       await signIn(data.email, data.password);
       const callbackUrl = searchParams.get('callbackUrl');
       const isSafeCallback = callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//');
-      router.push(isSafeCallback ? callbackUrl : '/');
+      router.push(isSafeCallback ? callbackUrl : '/shop');
       router.refresh();
     } catch (err) {
       if (err instanceof Error && err.message === 'ACCOUNT_SUSPENDED') {

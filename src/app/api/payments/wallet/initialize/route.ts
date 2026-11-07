@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       reference,
       // Land back on the homepage — the wallet display in the header picks up
       // the ?reference= param itself and shows a toast, no dedicated page.
-      callbackUrl: new URL('/', request.url).toString(),
+      callbackUrl: new URL('/shop', request.url).toString(),
     });
     return NextResponse.json({ authorizationUrl, reference });
   } catch (err) {

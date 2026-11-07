@@ -94,7 +94,7 @@ export default function NotificationsPage() {
     <div className="container mx-auto py-8">
       <div className="mb-6">
         <Button variant="outline" asChild>
-          <Link href="/">
+          <Link href="/shop">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Link>

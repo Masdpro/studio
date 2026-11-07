@@ -33,7 +33,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
   return (
     <div className="container mx-auto max-w-5xl py-2">
       <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link href="/?view=markets">
+        <Link href="/shop?view=markets">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Local Markets
         </Link>
       </Button>

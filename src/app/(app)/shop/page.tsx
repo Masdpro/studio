@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import HomePageClient from './HomePageClient';
+import HomePageClient from '../HomePageClient';
 import { getProducts } from '@/lib/services/products';
 import { getVendors } from '@/lib/services/vendors';
 import { getMarkets } from '@/lib/services/markets';

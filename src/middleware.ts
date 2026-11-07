@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (rule.role !== true && token.role !== rule.role && !((token.roles as string[] | undefined) ?? []).includes(rule.role)) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/shop', request.url));
   }
 
   return NextResponse.next();
