@@ -6,16 +6,18 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ErrandRequest, ErrandQuote } from '@/lib/types';
 import { CustomerErrandListItem } from '@/components/errands/CustomerErrandListItem';
 import { ViewQuotesDialog } from '@/components/errands/ViewQuotesDialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ShoppingBasket, PlusCircle, Loader2, Search } from 'lucide-react';
+import { CreateErrandRequestForm } from '@/components/errands/CreateErrandRequestForm';
+import { ClipboardList, PlusCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type QuoteWithAgentName = ErrandQuote & { agentName: string };
 
-export default function MyErrandsPage() {
+/** One page for errands: request a new one at the top, follow the ones you already have below. */
+export default function ErrandsPage() {
   const [errands, setErrands] = useState<ErrandRequest[]>([]);
+  // The request form opens on its own when you have no errands yet, or when you arrive from an old "create" link.
+  const [formOpen, setFormOpen] = useState(false);
   const [pendingQuoteCounts, setPendingQuoteCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -56,8 +58,15 @@ export default function MyErrandsPage() {
   }, [toast]);
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('new')) setFormOpen(true);
     loadErrands();
   }, [loadErrands]);
+
+  const handleCreated = async () => {
+    setFormOpen(false);
+    window.history.replaceState(null, '', '/errands');
+    await loadErrands();
+  };
 
   const handleViewQuotes = async (errandId: string) => {
     const errand = errands.find((e) => e.id === errandId);
@@ -102,60 +111,54 @@ export default function MyErrandsPage() {
   };
 
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <p className="mt-4 text-lg text-muted-foreground">Loading your errands...</p>
-      </div>
-    );
-  }
+  const showForm = formOpen || (!isLoading && errands.length === 0);
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div className="flex-grow">
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            <ShoppingBasket className="h-8 w-8" />
-            My Errand Requests
+    <div className="container mx-auto max-w-3xl py-8">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-primary">
+            <ClipboardList className="h-8 w-8" />
+            Errands
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Track your custom shopping requests and manage quotes from agents.
-          </p>
+          <p className="mt-1 text-muted-foreground">Ask an agent to buy and deliver anything, then follow it here.</p>
         </div>
-        <Button asChild size="lg">
-          <Link href="/errands/create">
-            <PlusCircle className="mr-2 h-5 w-5" /> Create New Errand
-          </Link>
-        </Button>
+        {!showForm && (
+          <Button size="lg" onClick={() => setFormOpen(true)}>
+            <PlusCircle className="mr-2 h-5 w-5" /> New errand
+          </Button>
+        )}
       </div>
 
-      {errands.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-16">
-            <Search className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
-            <h3 className="text-xl font-semibold mb-2">No Errands Yet!</h3>
-            <p className="text-muted-foreground mb-6">
-              Looks like you haven't requested any errands. Get started by creating one.
-            </p>
-            <Button asChild>
-              <Link href="/errands/create">Create Your First Errand</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {errands.map((errand) => (
-            <CustomerErrandListItem
-              key={errand.id}
-              errand={errand}
-              pendingQuoteCount={pendingQuoteCounts[errand.id] ?? 0}
-              onViewQuotes={handleViewQuotes}
-              onAcceptQuote={handleAcceptQuote} // Pass down
-            />
-          ))}
-        </div>
+      {showForm && (
+        <CreateErrandRequestForm
+          className="mb-8 max-w-none"
+          onCreated={handleCreated}
+          onCancel={errands.length > 0 ? () => setFormOpen(false) : undefined}
+        />
       )}
+
+      {isLoading ? (
+        <div className="py-12 text-center">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+          <p className="mt-3 text-muted-foreground">Loading your errands...</p>
+        </div>
+      ) : errands.length > 0 ? (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Your errands</h2>
+          <div className="space-y-6">
+            {errands.map((errand) => (
+              <CustomerErrandListItem
+                key={errand.id}
+                errand={errand}
+                pendingQuoteCount={pendingQuoteCounts[errand.id] ?? 0}
+                onViewQuotes={handleViewQuotes}
+                onAcceptQuote={handleAcceptQuote}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
       {selectedErrandForQuotes && (
         <ViewQuotesDialog
           errand={selectedErrandForQuotes}

@@ -5,7 +5,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
  * A horizontally scrolling row that shows it can scroll: an edge fade plus arrow buttons appear on
- * whichever side still has more cards, and disappear once you reach that end.
+ * whichever side still has more cards, and disappear once you reach that end. The scrollbar itself is
+ * hidden: the arrows, fades and swiping already make the row scrollable.
  */
 export function DealsScroller({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -38,7 +39,7 @@ export function DealsScroller({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative">
-      <div ref={ref} onScroll={update} className="flex gap-6 overflow-x-auto scroll-smooth p-1 pb-3 [scrollbar-width:thin]">
+      <div ref={ref} onScroll={update} className="flex gap-6 overflow-x-auto scroll-smooth p-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
       {canLeft && (

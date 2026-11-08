@@ -1,11 +1,6 @@
+import { redirect } from 'next/navigation';
 
-// src/app/(app)/errands/create/page.tsx
-import { CreateErrandRequestForm } from '@/components/errands/CreateErrandRequestForm';
-
+// Requesting and tracking errands now happen on one page; old links land there with the form open.
 export default function CreateErrandPage() {
-  return (
-    <div className="container mx-auto py-8">
-      <CreateErrandRequestForm />
-    </div>
-  );
+  redirect('/errands?new=1');
 }

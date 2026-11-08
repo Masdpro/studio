@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ShoppingBasket, Send, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const errandRequestSchema = z.object({
   itemsDescription: z.string().min(10, { message: 'Please describe the items you need (at least 10 characters).' }).max(1000, { message: 'Description is too long (max 1000 characters).' }),
@@ -30,7 +31,15 @@ const errandRequestSchema = z.object({
 
 type ErrandRequestFormValues = z.infer<typeof errandRequestSchema>;
 
-export function CreateErrandRequestForm() {
+/**
+ * The errand request form. On the Errands page it sits inline: pass `onCreated` and it clears itself
+ * and hands control back instead of navigating; `onCancel` adds a Cancel button.
+ */
+export function CreateErrandRequestForm({
+  onCreated,
+  onCancel,
+  className,
+}: { onCreated?: () => void; onCancel?: () => void; className?: string } = {}) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +68,12 @@ export function CreateErrandRequestForm() {
         title: 'Errand Request Submitted!',
         description: 'Your errand request has been posted. Agents will now be able to quote on it.',
       });
-      router.push('/errands');
+      if (onCreated) {
+        form.reset();
+        onCreated();
+      } else {
+        router.push('/errands');
+      }
     } catch (err) {
       toast({
         title: 'Something went wrong',
@@ -72,11 +86,11 @@ export function CreateErrandRequestForm() {
   }
 
   return (
-    <Card className="w-full max-w-xl mx-auto">
+    <Card className={cn('w-full max-w-xl mx-auto', className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl">
           <ShoppingBasket className="h-6 w-6 text-primary" />
-          Create New Errand Request
+          New errand
         </CardTitle>
         <CardDescription>List the items you need, and an agent will run the errand for you.</CardDescription>
       </CardHeader>
@@ -91,7 +105,7 @@ export function CreateErrandRequestForm() {
                   <FormLabel>Items to Purchase</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Please list each item on a new line with details if necessary. E.g.,\n- 1 Gallon Whole Milk (Brand XYZ)\n- 2 Apples (Granny Smith)\n- 1 Box of Cereal (Cheerios, Large)"
+                      placeholder={'One item per line, with brand and size. E.g.\n- 2 tins Peak milk (400g)\n- 1 loaf Agege bread\n- 5kg bag of rice (Mama Gold)'}
                       rows={6}
                       {...field}
                     />
@@ -110,7 +124,7 @@ export function CreateErrandRequestForm() {
                 <FormItem>
                   <FormLabel>Preferred Store (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="E.g., Target, Walmart, Local Corner Store" {...field} />
+                    <Input placeholder="E.g., Shoprite Ikeja, Yaba market, the shop on your street" {...field} />
                   </FormControl>
                   <FormDescription>
                     If you have a preferred store, let the agent know. Otherwise, they will choose a suitable one.
@@ -135,10 +149,17 @@ export function CreateErrandRequestForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              Post Errand Request
-            </Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              {onCancel && (
+                <Button type="button" variant="outline" className="sm:w-40" onClick={onCancel} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+              )}
+              <Button type="submit" className="w-full flex-1 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                Post errand
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

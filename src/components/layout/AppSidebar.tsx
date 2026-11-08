@@ -5,7 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, SearchCheck, ShoppingBasket, ClipboardList, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -26,8 +26,7 @@ const customerNavItems = [
 ];
 
 const customerErrandItems = [
-  { href: '/errands/create', label: 'Create Errand', icon: Edit3, tooltip: "Request an Errand" },
-  { href: '/errands', label: 'My Errands', icon: History, tooltip: "View Your Errand Requests" },
+  { href: '/errands', label: 'Errands', icon: ClipboardList, tooltip: "Request and track errands" },
 ];
 
 const becomeItems = [
