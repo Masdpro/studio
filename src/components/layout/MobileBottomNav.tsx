@@ -8,14 +8,22 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { cn } from '@/lib/utils';
 
-/** Pages that bring their own bottom tab bar on phones (so the main one steps aside). */
-const OWN_TAB_BAR = ['/vendor/dashboard'];
+/**
+ * Work areas where the shopping tab bar steps aside: every vendor, branch and delivery-agent page.
+ * (The vendor dashboard brings its own bottom tabs; the rest are reached from the account menu.)
+ */
+const WORK_AREAS = ['/vendor', '/branch', '/delivery-agent', '/delivery'];
+
+export function isWorkArea(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return WORK_AREAS.some((base) => pathname === base || pathname.startsWith(`${base}/`));
+}
 
 /** True when the phone bottom tab bar is shown on this page. */
 export function useShowsBottomNav() {
   const pathname = usePathname();
   const { role } = useAuth();
-  return role !== 'admin' && !OWN_TAB_BAR.includes(pathname);
+  return role !== 'admin' && !isWorkArea(pathname);
 }
 
 /**
