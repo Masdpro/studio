@@ -2,6 +2,9 @@
 export const MAX_PRODUCT_IMAGES = 5;
 
 const IMAGE_RE = /^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/;
+
+/** True for a photo uploaded through this app (every new product must have one). */
+export const isUploadedImage = (value: unknown): value is string => typeof value === 'string' && IMAGE_RE.test(value);
 const VIDEO_RE = /^\/api\/uploads\/[0-9a-f-]{36}\.(mp4|webm)$/;
 
 /** Extra photos beyond the main one: only images uploaded through this app are kept. */

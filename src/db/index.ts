@@ -32,6 +32,7 @@ try { sqlite.exec('ALTER TABLE products ADD COLUMN sizes_json TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE products ADD COLUMN stock INTEGER'); } catch {}
 // Wallet ledger, bank accounts, withdrawals and delivery codes (also in drizzle/0002_wallet_ledger.sql,
 // which production applies first; this keeps a local dev.db that was built with `drizzle-kit push` working).
+try { sqlite.exec('ALTER TABLE vendors ADD COLUMN business_type TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE orders ADD COLUMN delivery_code TEXT'); } catch {}
 try { sqlite.exec('ALTER TABLE orders ADD COLUMN delivery_code_attempts INTEGER NOT NULL DEFAULT 0'); } catch {}
 try {

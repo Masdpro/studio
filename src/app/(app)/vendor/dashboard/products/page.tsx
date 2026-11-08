@@ -4,6 +4,8 @@ import { useRequireTrading } from '@/hooks/use-trading-status';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
+import { QuickAddProducts } from '@/components/vendor/QuickAddProducts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductListItem } from '@/components/vendor/ProductListItem';
 import { EditProductDialog } from '@/components/vendor/EditProductDialog';
 import type { Product } from '@/lib/types';
@@ -47,7 +49,7 @@ export default function VendorProductManagementPage() {
   const handleProductAdd = async (newProductData: Omit<Product, 'id' | 'vendorId' | 'imageUrl'> & { imageUrl?: string }) => {
     const payload = {
       ...newProductData,
-      imageUrl: newProductData.imageUrl || 'https://placehold.co/600x400.png',
+      imageUrl: newProductData.imageUrl,
       aiHint: newProductData.aiHint || 'product item',
     };
     const res = await fetch('/api/vendor/products', {
@@ -59,7 +61,8 @@ export default function VendorProductManagementPage() {
       await fetchProducts();
       toast({ title: 'Product added!', description: `${newProductData.name} is now listed.` });
     } else {
-      toast({ title: 'Failed to add product', variant: 'destructive' });
+      const { error } = await res.json().catch(() => ({}));
+      toast({ title: 'Failed to add product', description: error, variant: 'destructive' });
     }
   };
 
@@ -104,14 +107,25 @@ export default function VendorProductManagementPage() {
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackagePlus className="h-6 w-6 text-primary" />
-              Add to Inventory / List Product
+              Add products
             </CardTitle>
-            <CardDescription>Add products from your inventory to display them on Closebuy.</CardDescription>
+            <CardDescription>Pick from a ready-made list for your kind of business, or add one product at a time.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Suspense fallback={<p className="text-muted-foreground text-sm">Loading form…</p>}>
-              <ProductUploadForm onProductAdd={handleProductAdd} />
-            </Suspense>
+            <Tabs defaultValue="quick">
+              <TabsList className="mb-4 grid w-full grid-cols-2">
+                <TabsTrigger value="quick">Quick add</TabsTrigger>
+                <TabsTrigger value="single">One at a time</TabsTrigger>
+              </TabsList>
+              <TabsContent value="quick">
+                <QuickAddProducts existingNames={products.map((p) => p.name)} onAdded={fetchProducts} />
+              </TabsContent>
+              <TabsContent value="single">
+                <Suspense fallback={<p className="text-muted-foreground text-sm">Loading form…</p>}>
+                  <ProductUploadForm onProductAdd={handleProductAdd} />
+                </Suspense>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

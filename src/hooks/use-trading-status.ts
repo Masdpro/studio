@@ -7,33 +7,32 @@ import type { VerificationState } from '@/components/account/AccountVerification
 
 /** Vendors / agents may only use their tools once an admin has approved them. */
 export function useTradingStatus() {
-  const { user, isVendor, isAgent } = useAuth();
+  const { user, isVendor, isAgent, loading } = useAuth();
   const [state, setState] = useState<VerificationState | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  // Which account the state above belongs to; until it matches, the answer isn't known yet.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const applies = !!user && (isVendor || isAgent);
+  const userId = user?.id ?? null;
   useEffect(() => {
-    if (!applies) {
-      setState(null);
-      setLoaded(true);
-      return;
-    }
+    if (!applies || !userId) return;
     let off = false;
     fetch('/api/account/verification')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!off) {
           setState(d?.state ?? null);
-          setLoaded(true);
+          setLoadedFor(userId);
         }
       })
       .catch(() => {
-        if (!off) setLoaded(true);
+        if (!off) setLoadedFor(userId);
       });
     return () => {
       off = true;
     };
-  }, [applies, user?.id]);
-  return { state, loaded, mayTrade: !applies || state?.mayTrade === true };
+  }, [applies, userId]);
+  const loaded = !loading && (!applies || loadedFor === userId);
+  return { state: applies ? state : null, loaded, mayTrade: !applies || (loadedFor === userId && state?.mayTrade === true) };
 }
 
 /** Sends not-yet-approved vendors / agents back to their dashboard (which shows the approval status). */

@@ -20,9 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Trash2, Camera, ScanLine, XCircle, Loader2, X } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { identifyProductFromImage } from '@/ai/flows/identify-product-from-image';
+import { UploadCloud } from 'lucide-react';
 import { sanitizeOptions, sanitizeStock } from '@/lib/product-media';
 import { ProductMediaField } from '@/components/vendor/ProductMediaField';
 import { Separator } from '@/components/ui/separator';
@@ -31,7 +29,7 @@ const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  imageUrl: z.string().optional(),
+  imageUrl: z.string().regex(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/, { message: 'Add at least one photo of the product.' }),
   galleryImages: z.array(z.string()).optional(),
   videoUrl: z.string().optional(),
   category: z.string().optional(),
@@ -71,70 +69,9 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     },
   });
 
-  // Scanner state
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [isCameraInitializing, setIsCameraInitializing] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-
   // File input state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
-
-
-  const getCameraPermission = useCallback(async () => {
-    if (!isCameraActive) return;
-
-    setIsCameraInitializing(true);
-    setHasCameraPermission(null);
-    let newStream: MediaStream | null = null;
-    try {
-      newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    } catch (rearError) {
-      console.warn('Rear camera access failed, trying any camera:', rearError);
-      try {
-        newStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      } catch (anyError) {
-        console.error('Error accessing any camera:', anyError);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Could not access any camera. Please enable permissions in your browser settings.',
-        });
-        setIsCameraInitializing(false);
-        return;
-      }
-    }
-    streamRef.current = newStream;
-    setHasCameraPermission(true);
-    if (videoRef.current) {
-      videoRef.current.srcObject = newStream;
-    }
-    setIsCameraInitializing(false);
-  }, [isCameraActive, toast]);
-
-  // Request/cleanup camera permission when the user toggles the camera
-  useEffect(() => {
-    if (isCameraActive) {
-      getCameraPermission();
-    } else {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-    }
-    
-    // Cleanup on component unmount
-    return () => {
-       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    }
-  }, [isCameraActive, getCameraPermission]);
 
 
   useEffect(() => {
@@ -148,57 +85,10 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
     if (category) form.setValue('category', category);
     if (aiHint) form.setValue('aiHint', aiHint);
 
-    const imageData = sessionStorage.getItem('productImageData');
-    if (imageData) {
-        form.setValue('imageUrl', imageData);
-        sessionStorage.removeItem('productImageData');
-    }
-
   }, [searchParams, form]);
   
-  const handleScan = async () => {
-    if (!videoRef.current || !canvasRef.current || !hasCameraPermission) return;
-    
-    setIsScanning(true);
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d');
-    if (context) {
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const photoDataUri = canvas.toDataURL('image/jpeg');
-
-      try {
-        const result = await identifyProductFromImage({ photoDataUri });
-        if (result.products.length > 0) {
-            const product = result.products[0];
-            form.setValue('name', product.name);
-            form.setValue('description', product.description);
-            form.setValue('category', product.category);
-            form.setValue('aiHint', product.aiHint);
-            form.setValue('imageUrl', photoDataUri);
-            toast({ title: 'Product Identified!', description: `Form has been pre-filled for "${product.name}".` });
-        } else {
-            toast({ title: 'No Products Found', description: 'The AI could not identify any products in the image. Please try again.' });
-        }
-      } catch (err) {
-        console.error('Error identifying product:', err);
-        toast({
-          title: 'AI Scan Failed',
-          description: 'An error occurred while analyzing the image.',
-          variant: 'destructive',
-        });
-      }
-    }
-    setIsScanning(false);
-  };
-
-
   function onSubmit(data: ProductFormValues) {
-    console.log('New product data:', data);
-    if (onProductAdd) {
+        if (onProductAdd) {
       onProductAdd({ ...data, colors: sanitizeOptions(data.colors), sizes: sanitizeOptions(data.sizes), stock: sanitizeStock(data.stock) ?? undefined });
     }
     toast({
@@ -237,82 +127,6 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
 
   return (
     <>
-      <div className="mb-6 border p-4 rounded-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Camera className="h-5 w-5 text-primary" />
-            AI Product Scanner
-          </h3>
-          {!isCameraActive && (
-            <Button type="button" variant="outline" onClick={() => setIsCameraActive(true)}>
-              Scan with Camera
-            </Button>
-          )}
-        </div>
-
-        {isCameraActive ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden border">
-                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                <canvas ref={canvasRef} className="hidden" />
-                {isCameraInitializing && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                )}
-                {hasCameraPermission === false && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/90 text-destructive-foreground p-4 text-center">
-                    <XCircle className="h-12 w-12 mb-2" />
-                    <p className="font-semibold">Camera Access Denied</p>
-                  </div>
-                )}
-              </div>
-              {hasCameraPermission === false && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTitle>Camera Access Required</AlertTitle>
-                  <AlertDescription>Enable camera permissions to use this feature.</AlertDescription>
-                </Alert>
-              )}
-            </div>
-            <div className="flex flex-col justify-center items-center gap-4">
-              <p className="text-sm text-muted-foreground text-center">Point your camera at a product and scan it to auto-fill the form.</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                 <Button
-                    type="button"
-                    onClick={() => setIsCameraActive(false)}
-                    variant="outline"
-                  >
-                    <X className="mr-2 h-5 w-5" /> Cancel
-                  </Button>
-                <Button
-                  type="button"
-                  onClick={handleScan}
-                  disabled={!hasCameraPermission || isScanning || isCameraInitializing}
-                  className="w-full max-w-xs"
-                  size="lg"
-                >
-                  {isScanning ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : (
-                    <ScanLine className="mr-2 h-5 w-5" />
-                  )}
-                  {isScanning ? 'Analyzing Image...' : 'Scan Product & Fill Form'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Click the button to activate the camera and scan products automatically.</p>
-        )}
-      </div>
-
-      <div className="flex items-center my-6">
-        <div className="flex-grow border-t border-border"></div>
-        <span className="flex-shrink mx-4 text-muted-foreground text-sm">Or Enter Manually</span>
-        <div className="flex-grow border-t border-border"></div>
-      </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
@@ -360,7 +174,7 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
             name="imageUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Product Photos &amp; Video</FormLabel>
+                <FormLabel>Product Photos &amp; Video (at least one photo)</FormLabel>
                 <FormControl>
                   <ProductMediaField
                     images={[field.value, ...(form.watch('galleryImages') ?? [])].filter((u): u is string => !!u)}

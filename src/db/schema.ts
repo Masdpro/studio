@@ -76,6 +76,7 @@ export const vendors = sqliteTable('vendors', {
   imageUrl: text('image_url'), // store photo/logo, uploaded by an admin
   slug: text('slug'), // custom link: /s/<slug>
   profileManaged: integer('profile_managed', { mode: 'boolean' }).default(false),
+  businessType: text('business_type'), // id from src/lib/product-catalog.ts, chosen in Quick add
 });
 
 export const deliveryAgents = sqliteTable('delivery_agents', {

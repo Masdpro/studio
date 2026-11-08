@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getBranchForUser } from '@/lib/roles';
 import { getProductById, updateProduct, deleteProduct } from '@/lib/services/products';
 import type { Product } from '@/lib/types';
+import { isUploadedImage } from '@/lib/product-media';
 
 // Fields a vendor may edit on their own product. Deliberately excludes id and
 // vendorId — a vendor must never be able to reassign a product to a
@@ -38,7 +39,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
 
   const body = await request.json();
   const fields = pickEditableFields(body);
-  if (fields.imageUrl === '') fields.imageUrl = 'https://placehold.co/600x400.png'; // imageUrl is always rendered
+  // Every product keeps a photo: it can be replaced with a new upload, but not removed.
+  if ('imageUrl' in fields && !isUploadedImage(fields.imageUrl) && fields.imageUrl !== (await getProductById(productId))?.imageUrl) {
+    return NextResponse.json({ error: 'A product needs a photo. Upload one to replace it.' }, { status: 400 });
+  }
   await updateProduct(productId, fields);
   return NextResponse.json({ ok: true });
 }

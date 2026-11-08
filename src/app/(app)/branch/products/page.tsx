@@ -45,7 +45,7 @@ export default function BranchProductManagementPage() {
   const handleProductAdd = async (newProductData: Omit<Product, 'id' | 'vendorId' | 'imageUrl'> & { imageUrl?: string }) => {
     const payload = {
       ...newProductData,
-      imageUrl: newProductData.imageUrl || 'https://placehold.co/600x400.png',
+      imageUrl: newProductData.imageUrl,
       aiHint: newProductData.aiHint || 'product item',
     };
     const res = await fetch('/api/vendor/products', {
