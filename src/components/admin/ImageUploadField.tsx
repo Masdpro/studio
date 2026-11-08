@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, ImagePlus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -51,9 +51,16 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
     }
   }
 
+  const uploadLabel = value ? 'Replace photo' : 'Upload photo';
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-3">
-      <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
+    <div className="flex items-start gap-2">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={isUploading}
+        aria-label={uploadLabel}
+        className="relative flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted"
+      >
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="Preview" className="h-full w-full object-cover" />
@@ -65,32 +72,117 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
         )}
-      </div>
-      <div className="min-w-[8.5rem] flex-1 space-y-1.5">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
-          className="hidden"
-          data-testid="image-file-input"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFile(file);
-          }}
-        />
-        <div className="flex flex-wrap gap-1.5">
-        <Button type="button" variant="outline" size="sm" className="h-8 px-2.5" disabled={isUploading} onClick={() => inputRef.current?.click()}>
-          <ImagePlus className="mr-1.5 h-4 w-4" />
-          {value ? 'Replace image' : 'Upload image'}
-        </Button>
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        data-testid="image-file-input"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+      />
+      <div className="flex flex-col gap-1.5">
+        <IconAction label={uploadLabel} hint="JPG, PNG, GIF or WebP, up to 5 MB" disabled={isUploading} onClick={() => inputRef.current?.click()}>
+          <ImagePlus className="h-4 w-4" />
+        </IconAction>
         {value && (
-          <Button type="button" variant="ghost" size="sm" className="h-8 px-2.5" disabled={isUploading} onClick={() => onChange('')}>
-            <Trash2 className="mr-1.5 h-4 w-4" /> Remove
-          </Button>
+          <IconAction label="Remove photo" hint="Tap again to remove" confirm destructive disabled={isUploading} onClick={() => onChange('')}>
+            <Trash2 className="h-4 w-4" />
+          </IconAction>
         )}
-        </div>
-        <p className="text-xs leading-snug text-muted-foreground">JPG, PNG, GIF or WebP, up to 5 MB.</p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * A small icon-only button that names itself: the label shows on hover or keyboard focus, and on touch
+ * screens it shows when tapped. With `confirm`, a touch tap first shows the label and a second tap acts.
+ */
+function IconAction({
+  label,
+  hint,
+  confirm = false,
+  destructive = false,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  confirm?: boolean;
+  destructive?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const [show, setShow] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const touch = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const flash = (ms: number) => {
+    setShow(true);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setShow(false);
+      setArmed(false);
+    }, ms);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        disabled={disabled}
+        onPointerDown={(e) => {
+          touch.current = e.pointerType !== 'mouse';
+        }}
+        // Touch screens fire emulated mouse events around a tap; only real mice use hover.
+        onPointerEnter={(e) => e.pointerType === 'mouse' && setShow(true)}
+        onPointerLeave={(e) => {
+          if (e.pointerType !== 'mouse') return;
+          setShow(false);
+          setArmed(false);
+        }}
+        onFocus={() => !touch.current && setShow(true)}
+        onBlur={() => {
+          setShow(false);
+          setArmed(false);
+        }}
+        onClick={() => {
+          if (touch.current && confirm && !armed) {
+            setArmed(true);
+            flash(2500);
+            return;
+          }
+          if (touch.current) flash(1500);
+          setArmed(false);
+          onClick();
+        }}
+        className={cn(
+          'flex h-9 w-9 items-center justify-center rounded-md border bg-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+          destructive && 'text-destructive hover:bg-destructive/10',
+          armed && 'border-destructive bg-destructive/10',
+        )}
+      >
+        {children}
+      </button>
+      {show && (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-max max-w-[9.5rem] -translate-y-1/2 rounded-md bg-foreground px-2 py-1 text-xs leading-snug text-background shadow"
+        >
+          {armed && hint ? hint : label}
+          {!armed && hint && !confirm && <span className="block opacity-75">{hint}</span>}
+        </span>
+      )}
     </div>
   );
 }

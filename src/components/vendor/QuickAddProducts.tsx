@@ -384,7 +384,7 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
       </p>
       <ul className="space-y-3">
         {picked.map((p) => (
-          <li key={p.key} className={cn('min-w-0 space-y-2 overflow-hidden rounded-md border p-3', complete(p) && 'border-green-300 bg-green-50/40')}>
+          <li key={p.key} className={cn('min-w-0 space-y-2 rounded-md border p-3', complete(p) && 'border-green-300 bg-green-50/40')}>
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1 space-y-1">
                 <Input aria-label="Product name" value={p.name} onChange={(e) => update(p.key, { name: e.target.value })} className="h-8 font-medium" />
