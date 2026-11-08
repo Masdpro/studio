@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ClipboardList, Home, ListChecks, ShoppingCart } from 'lucide-react';
@@ -17,55 +18,86 @@ export function useShowsBottomNav() {
   return role !== 'admin' && !OWN_TAB_BAR.includes(pathname);
 }
 
-/** Asks the header to open the cart drawer. */
-export const openCart = () => window.dispatchEvent(new Event('cart:open'));
+/**
+ * True while the page is being scrolled; turns false shortly after scrolling stops.
+ * Used to slide the phone tab bars out of the way, like mobile apps do.
+ */
+export function useScrolling(settleMs = 350) {
+  const [scrolling, setScrolling] = useState(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      setScrolling(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setScrolling(false), settleMs);
+    };
+    // Capture so scrolling inside the main content area (not just the window) counts too.
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('scroll', onScroll, { capture: true });
+    };
+  }, [settleMs]);
+  return scrolling;
+}
+
+/** Classes that slide a floating bottom bar away while scrolling. */
+export const hideWhileScrolling = (scrolling: boolean) =>
+  cn('transition-[transform,opacity] duration-300 ease-out', scrolling ? 'pointer-events-none translate-y-[calc(100%+1.5rem)] opacity-0' : 'translate-y-0 opacity-100');
 
 /**
- * App-style tab bar along the bottom of the screen on phones: Home, Orders, Cart and Errands.
+ * App-style tab bar on phones: a floating, frosted-glass pill with Home, Orders, Cart and Errands.
  * Hidden on tablets and computers, which use the side menu instead.
  */
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { itemCount } = useCart();
   const shows = useShowsBottomNav();
+  const scrolling = useScrolling();
   if (!shows) return null;
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const itemClass = (active: boolean) =>
-    cn(
-      'relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
-      active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-    );
-
-  const links = [
+  const items = [
     { href: '/shop', label: 'Home', icon: Home },
     { href: '/orders', label: 'Orders', icon: ListChecks },
+    { href: '/cart', label: 'Cart', icon: ShoppingCart, badge: itemCount },
+    { href: '/errands', label: 'Errands', icon: ClipboardList },
   ];
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-      <div className="grid grid-cols-4">
-        {links.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} aria-current={isActive(href) ? 'page' : undefined} className={itemClass(isActive(href))}>
-            <Icon className="h-5 w-5" />
-            {label}
-          </Link>
-        ))}
-        <button type="button" onClick={openCart} className={itemClass(false)}>
-          <span className="relative">
-            <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none text-destructive-foreground">
-                {itemCount}
+    <nav
+      aria-label="Main"
+      className={cn(
+        hideWhileScrolling(scrolling),
+        'fixed inset-x-3 z-40 rounded-[1.75rem] border border-white/40 bg-background/60 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-background/50 md:hidden',
+      )}
+      style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+    >
+      <div className="grid grid-cols-4 p-1.5">
+        {items.map(({ href, label, icon: Icon, badge }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                'flex h-14 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] text-[11px] font-medium transition-colors',
+                active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <span className="relative">
+                <Icon className="h-5 w-5" />
+                {!!badge && badge > 0 && (
+                  <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none text-destructive-foreground">
+                    {badge}
+                  </span>
+                )}
               </span>
-            )}
-          </span>
-          Cart
-        </button>
-        <Link href="/errands" aria-current={isActive('/errands') ? 'page' : undefined} className={itemClass(isActive('/errands'))}>
-          <ClipboardList className="h-5 w-5" />
-          Errands
-        </Link>
+              {label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

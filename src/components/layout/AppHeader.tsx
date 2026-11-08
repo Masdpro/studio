@@ -35,13 +35,7 @@ export function AppHeader() {
   useEffect(() => {
     const closeCart = () => setIsCartSheetOpen(false);
     window.addEventListener('wallet:open', closeCart);
-    // The phone bottom tab bar's Cart button opens the same drawer.
-    const openCart = () => setIsCartSheetOpen(true);
-    window.addEventListener('cart:open', openCart);
-    return () => {
-      window.removeEventListener('wallet:open', closeCart);
-      window.removeEventListener('cart:open', openCart);
-    };
+    return () => window.removeEventListener('wallet:open', closeCart);
   }, []);
   const { itemCount } = useCart();
   // Admins only use the admin panel: no wallet, cart or shopping tabs.

@@ -5,6 +5,8 @@ import { VendorAnalytics } from '@/components/vendor/VendorAnalytics';
 import { StoreLinkCard } from '@/components/vendor/StoreLinkCard';
 import { AccountVerification } from '@/components/account/AccountVerification';
 import { useTradingStatus } from '@/hooks/use-trading-status';
+import { hideWhileScrolling, useScrolling } from '@/components/layout/MobileBottomNav';
+import { cn } from '@/lib/utils';
 
 import { useState, useEffect, useCallback } from 'react';
 import { BranchesManager } from '@/components/vendor/BranchesManager';
@@ -23,6 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 export default function VendorDashboardPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
   const { mayTrade, loaded: tradingLoaded } = useTradingStatus();
+  const scrolling = useScrolling();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [displayedVendorOrders, setDisplayedVendorOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,7 +151,13 @@ export default function VendorDashboardPage() {
         }}
       >
         {/* Phones: an app-style tab bar fixed to the bottom of the screen. */}
-        <TabsList className="fixed inset-x-0 bottom-0 z-40 grid h-auto w-full grid-cols-5 rounded-none border-t bg-background/95 p-0 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
+        <TabsList
+          className={cn(
+            hideWhileScrolling(scrolling),
+            'fixed inset-x-3 z-40 grid h-auto grid-cols-5 rounded-[1.75rem] border border-white/40 bg-background/50 p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl backdrop-saturate-150 sm:hidden',
+          )}
+          style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+        >
           {[
             { value: 'profile', label: 'Profile', icon: Settings },
             { value: 'branches', label: 'Branches', icon: MapPin },
@@ -159,7 +168,7 @@ export default function VendorDashboardPage() {
             <TabsTrigger
               key={value}
               value={value}
-              className="flex h-16 flex-col gap-1 rounded-none px-0 text-[11px] font-medium text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+              className="flex h-14 flex-col gap-0.5 rounded-[1.25rem] px-0 text-[11px] font-medium text-muted-foreground data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none"
             >
               <Icon className="h-5 w-5" />
               {label}
