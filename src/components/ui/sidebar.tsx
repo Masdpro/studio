@@ -28,7 +28,7 @@ import {
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "13rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+const SIDEBAR_WIDTH_MOBILE = "15rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -197,7 +197,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="flex w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground p-0" 
+            className="flex w-[--sidebar-width] max-w-[80vw] flex-col bg-sidebar p-0 pt-10 text-sidebar-foreground sm:max-w-[--sidebar-width]"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -205,8 +205,9 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <SheetHeader>
-              <SheetTitle>Admin</SheetTitle>
+            {/* Screen readers still get a title; nothing is shown on screen. */}
+            <SheetHeader className="sr-only">
+              <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
             {children}
           </SheetContent>

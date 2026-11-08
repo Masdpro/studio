@@ -16,13 +16,13 @@ import {
   SidebarFooter,
   SidebarSeparator,
   SidebarGroup,
-  SidebarGroupLabel
+  SidebarGroupLabel,
+  useSidebar,
 } from '@/components/ui/sidebar';
 
 const customerNavItems = [
   { href: '/shop', label: 'Home', icon: Home, tooltip: "Browse Products" },
   { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
-  { href: '/wallet', label: 'Wallet', icon: Wallet, tooltip: "Balance, history and withdrawals" },
 ];
 
 const customerErrandItems = [
@@ -93,6 +93,7 @@ const customerGroup = { label: 'Customer', items: [...customerNavItems, ...custo
 export function AppSidebar() {
   const { role, roles, loading } = useAuth();
   const { mayTrade } = useTradingStatus();
+  const { isMobile } = useSidebar();
 
   // Each role only sees its own menu. Customers (and visitors) also get the two ways to become a vendor or agent.
   let groups: { label: string; items: NavItem[] }[] = [];
@@ -106,6 +107,12 @@ export function AppSidebar() {
       if (isVendor) groups.push({ label: 'Vendor', items: mayTrade ? vendorItems : vendorItems.slice(0, 1) });
       if (isAgent) groups.push({ label: 'Delivery', items: mayTrade ? [...deliveryAgentItems, ...commonDeliveryItems] : deliveryAgentItems.slice(0, 1) });
       if (roles.includes('branch')) groups.push({ label: 'Branch', items: branchItems });
+      // One wallet per account, shared by every role: top-ups and purchases as a customer, earnings and withdrawals as a vendor or agent.
+      const earns = isVendor || isAgent;
+      groups.push({
+        label: 'Money',
+        items: [{ href: '/wallet', label: earns ? 'Wallet & earnings' : 'Wallet', icon: Wallet, tooltip: earns ? 'Balance, earnings and withdrawals' : 'Balance, top-ups and history' }],
+      });
       const more = becomeItems.filter((i) => (i.href.includes('/vendor') ? !isVendor : !isAgent));
       if (more.length && !roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: more });
     }
@@ -113,7 +120,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
-      {/* Logo pinned to the top: only the menu below scrolls. */}
+      {/* Logo pinned to the top: only the menu below scrolls. Hidden in the phone drawer, where the header already shows it. */}
+      {!isMobile && (
       <SidebarHeader className="h-16 shrink-0 justify-center border-b px-4">
         <Link href={role === 'admin' ? '/admin' : '/shop'} className="flex items-center gap-2">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block shrink-0" />
@@ -121,6 +129,7 @@ export function AppSidebar() {
           <span className="sr-only">Closebuy home</span>
         </Link>
       </SidebarHeader>
+      )}
       <SidebarContent>
         <SidebarMenu>
           {groups.map((g, i) => (
