@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, UserCircle, Wallet } from 'lucide-react';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { HomeViewTabs } from '@/components/layout/HomeViewTabs';
@@ -35,7 +35,13 @@ export function AppHeader() {
   useEffect(() => {
     const closeCart = () => setIsCartSheetOpen(false);
     window.addEventListener('wallet:open', closeCart);
-    return () => window.removeEventListener('wallet:open', closeCart);
+    // The phone bottom tab bar's Cart button opens the same drawer.
+    const openCart = () => setIsCartSheetOpen(true);
+    window.addEventListener('cart:open', openCart);
+    return () => {
+      window.removeEventListener('wallet:open', closeCart);
+      window.removeEventListener('cart:open', openCart);
+    };
   }, []);
   const { itemCount } = useCart();
   // Admins only use the admin panel: no wallet, cart or shopping tabs.
@@ -47,9 +53,6 @@ export function AppHeader() {
   return (
     <>
       <header className="sticky top-0 z-50 flex h-16 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur sm:px-4 md:px-6">
-        <div className="md:hidden">
-          <SidebarTrigger />
-        </div>
         {/* The full logo lives at the top of the sidebar on desktop; keep a compact one where the sidebar is hidden. */}
         <Link href={isAdmin ? '/admin' : '/shop'} className="flex items-center gap-1 md:hidden">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block" />
@@ -76,7 +79,7 @@ export function AppHeader() {
             <UserWalletDisplay />
           </Suspense>}
           <NotificationBell />
-          {!isAdmin && <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartSheetOpen(true)}>
+          {!isAdmin && <Button variant="ghost" size="icon" className="relative hidden md:inline-flex" onClick={() => setIsCartSheetOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
               <Badge
@@ -95,10 +98,12 @@ export function AppHeader() {
         <HomeViewTabs className="sticky top-16 z-40 flex justify-center border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:hidden [&>div]:w-full [&_button]:flex-1" />
       </Suspense>}
 
+      <MobileBottomNav />
+
       {/* Cart Sheet */}
       <Sheet open={isCartSheetOpen} onOpenChange={setIsCartSheetOpen}>
         <SheetContent className="w-full max-w-md sm:max-w-lg p-0 flex flex-col" side="right">
-          <SheetHeader className="p-6 pb-2 border-b">
+          <SheetHeader className="border-b p-6 pb-2 pr-14">
             <SheetTitle className="text-2xl flex items-center gap-2">
               <ShoppingCart className="h-6 w-6 text-primary" /> Your Cart
             </SheetTitle>
@@ -111,7 +116,7 @@ export function AppHeader() {
       {/* Profile Sheet */}
       <Sheet open={isProfileSheetOpen} onOpenChange={setIsProfileSheetOpen}>
         <SheetContent className="w-full max-w-md sm:max-w-lg p-0 flex flex-col" side="right">
-           <SheetHeader className="p-6 pb-4 border-b sticky top-0 bg-background z-10"> {/* Added sticky header */}
+           <SheetHeader className="sticky top-0 z-10 border-b bg-background p-6 pb-4 pr-14">
             <SheetTitle className="text-2xl flex items-center gap-2">
               <UserCircle className="h-6 w-6 text-primary" /> Your Profile
             </SheetTitle>

@@ -126,7 +126,7 @@ export default function VendorDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-8 pb-24 pt-8 sm:pb-8">
+    <div className="container mx-auto space-y-8 py-8">
       <h1 id="vendor-dashboard-top" className="text-3xl font-bold text-primary mb-6 scroll-mt-20">
         {vendor?.businessName ?? 'Your'} Dashboard
       </h1>

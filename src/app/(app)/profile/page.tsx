@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { BadgeCheck, KeyRound, Loader2, Mail, MapPin, Pencil, Phone, User } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowLeft, BadgeCheck, KeyRound, Loader2, Mail, MapPin, Pencil, Phone, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,8 @@ async function call(url: string, method: string, body: unknown) {
 export default function CustomerProfilePage() {
   const { user, loading, refresh, signOut } = useAuth();
   const router = useRouter();
+  // Opened as its own page (not inside the header's profile drawer, which has a close button).
+  const standalone = usePathname() === '/profile';
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mode, setMode] = useState<'view' | 'details' | 'phone' | 'password'>('view');
@@ -101,6 +103,13 @@ export default function CustomerProfilePage() {
 
   return (
     <div className="container mx-auto py-8">
+      {standalone && (
+        <div className="mx-auto mb-3 max-w-2xl">
+          <Button variant="ghost" size="sm" onClick={() => (window.history.length > 1 ? router.back() : router.push('/shop'))}>
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+          </Button>
+        </div>
+      )}
       <Card className="mx-auto w-full max-w-2xl shadow-xl">
         <CardHeader className="text-center">
           <Avatar className="mx-auto mb-4 h-24 w-24 border-2 border-primary">

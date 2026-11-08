@@ -68,7 +68,8 @@ const adminItems = [
   { href: '/admin/payouts', label: 'Payouts', icon: Banknote, tooltip: "Vendor and agent withdrawals" },
 ];
 
-type NavItem = { href: string; label: string; icon: React.ComponentType; tooltip: string };
+export type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; tooltip: string };
+export type NavGroup = { label: string; items: NavItem[] };
 
 function Group({ label, items }: { label: string; items: NavItem[] }) {
   return (
@@ -90,13 +91,13 @@ function Group({ label, items }: { label: string; items: NavItem[] }) {
 
 const customerGroup = { label: 'Customer', items: [...customerNavItems, ...customerErrandItems] };
 
-export function AppSidebar() {
+/** The menu sections the signed-in person should see (shared by the desktop sidebar and the phone account menu). */
+export function useNavGroups(): NavGroup[] {
   const { role, roles, loading } = useAuth();
   const { mayTrade } = useTradingStatus();
-  const { isMobile } = useSidebar();
 
   // Each role only sees its own menu. Customers (and visitors) also get the two ways to become a vendor or agent.
-  let groups: { label: string; items: NavItem[] }[] = [];
+  let groups: NavGroup[] = [];
   if (!loading) {
     if (role === 'admin') {
       groups = [{ label: 'Admin', items: adminItems }];
@@ -111,11 +112,20 @@ export function AppSidebar() {
       if (more.length && !roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: more });
     }
   }
+  return groups;
+}
+
+export function AppSidebar() {
+  const { role } = useAuth();
+  const groups = useNavGroups();
+  const { isMobile } = useSidebar();
+
+  // Phones have no side menu: the bottom tab bar and the account menu cover navigation there.
+  if (isMobile) return null;
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
-      {/* Logo pinned to the top: only the menu below scrolls. Hidden in the phone drawer, where the header already shows it. */}
-      {!isMobile && (
+      {/* Logo pinned to the top: only the menu below scrolls. */}
       <SidebarHeader className="h-16 shrink-0 justify-center border-b px-4">
         <Link href={role === 'admin' ? '/admin' : '/shop'} className="flex items-center gap-2">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block shrink-0" />
@@ -123,7 +133,6 @@ export function AppSidebar() {
           <span className="sr-only">Closebuy home</span>
         </Link>
       </SidebarHeader>
-      )}
       <SidebarContent>
         <SidebarMenu>
           {groups.map((g, i) => (
