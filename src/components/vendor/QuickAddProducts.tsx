@@ -22,6 +22,19 @@ type Step = 'type' | 'groups' | 'items' | 'details';
 
 const keyOf = (category: string, name: string) => `${category}::${name}`.toLowerCase();
 
+/** Extra words people use for each kind of business, so the search box can find business types too. */
+const TYPE_WORDS: Record<string, string> = {
+  food: 'food restaurant buka canteen caterer catering eatery kitchen bakery cafe fast food chops',
+  drinks: 'drinks beverage bar lounge juice drink shop wine liquor beer',
+  groceries: 'grocery groceries supermarket provision store market stall shop foodstuff mini mart',
+  fashion: 'fashion clothing clothes boutique tailor tailoring fabric shoes bags wears',
+  electronics: 'phone phones electronics gadgets gadget accessories computer laptop repairs repair solar',
+  beauty: 'beauty cosmetics hair salon barber barbing makeup skincare spa nails personal care',
+  health: 'pharmacy chemist drugs medicine patent medicine health store',
+  home: 'home kitchen furniture household appliances bedding',
+  kids: 'baby kids children toys school supplies stationery',
+};
+
 /**
  * Quick add: choose the kind of business, the groups of products, tick the products,
  * then give each one a price and a photo. Only complete products are listed.
@@ -106,6 +119,14 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
       .slice(0, 30);
   }, [fq, type]);
   const exactHit = finderHits.some((i) => i.name.toLowerCase() === fq);
+  const typeHits = useMemo(() => {
+    if (fq.length < 2) return [];
+    const words = fq.split(/\s+/);
+    return BUSINESS_TYPES.filter((t) => {
+      const hay = `${t.label} ${t.blurb} ${TYPE_WORDS[t.id] ?? ''} ${t.groups.map((g) => g.label).join(' ')}`.toLowerCase();
+      return words.every((w) => hay.includes(w));
+    });
+  }, [fq]);
 
   const update = (key: string, patch: Partial<Picked>) => setPicked((prev) => prev.map((p) => (p.key === key ? { ...p, ...patch } : p)));
   const complete = (p: Picked) => p.name.trim().length >= 2 && Number(p.price.replace(/,/g, '')) > 0 && !!p.imageUrl;
@@ -152,19 +173,24 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
       </span>
     );
 
+  const onTypeStep = step === 'type' || !type;
   const finderBox = (
     <div className="relative">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
         className="pl-8 pr-8"
-        placeholder="Type a product, e.g. Indomie, jollof, iPhone 13"
-        aria-label="Find or add a product"
+        placeholder={onTypeStep ? 'Your business or a product, e.g. pharmacy' : 'Type a product, e.g. Indomie, jollof, iPhone 13'}
+        aria-label={onTypeStep ? 'Find your business type or a product' : 'Find or add a product'}
         value={finder}
         onChange={(e) => setFinder(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            if (!exactHit) addCustomName(finder);
+            if (onTypeStep && typeHits.length === 1) {
+              chooseType(typeHits[0]);
+            } else if (!exactHit) {
+              addCustomName(finder);
+            }
             setFinder('');
           }
         }}
@@ -190,6 +216,26 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
       <div className="space-y-3">
         {finderBox}
         <ul className="max-h-[55vh] divide-y overflow-y-auto rounded-md border">
+          {typeHits.map((t) => {
+            const Icon = ICONS[t.icon] ?? ShoppingBasket;
+            return (
+              <li key={`type-${t.id}`}>
+                <button
+                  type="button"
+                  onClick={() => { chooseType(t); setFinder(''); }}
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-accent"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </span>
+                  <span>
+                    <span className="block font-medium">{t.label}</span>
+                    <span className="block text-xs text-muted-foreground">Business type · {t.blurb}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
           {!exactHit && (
             <li>
               <button
@@ -239,7 +285,7 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
     return (
       <div className="space-y-3">
         {finderBox}
-        <p className="text-sm text-muted-foreground">Can’t see it below? Type it above. Or pick the kind of business you run:</p>
+        <p className="text-sm text-muted-foreground">What kind of business do you run? Pick one below, or type it in the box above.</p>
         <div className="grid grid-cols-2 gap-2">
           {BUSINESS_TYPES.map((t) => {
             const Icon = ICONS[t.icon] ?? ShoppingBasket;
