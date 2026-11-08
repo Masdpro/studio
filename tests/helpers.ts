@@ -28,10 +28,10 @@ export function makeUser(opts: { role?: 'customer' | 'vendor' | 'delivery_agent'
   return id;
 }
 
-export function makeVendor() {
-  const id = makeUser({ role: 'vendor' });
+export function makeVendor(approval: 'pending' | 'approved' | 'rejected' = 'approved') {
+  const id = makeUser({ role: 'vendor', approval });
   db.insert(vendors)
-    .values({ id, businessName: 'Test Shop', contactEmail: `${id}@test.local`, phone: '+2348000000000', streetAddress: '1 Test St', city: 'Lagos', country: 'Nigeria', status: 'Open' })
+    .values({ id, businessName: 'Test Shop', contactEmail: `${id}@test.local`, phone: '+2348000000000', streetAddress: '1 Test St', city: 'Lagos', country: 'Nigeria', status: 'Open', approvalStatus: approval })
     .run();
   return id;
 }
@@ -39,7 +39,7 @@ export function makeVendor() {
 export function makeAgent(approval: 'pending' | 'approved' | 'rejected' = 'approved') {
   const id = makeUser({ role: 'delivery_agent', approval });
   db.insert(deliveryAgents)
-    .values({ id, name: 'Test Agent', email: `${id}@test.local`, phone: '+2348000000000', streetAddress: '2 Test St', city: 'Lagos', country: 'Nigeria' })
+    .values({ id, name: 'Test Agent', email: `${id}@test.local`, phone: '+2348000000000', streetAddress: '2 Test St', city: 'Lagos', country: 'Nigeria', approvalStatus: approval })
     .run();
   return id;
 }

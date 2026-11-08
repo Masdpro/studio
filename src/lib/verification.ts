@@ -2,7 +2,7 @@ import { getUserRoles } from '@/lib/roles';
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { users, verificationCodes, verificationDocuments } from '@/db/schema';
+import { deliveryAgents, users, vendors, verificationCodes, verificationDocuments } from '@/db/schema';
 import { sendEmail, sendSms } from '@/lib/notify';
 import { renderEmail } from '@/lib/email-template';
 
@@ -13,20 +13,75 @@ export const REQUIRED_DOCUMENTS: Record<string, DocumentKind[]> = {
   delivery_agent: ['government_id', 'selfie'],
 };
 
+export type TradingRole = 'vendor' | 'delivery_agent';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+export const TRADING_ROLES: TradingRole[] = ['vendor', 'delivery_agent'];
+export const ROLE_LABELS: Record<TradingRole, string> = { vendor: 'Vendor', delivery_agent: 'Delivery agent' };
+
+export function tradingRolesOf(userId: string): TradingRole[] {
+  const roles = getUserRoles(userId);
+  return TRADING_ROLES.filter((r) => roles.includes(r));
+}
+
+/**
+ * Approval of one trading role. Each role is approved on its own (stored on its profile), so a
+ * vendor who later becomes a delivery agent keeps selling while the agent side waits for review.
+ * Old accounts with a role but no profile row fall back to the account's status.
+ */
+export function roleApproval(userId: string, role: TradingRole): { status: ApprovalStatus; note: string | null } {
+  const table = role === 'vendor' ? vendors : deliveryAgents;
+  const row = db.select({ status: table.approvalStatus, note: table.approvalNote }).from(table).where(eq(table.id, userId)).get();
+  if (row) return { status: row.status, note: row.note };
+  const user = db.select({ status: users.approvalStatus, note: users.approvalNote }).from(users).where(eq(users.id, userId)).get();
+  return { status: user?.status ?? 'pending', note: user?.note ?? null };
+}
+
+/** Sets one role's approval and refreshes the account summary. */
+export function setRoleApproval(userId: string, role: TradingRole, status: ApprovalStatus, note: string | null) {
+  const table = role === 'vendor' ? vendors : deliveryAgents;
+  const res = db.update(table).set({ approvalStatus: status, approvalNote: note }).where(eq(table.id, userId)).run();
+  if (res.changes === 0) db.update(users).set({ approvalStatus: status, approvalNote: note }).where(eq(users.id, userId)).run();
+  syncAccountApproval(userId);
+}
+
+/**
+ * users.approval_status is a summary: approved only when every trading role is approved,
+ * rejected if any role was sent back, otherwise pending. Accounts without a trading role are left alone.
+ */
+export function syncAccountApproval(userId: string) {
+  const roles = tradingRolesOf(userId);
+  if (roles.length === 0) return;
+  const each = roles.map((r) => roleApproval(userId, r));
+  const rejected = each.find((a) => a.status === 'rejected');
+  const status: ApprovalStatus = rejected ? 'rejected' : each.every((a) => a.status === 'approved') ? 'approved' : 'pending';
+  db.update(users).set({ approvalStatus: status, approvalNote: rejected?.note ?? null }).where(eq(users.id, userId)).run();
+}
+
+/** After new documents arrive, roles that were sent back and need that document go back to the queue. */
+export function resubmitRolesNeeding(userId: string, kind: DocumentKind) {
+  for (const role of tradingRolesOf(userId)) {
+    if (REQUIRED_DOCUMENTS[role].includes(kind) && roleApproval(userId, role).status === 'rejected') setRoleApproval(userId, role, 'pending', null);
+  }
+}
+
 export function requiredDocumentsFor(userId: string): DocumentKind[] {
   const roles = getUserRoles(userId);
   return Array.from(new Set(roles.flatMap((r) => REQUIRED_DOCUMENTS[r] ?? [])));
 }
 
-/** Called when an existing account adds a vendor / agent profile: records the phone and, for a first trading role, queues it for admin approval. */
-export function startTradingRole(userId: string, phone: unknown, alreadyTrading: boolean) {
+/**
+ * Called when an account adds a vendor / agent profile: records the phone and queues the account
+ * for review. The new role's profile starts pending, so it needs its own admin approval even when
+ * the account is already approved for another role (which keeps trading meanwhile).
+ */
+export function startTradingRole(userId: string, phone: unknown, _alreadyTrading?: boolean) {
   const normalized = typeof phone === 'string' ? normalizeNigerianPhone(phone) : null;
   const user = db.select().from(users).where(eq(users.id, userId)).get();
-  if (!user) return;
-  const patch: Record<string, unknown> = {};
+  if (!user || user.role === 'admin') return;
+  const patch: Record<string, unknown> = { approvalStatus: 'pending' };
   if (normalized && normalized !== user.phone) { patch.phone = normalized; patch.phoneVerifiedAt = null; }
-  if (!alreadyTrading && user.role !== 'admin') patch.approvalStatus = 'pending';
-  if (Object.keys(patch).length) db.update(users).set(patch).where(eq(users.id, userId)).run();
+  db.update(users).set(patch).where(eq(users.id, userId)).run();
+  syncAccountApproval(userId);
 }
 
 export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
@@ -185,34 +240,64 @@ export function getVerificationState(userId: string) {
   const documentsComplete = required.every((k) => submitted.has(k));
   const phoneRequired = phoneVerificationRequired();
   const phoneOk = !phoneRequired || !!user.phoneVerifiedAt;
+  const emailVerified = !!user.emailVerifiedAt;
+  // `live`: taken with the live camera check instead of uploaded.
+  const docInfo = (kind: DocumentKind) => ({ kind, label: DOCUMENT_LABELS[kind], uploaded: submitted.has(kind), id: documents.find((d) => d.kind === kind)?.id ?? null, live: kind === 'selfie' });
+
+  // Each trading role has its own documents, review and approval.
+  const tradingRoles = tradingRolesOf(userId).map((role) => {
+    const approval = roleApproval(userId, role);
+    const roleDocsComplete = REQUIRED_DOCUMENTS[role].every((k) => submitted.has(k));
+    return {
+      role,
+      label: ROLE_LABELS[role],
+      approvalStatus: approval.status,
+      approvalNote: approval.note,
+      requiredDocuments: REQUIRED_DOCUMENTS[role].map(docInfo),
+      documentsComplete: roleDocsComplete,
+      readyForReview: emailVerified && phoneOk && roleDocsComplete,
+      mayTrade: approval.status === 'approved' && phoneOk,
+    };
+  });
+  const rejected = tradingRoles.find((r) => r.approvalStatus === 'rejected');
+
   return {
     role: roles.includes('vendor') ? 'vendor' : roles.includes('delivery_agent') ? 'delivery_agent' : user.role,
     roles,
     email: user.email,
-    emailVerified: !!user.emailVerifiedAt,
+    emailVerified,
     phone: user.phone,
     phoneVerified: !!user.phoneVerifiedAt,
     phoneRequired,
     needsReview,
-    approvalStatus: user.approvalStatus,
-    approvalNote: user.approvalNote,
-    // `live`: taken with the live camera check instead of uploaded.
-    requiredDocuments: required.map((kind) => ({ kind, label: DOCUMENT_LABELS[kind], uploaded: submitted.has(kind), id: documents.find((d) => d.kind === kind)?.id ?? null, live: kind === 'selfie' })),
+    tradingRoles,
+    // Account-wide summary (approved only when every role is).
+    approvalStatus: !needsReview ? user.approvalStatus : rejected ? 'rejected' : tradingRoles.every((r) => r.approvalStatus === 'approved') ? 'approved' : 'pending',
+    approvalNote: rejected?.approvalNote ?? null,
+    requiredDocuments: required.map(docInfo),
     documentsComplete,
-    // Everything an admin needs before they can approve:
-    readyForReview: !needsReview ? true : !!user.emailVerifiedAt && phoneOk && documentsComplete,
-    // Vendors / agents may only trade once approved.
-    mayTrade: !needsReview || (user.approvalStatus === 'approved' && phoneOk),
+    // Everything an admin needs before they can approve every role:
+    readyForReview: !needsReview ? true : tradingRoles.every((r) => r.readyForReview),
+    // True when the account may trade in at least one role (each role is also checked on its own).
+    mayTrade: !needsReview || tradingRoles.some((r) => r.mayTrade),
+    // True when every role is cleared.
+    fullyApproved: !needsReview || tradingRoles.every((r) => r.mayTrade),
   };
 }
 
-/** Returns an error message if this seller / agent isn't cleared to trade yet, otherwise null. */
-export function tradingBlockReason(userId: string): string | null {
+/**
+ * Returns an error message if this account isn't cleared to trade in `role` yet, otherwise null.
+ * Without a role: blocked only when no trading role is cleared.
+ */
+export function tradingBlockReason(userId: string, role?: TradingRole): string | null {
   const s = getVerificationState(userId);
   if (!s) return 'Account not found.';
-  if (s.mayTrade) return null;
-  if (s.approvalStatus === 'rejected') return 'Your verification was not approved. Open Account verification to see why and re-submit.';
-  return 'Your account is still being verified. Finish Account verification and wait for admin approval.';
+  const r = role ? s.tradingRoles.find((t) => t.role === role) : null;
+  if (role && !r) return `This account is not registered as a ${ROLE_LABELS[role].toLowerCase()}.`;
+  if (r ? r.mayTrade : s.mayTrade) return null;
+  const what = r ? `Your ${r.label.toLowerCase()} profile` : 'Your account';
+  if ((r ?? s).approvalStatus === 'rejected') return `${what} was not approved. Open Account verification to see why and re-submit.`;
+  return `${what} is still being verified. Finish Account verification and wait for admin approval.`;
 }
 
 const RESET_TTL_MS = 60 * 60 * 1000;

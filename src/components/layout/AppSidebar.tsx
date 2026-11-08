@@ -5,7 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, SearchCheck, ShoppingBasket, ClipboardList, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Settings, Store, Bike, SearchCheck, ShoppingBasket, ClipboardList, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -44,10 +44,6 @@ const vendorItems = [
   { href: '/vendor/dashboard', label: 'Vendor Dashboard', icon: Store, tooltip: "Manage Your Store" },
   { href: '/vendor/orders', label: 'Orders', icon: ListChecks, tooltip: "Manage Customer Orders" },
   { href: '/vendor/dashboard/products', label: 'Manage Products', icon: Settings, tooltip: "Add/Edit Products" },
-];
-
-const commonDeliveryItems = [
-  { href: '/delivery/optimize-route', label: 'Optimize Route AI', icon: Route, tooltip: "Delivery Route Optimizer" },
 ];
 
 const deliveryAgentItems = [
@@ -93,7 +89,9 @@ const customerGroup = { label: 'Customer', items: [...customerNavItems, ...custo
 /** The menu sections the signed-in person should see (shared by the desktop sidebar and the phone account menu). */
 export function useNavGroups(): NavGroup[] {
   const { role, roles, loading } = useAuth();
-  const { mayTrade } = useTradingStatus();
+  // Each role is approved on its own, so each menu opens up when its own role is approved.
+  const { state } = useTradingStatus();
+  const roleMayTrade = (role: 'vendor' | 'delivery_agent') => !!state?.tradingRoles?.find((r) => r.role === role)?.mayTrade;
 
   // Each role only sees its own menu. Customers (and visitors) also get the two ways to become a vendor or agent.
   let groups: NavGroup[] = [];
@@ -104,8 +102,8 @@ export function useNavGroups(): NavGroup[] {
       const isVendor = roles.includes('vendor');
       const isAgent = roles.includes('delivery_agent');
       groups = [customerGroup];
-      if (isVendor) groups.push({ label: 'Vendor', items: mayTrade ? vendorItems : vendorItems.slice(0, 1) });
-      if (isAgent) groups.push({ label: 'Delivery', items: mayTrade ? [...deliveryAgentItems, ...commonDeliveryItems] : deliveryAgentItems.slice(0, 1) });
+      if (isVendor) groups.push({ label: 'Vendor', items: roleMayTrade('vendor') ? vendorItems : vendorItems.slice(0, 1) });
+      if (isAgent) groups.push({ label: 'Delivery', items: roleMayTrade('delivery_agent') ? deliveryAgentItems : deliveryAgentItems.slice(0, 1) });
       if (roles.includes('branch')) groups.push({ label: 'Branch', items: branchItems });
       const more = becomeItems.filter((i) => (i.href.includes('/vendor') ? !isVendor : !isAgent));
       if (more.length && !roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: more });

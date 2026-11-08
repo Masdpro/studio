@@ -13,7 +13,16 @@ import type { VerificationState } from '@/components/account/AccountVerification
 import { STEP_PROMPTS, type LivenessStep } from '@/lib/liveness';
 
 type LiveCheck = { id: string; steps: LivenessStep[]; frameCount: number; completedAt: string | null };
-type Account = VerificationState & { id: string; name: string; createdAt: string; liveCheck?: LiveCheck | null };
+// One entry per role to review: an account with both roles appears twice, each approved on its own.
+type Account = VerificationState & {
+  id: string;
+  name: string;
+  createdAt: string;
+  reviewRole: 'vendor' | 'delivery_agent';
+  otherRoles?: { role: string; label: string; approvalStatus: string }[];
+  liveCheck?: LiveCheck | null;
+};
+const keyOf = (a: Account) => `${a.id}:${a.reviewRole}`;
 
 /** The photos from an agent's live selfie check: straight on, then one per move they were asked to make. */
 function LiveCheckPhotos({ check }: { check: LiveCheck }) {
@@ -65,18 +74,18 @@ export default function AdminVerificationsPage() {
     load();
   }, [load]);
 
-  async function decide(id: string, action: 'approve' | 'reject') {
-    setBusy(id);
+  async function decide(a: Account, action: 'approve' | 'reject') {
+    setBusy(keyOf(a));
     try {
-      const res = await fetch(`/api/admin/verifications/${id}`, {
+      const res = await fetch(`/api/admin/verifications/${a.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, note }),
+        body: JSON.stringify({ action, note, role: a.reviewRole }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) toast({ variant: 'destructive', title: 'Not saved', description: data.error ?? 'Something went wrong.' });
       else {
-        toast({ title: action === 'approve' ? 'Account approved' : 'Sent back for changes' });
+        toast({ title: action === 'approve' ? `${a.reviewRole === 'vendor' ? 'Vendor' : 'Delivery agent'} approved` : 'Sent back for changes' });
         setRejecting(null);
         setNote('');
         await load();
@@ -90,13 +99,13 @@ export default function AdminVerificationsPage() {
   const others = accounts.filter((a) => a.approvalStatus !== 'pending');
 
   const renderCard = (a: Account) => (
-    <Card key={a.id}>
+    <Card key={keyOf(a)}>
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <CardTitle className="text-lg">{a.name}</CardTitle>
             <CardDescription>
-              {a.role === 'vendor' ? 'Vendor' : 'Delivery agent'} · {a.email}
+              <span className="font-medium text-foreground">{a.reviewRole === 'vendor' ? 'Vendor' : 'Delivery agent'}</span> · {a.email}
               {a.phone ? ` · ${a.phone}` : ''}
             </CardDescription>
           </div>
@@ -127,13 +136,18 @@ export default function AdminVerificationsPage() {
             ),
           )}
         </div>
+        {!!a.otherRoles?.length && (
+          <p className="text-xs text-muted-foreground">
+            Also {a.otherRoles.map((o) => `${o.label.toLowerCase()} (${o.approvalStatus})`).join(', ')}. Each role is approved separately.
+          </p>
+        )}
         {a.liveCheck && <LiveCheckPhotos check={a.liveCheck} />}
         {a.approvalNote && <p className="text-sm text-destructive">Sent back: {a.approvalNote}</p>}
-        {rejecting === a.id ? (
+        {rejecting === keyOf(a) ? (
           <div className="space-y-2">
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What should they fix? (they will see this)" />
             <div className="flex gap-2">
-              <Button variant="destructive" size="sm" disabled={busy === a.id} onClick={() => decide(a.id, 'reject')}>
+              <Button variant="destructive" size="sm" disabled={busy === keyOf(a)} onClick={() => decide(a, 'reject')}>
                 Send back
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setRejecting(null)}>
@@ -144,12 +158,12 @@ export default function AdminVerificationsPage() {
         ) : (
           <div className="flex gap-2">
             {a.approvalStatus !== 'approved' && (
-              <Button size="sm" disabled={busy === a.id || !a.readyForReview} onClick={() => decide(a.id, 'approve')}>
-                {busy === a.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Approve
+              <Button size="sm" disabled={busy === keyOf(a) || !a.readyForReview} onClick={() => decide(a, 'approve')}>
+                {busy === keyOf(a) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Approve
               </Button>
             )}
             {a.approvalStatus !== 'rejected' && (
-              <Button variant="outline" size="sm" onClick={() => { setRejecting(a.id); setNote(''); }}>
+              <Button variant="outline" size="sm" onClick={() => { setRejecting(keyOf(a)); setNote(''); }}>
                 {a.approvalStatus === 'approved' ? 'Revoke' : 'Send back'}
               </Button>
             )}

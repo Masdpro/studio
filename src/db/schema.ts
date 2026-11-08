@@ -91,6 +91,10 @@ export const vendors = sqliteTable('vendors', {
   slug: text('slug'), // custom link: /s/<slug>
   profileManaged: integer('profile_managed', { mode: 'boolean' }).default(false),
   businessType: text('business_type'), // id from src/lib/product-catalog.ts, chosen in Quick add
+  // Each trading role is approved on its own: a new role starts pending even if the account
+  // already trades in another role. users.approval_status is the summary across roles.
+  approvalStatus: text('approval_status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('pending'),
+  approvalNote: text('approval_note'),
 });
 
 export const deliveryAgents = sqliteTable('delivery_agents', {
@@ -104,6 +108,10 @@ export const deliveryAgents = sqliteTable('delivery_agents', {
   vehicleDetails: text('vehicle_details'),
   imageUrl: text('image_url'), // profile photo, uploaded by an admin
   profileManaged: integer('profile_managed', { mode: 'boolean' }).default(false),
+  // Each trading role is approved on its own: a new role starts pending even if the account
+  // already trades in another role. users.approval_status is the summary across roles.
+  approvalStatus: text('approval_status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('pending'),
+  approvalNote: text('approval_note'),
 });
 
 export const products = sqliteTable('products', {

@@ -20,7 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function DeliveryAgentDashboardPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
-  const { mayTrade, loaded: tradingLoaded } = useTradingStatus();
+  const { mayTrade, loaded: tradingLoaded } = useTradingStatus('delivery_agent');
   const [agent, setAgent] = useState<DeliveryAgent | null>(null);
   // Store all orders and derive subsections from it
   const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -147,7 +147,7 @@ export default function DeliveryAgentDashboardPage() {
     return (
       <div className="container mx-auto max-w-2xl space-y-6 py-8">
         <h1 className="text-3xl font-bold text-primary">Delivery Agent Dashboard</h1>
-        <AccountVerification />
+        <AccountVerification focus="delivery_agent" />
       </div>
     );
   }

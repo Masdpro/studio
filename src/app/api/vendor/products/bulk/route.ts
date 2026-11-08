@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   const id = session?.user?.id;
   if (!id || !userHasRole(id, 'vendor')) return NextResponse.json({ error: 'Vendor sign-in required.' }, { status: 401 });
-  const blocked = tradingBlockReason(id);
+  const blocked = tradingBlockReason(id, 'vendor');
   if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
 
   const { items } = (await request.json().catch(() => ({}))) as { items?: unknown };

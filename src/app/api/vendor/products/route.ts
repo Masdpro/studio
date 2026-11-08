@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   if (!isVendor && !branch) return NextResponse.json({ error: 'Vendor sign-in required.' }, { status: 401 });
 
   if (isVendor) {
-    const blocked = tradingBlockReason(id);
+    const blocked = tradingBlockReason(id, 'vendor');
     if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
   }
 

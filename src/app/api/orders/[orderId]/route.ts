@@ -107,7 +107,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   const check = orderMachine.check(order.status, status, actor, order);
   if (!check.ok) return NextResponse.json({ error: check.message }, { status: 409 });
   if (isClaimingUnassignedDelivery) {
-    const blocked = tradingBlockReason(userId);
+    const blocked = tradingBlockReason(userId, 'delivery_agent');
     if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
   }
 

@@ -15,7 +15,7 @@ export default async function VendorLinkPage({ params }: { params: Promise<{ slu
   const vendor = await getVendorBySlug(slug.toLowerCase());
   if (!vendor) notFound();
   // Stores that haven't been approved yet aren't public.
-  if (tradingBlockReason(vendor.id)) notFound();
+  if (tradingBlockReason(vendor.id, 'vendor')) notFound();
   const [products, branches, markets] = await Promise.all([getProductsByVendor(vendor.id), getBranchesByVendor(vendor.id), getMarkets()]);
   return <VendorStorefront vendor={vendor} branches={branches} products={products} markets={markets} back={{ href: '/shop', label: 'Browse all Closebuy stores' }} />;
 }

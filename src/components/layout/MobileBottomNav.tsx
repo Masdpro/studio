@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
  * Work areas where the shopping tab bar steps aside: every vendor, branch and delivery-agent page.
  * (The vendor dashboard brings its own bottom tabs; the rest are reached from the account menu.)
  */
-const WORK_AREAS = ['/vendor', '/branch', '/delivery-agent', '/delivery'];
+const WORK_AREAS = ['/vendor', '/branch', '/delivery-agent'];
 
 export function isWorkArea(pathname: string | null): boolean {
   if (!pathname) return false;

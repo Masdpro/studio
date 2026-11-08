@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ err
   if (!session?.user?.id || !userHasRole(session.user.id, 'delivery_agent')) {
     return NextResponse.json({ error: 'Only delivery agents can submit quotes.' }, { status: 403 });
   }
-  const blocked = tradingBlockReason(session.user.id);
+  const blocked = tradingBlockReason(session.user.id, 'delivery_agent');
   if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
 
   const errand = await getErrandRequestById(errandId);

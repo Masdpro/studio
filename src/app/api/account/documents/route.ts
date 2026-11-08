@@ -4,10 +4,10 @@ import { and, eq } from 'drizzle-orm';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/db';
-import { users, verificationDocuments } from '@/db/schema';
+import { verificationDocuments } from '@/db/schema';
 import { DOCUMENT_CONTENT_TYPES, MAX_DOCUMENT_BYTES, detectDocumentExtension } from '@/lib/uploads';
 import { deleteFile, saveFile } from '@/lib/storage';
-import { requiredDocumentsFor, type DocumentKind } from '@/lib/verification';
+import { requiredDocumentsFor, resubmitRolesNeeding, type DocumentKind } from '@/lib/verification';
 
 /** Vendors and agents upload their ID / business documents here (multipart: "file" + "kind"). */
 export async function POST(request: Request) {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const id = randomUUID();
   db.insert(verificationDocuments).values({ id, userId, kind, fileName, contentType: DOCUMENT_CONTENT_TYPES[ext], createdAt: new Date() }).run();
 
-  // Uploading again after a rejection puts the account back in the review queue.
-  db.update(users).set({ approvalStatus: 'pending', approvalNote: null }).where(and(eq(users.id, userId), eq(users.approvalStatus, 'rejected'))).run();
+  // Uploading again after a rejection puts the role(s) that need this document back in the review queue.
+  resubmitRolesNeeding(userId, kind);
   return NextResponse.json({ id }, { status: 201 });
 }

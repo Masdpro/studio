@@ -1,10 +1,10 @@
 import { createHash, randomInt, randomUUID } from 'crypto';
 import { and, desc, eq, gte } from 'drizzle-orm';
 import { db } from '@/db';
-import { livenessChecks, users, verificationDocuments } from '@/db/schema';
+import { livenessChecks, verificationDocuments } from '@/db/schema';
 import { CONTENT_TYPES, detectImageExtension } from '@/lib/uploads';
 import { deleteFile, saveFile } from '@/lib/storage';
-import { requiredDocumentsFor } from '@/lib/verification';
+import { requiredDocumentsFor, resubmitRolesNeeding } from '@/lib/verification';
 import { CHECK_TTL_MS, isLivenessStep, pickSteps, type LivenessStep } from '@/lib/liveness';
 
 /**
@@ -94,8 +94,8 @@ export async function completeLivenessCheck(userId: string, checkId: string, neu
   const documentId = randomUUID();
   db.insert(verificationDocuments).values({ id: documentId, userId, kind: 'selfie', fileName: selfieName, contentType: CONTENT_TYPES[exts[0]], createdAt: now }).run();
 
-  // Redoing the check after being sent back puts the account back in the review queue.
-  db.update(users).set({ approvalStatus: 'pending', approvalNote: null }).where(and(eq(users.id, userId), eq(users.approvalStatus, 'rejected'))).run();
+  // Redoing the check after being sent back puts the agent role back in the review queue.
+  resubmitRolesNeeding(userId, 'selfie');
   return { documentId, steps };
 }
 

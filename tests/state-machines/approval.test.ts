@@ -3,14 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { users, verificationDocuments } from '@/db/schema';
+import { users, vendors, verificationDocuments } from '@/db/schema';
 import { PATCH as review } from '@/app/api/admin/verifications/[userId]/route';
 import { startTradingRole } from '@/lib/verification';
 import { POST as uploadDocument } from '@/app/api/account/documents/route';
 import { jsonRequest, makeUser, makeVendor, params, signInAs } from '../helpers';
 
 const approvalOf = (id: string) => db.select({ s: users.approvalStatus }).from(users).where(eq(users.id, id)).get()?.s;
-const setApproval = (id: string, s: 'pending' | 'approved' | 'rejected') => db.update(users).set({ approvalStatus: s }).where(eq(users.id, id)).run();
+// Approval is stored per role (here: the vendor role); the account status is the summary.
+const setApproval = (id: string, s: 'pending' | 'approved' | 'rejected') => {
+  db.update(vendors).set({ approvalStatus: s }).where(eq(vendors.id, id)).run();
+  db.update(users).set({ approvalStatus: s }).where(eq(users.id, id)).run();
+};
 const addDocs = (id: string) => {
   for (const kind of ['business_proof', 'store_photo'] as const) {
     db.insert(verificationDocuments).values({ id: randomUUID(), userId: id, kind, fileName: `${kind}.jpg`, contentType: 'image/jpeg', createdAt: new Date() }).run();
@@ -65,7 +69,7 @@ describe('account approval', () => {
     expect((await act(v, { action: 'approve' })).status).toBe(200);
     expect(approvalOf(v)).toBe('approved');
   });
-  it('an existing trader adding another role stays approved', () => {
+  it('an existing trader keeps the role they already have approved', () => {
     const v = makeVendor();
     startTradingRole(v, '08031234567', true);
     expect(approvalOf(v)).toBe('approved');

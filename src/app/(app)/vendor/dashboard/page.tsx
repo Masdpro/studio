@@ -24,7 +24,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function VendorDashboardPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
-  const { mayTrade, loaded: tradingLoaded } = useTradingStatus();
+  const { mayTrade, loaded: tradingLoaded } = useTradingStatus('vendor');
   const scrolling = useScrolling();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [displayedVendorOrders, setDisplayedVendorOrders] = useState<Order[]>([]);
@@ -123,7 +123,7 @@ export default function VendorDashboardPage() {
     return (
       <div className="container mx-auto max-w-2xl space-y-6 py-8">
         <h1 className="text-3xl font-bold text-primary">Vendor Dashboard</h1>
-        <AccountVerification />
+        <AccountVerification focus="vendor" />
       </div>
     );
   }

@@ -24,14 +24,20 @@ export function VerificationBanner() {
       .catch(() => {});
   }, [user, roles, pathname]);
 
-  if (!state || state.mayTrade || pathname === '/shop' || pathname.startsWith('/account/verification')) return null;
+  if (!state || pathname === '/shop' || pathname.startsWith('/account/verification')) return null;
+  // Each role is approved on its own. Remind about a role that isn't cleared yet when nothing can
+  // trade, or when the person is on that role's own pages.
+  const waiting = (state.tradingRoles ?? []).filter((r) => !r.mayTrade);
+  const here = waiting.filter((r) => (r.role === 'vendor' ? pathname.startsWith('/vendor') : pathname.startsWith('/delivery-agent')));
+  const shown = !state.mayTrade ? waiting : here;
+  if (shown.length === 0) return null;
+  const subject = waiting.length === (state.tradingRoles ?? []).length ? 'Your account' : `Your ${shown.map((r) => r.label.toLowerCase()).join(' and ')} profile`;
 
-  const text =
-    state.approvalStatus === 'rejected'
-      ? 'Your verification needs changes.'
-      : state.readyForReview
-        ? 'Your account is waiting for admin approval.'
-        : 'Finish verifying your account to start trading.';
+  const text = shown.some((r) => r.approvalStatus === 'rejected')
+    ? `${subject} needs changes before it can be approved.`
+    : shown.every((r) => r.readyForReview)
+      ? `${subject} is waiting for admin approval.`
+      : `Finish verifying ${subject.replace(/^Your/, 'your')} to start trading.`;
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">

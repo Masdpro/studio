@@ -211,37 +211,37 @@ stateDiagram-v2
 | `Pending` | `Accepted` | customer accepts this quote | system | — |
 | `Pending` | `Rejected` | customer accepts another quote | system | — |
 
-## Account approval
+## Role approval
 
-Whether a vendor or delivery agent has been checked by an admin and may trade. Customers are approved from the start.
+Whether a vendor or delivery-agent role has been checked by an admin and may trade. Each role is approved on its own: an approved vendor who becomes an agent keeps selling while the agent role waits. users.approval_status is the summary (approved only when every role is). Customers are approved from the start.
 
-Stored in `users.approval_status`. Starts as `approved` or `pending`.
+Stored in `vendors.approval_status and delivery_agents.approval_status (summary: users.approval_status)`. Starts as `approved` or `pending`.
 
 ```mermaid
 stateDiagram-v2
   [*] --> approved
   [*] --> pending
-  approved --> pending : customer adds their first vendor or agent profile (user)
+  approved --> pending : account adds a vendor or agent profile (the new role starts pending, even if another role is approved) (user)
   pending --> approved : admin approves (admin)
   rejected --> approved : admin approves (admin)
   pending --> rejected : admin rejects with a reason (or updates the reason) (admin)
   approved --> rejected : admin rejects with a reason (or updates the reason) (admin)
   rejected --> rejected : admin rejects with a reason (or updates the reason) (admin)
-  rejected --> pending : user uploads a document again (user)
+  rejected --> pending : user uploads a document that role needs again (or redoes the live selfie) (user)
 ```
 
 | Status | Meaning |
 | --- | --- |
 | `pending` | Waiting for an admin to review documents. |
 | `approved` | Allowed to trade (customers start here). |
-| `rejected` | Needs fixing; the reason is in users.approval_note. |
+| `rejected` | Needs fixing; the reason is in approval_note on the same row. |
 
 | From | To | When | Who | Rules |
 | --- | --- | --- | --- | --- |
-| `approved` | `pending` | customer adds their first vendor or agent profile | user | — |
-| `pending`, `rejected` | `approved` | admin approves | admin | email, phone (when required) and all documents done |
+| `approved` | `pending` | account adds a vendor or agent profile (the new role starts pending, even if another role is approved) | user | — |
+| `pending`, `rejected` | `approved` | admin approves | admin | email, phone (when required) and all of that role’s documents done |
 | `pending`, `approved`, `rejected` | `rejected` | admin rejects with a reason (or updates the reason) | admin | — |
-| `rejected` | `pending` | user uploads a document again | user | — |
+| `rejected` | `pending` | user uploads a document that role needs again (or redoes the live selfie) | user | — |
 
 ## Smaller rules that are not modelled as machines
 
