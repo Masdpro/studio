@@ -102,7 +102,7 @@ export default function VendorProductManagementPage() {
 
   return (
     <div className="container mx-auto py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-1">
+      <div className="min-w-0 lg:col-span-1">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function VendorProductManagementPage() {
         </Card>
       </div>
 
-      <div className="lg:col-span-2">
+      <div className="min-w-0 lg:col-span-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">

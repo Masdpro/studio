@@ -52,8 +52,8 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
+    <div className="flex min-w-0 flex-wrap items-center gap-3">
+      <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="Preview" className="h-full w-full object-cover" />
@@ -66,7 +66,7 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
           </div>
         )}
       </div>
-      <div className="space-y-2">
+      <div className="min-w-[8.5rem] flex-1 space-y-1.5">
         <input
           ref={inputRef}
           type="file"
@@ -78,16 +78,18 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
             if (file) handleFile(file);
           }}
         />
-        <Button type="button" variant="outline" size="sm" disabled={isUploading} onClick={() => inputRef.current?.click()}>
-          <ImagePlus className="mr-2 h-4 w-4" />
+        <div className="flex flex-wrap gap-1.5">
+        <Button type="button" variant="outline" size="sm" className="h-8 px-2.5" disabled={isUploading} onClick={() => inputRef.current?.click()}>
+          <ImagePlus className="mr-1.5 h-4 w-4" />
           {value ? 'Replace image' : 'Upload image'}
         </Button>
         {value && (
-          <Button type="button" variant="ghost" size="sm" disabled={isUploading} onClick={() => onChange('')}>
-            <Trash2 className="mr-2 h-4 w-4" /> Remove
+          <Button type="button" variant="ghost" size="sm" className="h-8 px-2.5" disabled={isUploading} onClick={() => onChange('')}>
+            <Trash2 className="mr-1.5 h-4 w-4" /> Remove
           </Button>
         )}
-        <p className="text-xs text-muted-foreground">JPG, PNG, GIF or WebP, up to 5 MB.</p>
+        </div>
+        <p className="text-xs leading-snug text-muted-foreground">JPG, PNG, GIF or WebP, up to 5 MB.</p>
       </div>
     </div>
   );
