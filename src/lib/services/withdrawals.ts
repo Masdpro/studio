@@ -3,7 +3,9 @@ import { bankAccounts, users, walletTransactions, withdrawals, wallets } from '@
 import { and, desc, eq, inArray } from 'drizzle-orm';
 
 /** Withdrawals that are still in progress (money held from the wallet, not yet paid or refunded). */
-export const OPEN_STATUSES = ['awaiting_approval', 'awaiting_otp', 'pending'] as const;
+import { WITHDRAWAL_OPEN, withdrawalMachine } from '@/lib/state-machines';
+/** @deprecated use WITHDRAWAL_OPEN from '@/lib/state-machines' */
+export const OPEN_STATUSES = WITHDRAWAL_OPEN;
 import { randomUUID } from 'crypto';
 import { applyEntry, postEntry, InsufficientFundsError } from '@/lib/services/wallets';
 import { createNotification } from '@/lib/services/notifications';
@@ -226,7 +228,7 @@ export async function resendWithdrawalOtp(reference: string) {
 /** Admin declines: the held money goes back to the wallet. */
 export async function rejectWithdrawal(reference: string, reason: string) {
   const w = getWithdrawal(reference);
-  if (w.status !== 'awaiting_approval' && w.status !== 'awaiting_otp') throw new Error('This withdrawal can no longer be declined.');
+  if (!withdrawalMachine.can(w.status, 'rejected', 'admin')) throw new Error('This withdrawal can no longer be declined.');
   await settleWithdrawal(reference, 'rejected', reason);
   return getWithdrawal(reference);
 }
@@ -235,8 +237,8 @@ export async function rejectWithdrawal(reference: string, reason: string) {
 export async function settleWithdrawal(reference: string, outcome: 'success' | 'failed' | 'reversed' | 'rejected', reason?: string) {
   const w = db.select().from(withdrawals).where(eq(withdrawals.id, reference)).get();
   if (!w) return;
-  // A success can still be reversed by the bank later; anything else is final.
-  if (!((OPEN_STATUSES as readonly string[]).includes(w.status) || (w.status === 'success' && outcome === 'reversed'))) return;
+  // Only moves the withdrawal machine allows (e.g. a success can still be reversed by the bank; final states never change).
+  if (!withdrawalMachine.can(w.status, outcome)) return;
   const claimed = db.update(withdrawals)
     .set({ status: outcome, failureReason: outcome === 'success' ? null : reason ?? null, completedAt: new Date() })
     .where(and(eq(withdrawals.id, reference), eq(withdrawals.status, w.status)))

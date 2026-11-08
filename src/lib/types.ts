@@ -1,3 +1,4 @@
+import type { OrderStatus } from '@/lib/state-machines/order';
 
 import { z } from 'zod';
 
@@ -87,17 +88,7 @@ export type Order = {
   vendorId: string; // To know where to pick up from
   items: CartItem[]; // Changed from Product[] to CartItem[]
   totalAmount: number;
-  status:
-    | 'Pending'
-    | 'Processing'
-    | 'ReadyForPickup' // Vendor has prepared it for DELIVERY AGENT
-    | 'ReadyForCustomerPickup' // Vendor has prepared it for CUSTOMER SELF-PICKUP
-    | 'PickedUpByCustomer' // Customer has confirmed self-pickup
-    | 'AcceptedByAgent' // Agent has accepted the task
-    | 'PickedUpByAgent' // Agent scanned at vendor
-    | 'Out for Delivery' // After pickup, or synonymous with PickedUpByAgent
-    | 'Delivered' // Agent scanned at customer, or after customer confirms
-    | 'Cancelled';
+  status: OrderStatus; // see src/lib/state-machines/order.ts
   pickupAddress: string; // Vendor's address (remains a string for simplicity in order context)
   deliveryAddress: string; // Customer's address (remains a string)
   deliveryFee: number; // Payment for the delivery agent

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminSession } from '@/lib/admin-guard';
 import { getOrderById, transitionOrderStatus } from '@/lib/services/orders';
 import { refundCancelledOrder } from '@/lib/services/order-refunds';
+import { orderMachine } from '@/lib/state-machines';
 
 /**
  * POST { reason } — support cancels an order and refunds the customer in full,
@@ -12,7 +13,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
   const { orderId } = await params;
   const order = await getOrderById(orderId);
   if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
-  if (order.status === 'Cancelled') return NextResponse.json({ error: 'This order is already cancelled and refunded.' }, { status: 409 });
+  if (!orderMachine.can(order.status, 'Cancelled', 'admin')) return NextResponse.json({ error: 'This order is already cancelled and refunded.' }, { status: 409 });
 
   const { reason } = (await request.json().catch(() => ({}))) as { reason?: string };
   const note = typeof reason === 'string' ? reason.trim().slice(0, 140) : '';

@@ -1,6 +1,10 @@
 import { db } from '@/db';
 import { wallets as walletsTable, paymentTransactions as paymentTransactionsTable, walletTransactions } from '@/db/schema';
-import { and, desc, eq, gte, lt, ne, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lt, ne, sql } from 'drizzle-orm';
+import { paymentMachine } from '@/lib/state-machines';
+
+/** Payment statuses that may still become 'failed' (only 'pending'). */
+const CAN_FAIL = paymentMachine.stateNames.filter((s) => paymentMachine.can(s, 'failed'));
 import { randomUUID } from 'crypto';
 import type { Wallet } from '@/lib/types';
 import { createNotification } from '@/lib/services/notifications';
@@ -148,10 +152,11 @@ export async function completeWalletFunding(reference: string): Promise<{ alread
   return { alreadyProcessed: false, newBalance };
 }
 
+/** pending → failed (see paymentMachine). A payment that already succeeded is never marked failed. */
 export async function markWalletFundingFailed(reference: string): Promise<void> {
   db.update(paymentTransactionsTable)
     .set({ status: 'failed', completedAt: new Date() })
-    .where(eq(paymentTransactionsTable.id, reference))
+    .where(and(eq(paymentTransactionsTable.id, reference), inArray(paymentTransactionsTable.status, CAN_FAIL)))
     .run();
 }
 

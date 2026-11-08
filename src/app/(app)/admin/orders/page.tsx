@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ORDER_OPEN } from '@/lib/state-machines';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ArrowLeft, Loader2, RotateCcw, Search } from 'lucide-react';
@@ -17,7 +18,7 @@ import type { Order } from '@/lib/types';
 type AdminOrder = Order & { customerName: string; customerEmail?: string; vendorName: string };
 
 const ALL = 'all';
-const OPEN_STATUSES: Order['status'][] = ['Pending', 'Processing', 'ReadyForPickup', 'ReadyForCustomerPickup', 'AcceptedByAgent', 'PickedUpByAgent', 'Out for Delivery'];
+const OPEN_STATUSES = ORDER_OPEN;
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);

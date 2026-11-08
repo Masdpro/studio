@@ -8,6 +8,7 @@ import { createNotification } from '@/lib/services/notifications';
 import { sendEmail } from '@/lib/notify';
 import { renderEmail } from '@/lib/email-template';
 import { appUrl } from '@/lib/verification';
+import { approvalMachine } from '@/lib/state-machines';
 
 /** PATCH { action: 'approve' } or { action: 'reject', note } */
 export async function PATCH(request: Request, { params }: { params: Promise<{ userId: string }> }) {
@@ -20,6 +21,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
   if (!user || !state || !state.needsReview) return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
 
   if (action === 'approve') {
+    // Approving an account that is already approved changes nothing (and doesn't email them again).
+    if (user.approvalStatus === 'approved') return NextResponse.json({ ok: true });
+    if (!approvalMachine.can(user.approvalStatus, 'approved', 'admin')) return NextResponse.json({ error: 'This account cannot be approved right now.' }, { status: 409 });
     if (!state.readyForReview) {
       return NextResponse.json({ error: state.phoneRequired ? 'Email, phone and all documents must be completed before approval.' : 'Email and all documents must be completed before approval.' }, { status: 409 });
     }
@@ -40,6 +44,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
   if (action === 'reject') {
     const reason = (note ?? '').trim();
     if (reason.length < 5) return NextResponse.json({ error: 'Give the user a short reason so they can fix it.' }, { status: 400 });
+    if (!approvalMachine.can(user.approvalStatus, 'rejected', 'admin')) return NextResponse.json({ error: 'This account cannot be rejected right now.' }, { status: 409 });
     db.update(users).set({ approvalStatus: 'rejected', approvalNote: reason }).where(eq(users.id, userId)).run();
     await createNotification({ userId, message: `Your verification needs attention: ${reason}`, category: 'Activity', link: '/account/verification' });
     await sendEmail(

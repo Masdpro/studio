@@ -18,7 +18,10 @@
     "seed-branches": "tsx scripts/seed-branches.ts",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "machines:docs": "tsx scripts/state-machine-docs.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",
@@ -81,7 +84,8 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   },
   "allowScripts": {
     "esbuild@0.18.20": true,

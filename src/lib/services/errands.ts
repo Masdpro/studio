@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { errandRequests as errandRequestsTable, errandQuotes as errandQuotesTable } from '@/db/schema';
-import { eq, and, desc, isNull, ne } from 'drizzle-orm';
+import { eq, and, desc, inArray, isNull, ne } from 'drizzle-orm';
+import { ERRAND_OPEN_FOR_QUOTES, errandMachine, errandQuoteMachine } from '@/lib/state-machines';
 import { randomUUID } from 'crypto';
 import type { ErrandRequest, ErrandQuote } from '@/lib/types';
 import { createNotification } from '@/lib/services/notifications';
@@ -24,7 +25,7 @@ export async function getOpenErrandRequestsForAgent(agentId: string): Promise<Er
     .orderBy(desc(errandRequestsTable.createdAt))
     .all();
 
-  const openStatuses = new Set(['PendingQuotes', 'AwaitingAcceptance']);
+  const openStatuses = new Set<string>(ERRAND_OPEN_FOR_QUOTES);
   const errands = rows.filter((r) => openStatuses.has(r.status)).map(rowToErrandRequest);
 
   const agentQuotes = db
@@ -120,23 +121,33 @@ export async function acceptErrandQuote(errandId: string, quoteId: string): Prom
   if (!quote || quote.errandRequestId !== errandId) {
     throw new Error('Quote not found for this errand.');
   }
+  if (!errandQuoteMachine.can(quote.status as ErrandQuote['status'], 'Accepted')) {
+    throw new Error('This quote can no longer be accepted.');
+  }
 
-  db.update(errandRequestsTable)
-    .set({
-      status: 'AgentAssigned',
-      assignedAgentId: quote.agentId,
-      acceptedQuoteId: quote.id,
-      estimatedTotalItemCost: quote.estimatedItemCost,
-      deliveryFee: quote.deliveryFee,
-    })
-    .where(eq(errandRequestsTable.id, errandId))
-    .run();
-
-  db.update(errandQuotesTable).set({ status: 'Accepted' }).where(eq(errandQuotesTable.id, quoteId)).run();
-  db.update(errandQuotesTable)
-    .set({ status: 'Rejected' })
-    .where(and(eq(errandQuotesTable.errandRequestId, errandId), ne(errandQuotesTable.id, quoteId)))
-    .run();
+  // Assign the agent and settle every quote in one step, and only if the errand is still waiting
+  // for a choice (two taps, or two tabs, must not assign two agents).
+  const assigned = db.transaction((tx) => {
+    const fromStates = errandMachine.stateNames.filter((s) => errandMachine.can(s, 'AgentAssigned', 'customer'));
+    const res = tx.update(errandRequestsTable)
+      .set({
+        status: 'AgentAssigned',
+        assignedAgentId: quote.agentId,
+        acceptedQuoteId: quote.id,
+        estimatedTotalItemCost: quote.estimatedItemCost,
+        deliveryFee: quote.deliveryFee,
+      })
+      .where(and(eq(errandRequestsTable.id, errandId), inArray(errandRequestsTable.status, fromStates), isNull(errandRequestsTable.assignedAgentId)))
+      .run();
+    if (res.changes !== 1) return false;
+    tx.update(errandQuotesTable).set({ status: 'Accepted' }).where(eq(errandQuotesTable.id, quoteId)).run();
+    tx.update(errandQuotesTable)
+      .set({ status: 'Rejected' })
+      .where(and(eq(errandQuotesTable.errandRequestId, errandId), ne(errandQuotesTable.id, quoteId), eq(errandQuotesTable.status, 'Pending')))
+      .run();
+    return true;
+  });
+  if (!assigned) throw new Error('A quote has already been accepted for this errand.');
 
   await createNotification({
     userId: quote.agentId,

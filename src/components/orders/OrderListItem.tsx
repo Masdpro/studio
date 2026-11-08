@@ -2,6 +2,7 @@
 'use client';
 
 import type { Order } from '@/lib/types';
+import { orderMachine, ORDER_COMPLETED, type OrderActor } from '@/lib/state-machines';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -140,11 +141,13 @@ export function OrderListItem({
   const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
 
   const showCustomerDeliveryBarcode = userRole === 'customer' && order.deliveryPreference === 'delivery' && (order.status === 'AcceptedByAgent' || order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
-  const canCustomerScanForPickup = userRole === 'customer' && order.status === 'ReadyForCustomerPickup' && onScanForCustomerPickup;
+  // Which buttons to show comes from the same rules the server enforces (src/lib/state-machines/order.ts).
+  const can = (to: Order['status'], actor: OrderActor) => orderMachine.can(order.status, to, actor);
+  const canCustomerScanForPickup = userRole === 'customer' && can('PickedUpByCustomer', 'customer') && onScanForCustomerPickup;
 
-  const canVendorAttend = userRole === 'vendor' && order.status === 'Pending' && onAttendToOrder;
+  const canVendorAttend = userRole === 'vendor' && can('Processing', 'vendor') && onAttendToOrder;
 
-  const canVendorMarkReady = userRole === 'vendor' && order.status === 'Processing' && onMarkAsReadyForPickup;
+  const canVendorMarkReady = userRole === 'vendor' && (can('ReadyForPickup', 'vendor') || can('ReadyForCustomerPickup', 'vendor')) && onMarkAsReadyForPickup;
   let vendorReadyButtonText = "Ready for Pickup";
   let vendorReadyButtonIcon = <ShoppingBag className="h-4 w-4 mr-1 sm:mr-2" />;
   if (canVendorMarkReady) {
@@ -163,10 +166,10 @@ export function OrderListItem({
     (userRole === 'customer' && order.status === 'PickedUpByAgent' && order.deliveryPreference === 'delivery');
 
 
-  const canLeaveReview = userRole === 'customer' && (order.status === 'Delivered' || order.status === 'PickedUpByCustomer');
+  const canLeaveReview = userRole === 'customer' && ORDER_COMPLETED.includes(order.status);
   const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
-  const canCustomerCancel = userRole === 'customer' && (order.status === 'Pending' || order.status === 'Processing') && onCancelOrder;
-  const canVendorDecline = userRole === 'vendor' && (order.status === 'Pending' || order.status === 'Processing') && onDeclineOrder;
+  const canCustomerCancel = userRole === 'customer' && can('Cancelled', 'customer') && onCancelOrder;
+  const canVendorDecline = userRole === 'vendor' && can('Cancelled', 'vendor') && onDeclineOrder;
 
   const handleViewDetailsClick = () => {
     setIsDetailsDialogOpen(true);
@@ -331,17 +334,17 @@ export function OrderListItem({
               </Button>
             )}
 
-            {userRole === 'delivery_agent' && order.status === 'ReadyForPickup' && !order.deliveryAgentId && onAcceptDelivery && (
+            {userRole === 'delivery_agent' && can('AcceptedByAgent', 'agent') && !order.deliveryAgentId && onAcceptDelivery && (
               <Button className="bg-primary hover:bg-primary/80" onClick={() => onAcceptDelivery(order.id)}>
                 Accept Delivery
               </Button>
             )}
-            {userRole === 'delivery_agent' && order.status === 'AcceptedByAgent' && onScanForPickup && (
+            {userRole === 'delivery_agent' && can('PickedUpByAgent', 'agent') && onScanForPickup && (
               <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => onScanForPickup(order.id)}>
                 <PackageCheck className="h-4 w-4 mr-2" /> Scan at Pickup
               </Button>
             )}
-            {userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery') && onScanForDelivery && (
+            {userRole === 'delivery_agent' && can('Delivered', 'agent') && onScanForDelivery && (
               <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => onScanForDelivery(order.id)}>
                 <ShieldCheck className="h-4 w-4 mr-2" /> Enter delivery code
               </Button>

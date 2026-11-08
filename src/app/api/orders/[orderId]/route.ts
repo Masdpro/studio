@@ -9,6 +9,7 @@ import { creditOrderEarnings } from '@/lib/services/earnings';
 import { checkDeliveryCode, getDeliveryCode } from '@/lib/services/delivery-codes';
 import { createNotification } from '@/lib/services/notifications';
 import type { Order } from '@/lib/types';
+import { orderMachine, ORDER_COMPLETED, type OrderActor } from '@/lib/state-machines';
 
 const STATUS_MESSAGES: Partial<Record<Order['status'], string>> = {
   Processing: 'Your order is being processed.',
@@ -54,32 +55,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
   return NextResponse.json({ order });
 }
 
-type Actor = 'customer' | 'vendor' | 'agent';
+type Actor = Exclude<OrderActor, 'admin'>;
 
 /**
- * Who may move an order from which status to which. Anything not listed is
- * refused, so nobody can skip steps (e.g. a customer marking their own order
- * "Delivered") or reopen a finished order.
+ * Updates an order's status. Who may make which move is defined once, in
+ * src/lib/state-machines/order.ts; anything not listed there is refused.
+ * Cancelling refunds the customer and restocks the items.
  */
-const ALLOWED: Record<Actor, Partial<Record<Order['status'], Order['status'][]>>> = {
-  customer: {
-    Pending: ['Cancelled'],
-    Processing: ['Cancelled'],
-    ReadyForCustomerPickup: ['PickedUpByCustomer'],
-  },
-  vendor: {
-    Pending: ['Processing', 'Cancelled'],
-    Processing: ['ReadyForPickup', 'ReadyForCustomerPickup', 'Cancelled'],
-  },
-  agent: {
-    ReadyForPickup: ['AcceptedByAgent'],
-    AcceptedByAgent: ['PickedUpByAgent'],
-    PickedUpByAgent: ['Delivered'],
-    'Out for Delivery': ['Delivered'],
-  },
-};
-
-/** Updates an order's status, following the rules above. Cancelling refunds the customer and restocks the items. */
 export async function PATCH(request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
 
@@ -117,17 +99,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
 
   // Someone can be both buyer and seller of an order (e.g. testing their own shop): the screen says which role it's acting in.
   const preferred = actingAs && actors.includes(actingAs) ? [actingAs, ...actors.filter((a) => a !== actingAs)] : actors;
-  const actor = preferred.find((a) => ALLOWED[a][order.status]?.includes(status));
+  const actor = orderMachine.isState(status) ? preferred.find((a) => orderMachine.can(order.status, status, a)) : undefined;
   if (!actor) {
     return NextResponse.json({ error: `This order can't be moved from "${order.status}" to "${status}".` }, { status: 409 });
   }
-  // The "ready" step must match how the customer chose to receive the order.
-  if (status === 'ReadyForPickup' && order.deliveryPreference !== 'delivery') {
-    return NextResponse.json({ error: 'This order is for customer pickup, not delivery.' }, { status: 409 });
-  }
-  if (status === 'ReadyForCustomerPickup' && order.deliveryPreference !== 'pickup') {
-    return NextResponse.json({ error: 'This order is for delivery, not customer pickup.' }, { status: 409 });
-  }
+  // Rules that depend on the order itself (e.g. the "ready" step must match how the customer chose to receive it).
+  const check = orderMachine.check(order.status, status, actor, order);
+  if (!check.ok) return NextResponse.json({ error: check.message }, { status: 409 });
   if (isClaimingUnassignedDelivery) {
     const blocked = tradingBlockReason(userId);
     if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
@@ -135,8 +113,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
 
   // Delivery is only complete when the customer, having checked the goods, gives the agent their code.
   if (status === 'Delivered') {
-    const check = checkDeliveryCode(order.id, deliveryCode);
-    if (!check.ok) return NextResponse.json({ error: check.error, code: 'DELIVERY_CODE' }, { status: 400 });
+    const code = checkDeliveryCode(order.id, deliveryCode);
+    if (!code.ok) return NextResponse.json({ error: code.error, code: 'DELIVERY_CODE' }, { status: 400 });
   }
 
   // Only the agent id of the caller themselves is ever written besides status.
@@ -146,7 +124,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
   }
 
   let refunded = 0;
-  if (status === 'Delivered' || status === 'PickedUpByCustomer') {
+  if (ORDER_COMPLETED.includes(status)) {
     // Order complete: pay the vendor (and the agent) straight into their wallets.
     await creditOrderEarnings({ ...order, status });
   }

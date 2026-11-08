@@ -1,4 +1,5 @@
 import { userHasRole } from '@/lib/roles';
+import { ERRAND_OPEN_FOR_QUOTES } from '@/lib/state-machines';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -49,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ err
   if (!errand) {
     return NextResponse.json({ error: 'Errand not found.' }, { status: 404 });
   }
-  if (errand.assignedAgentId) {
+  if (errand.assignedAgentId || !ERRAND_OPEN_FOR_QUOTES.includes(errand.status)) {
     return NextResponse.json({ error: 'This errand already has an assigned agent.' }, { status: 400 });
   }
 
