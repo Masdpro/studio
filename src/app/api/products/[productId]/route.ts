@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getBranchForUser } from '@/lib/roles';
 import { getProductById, updateProduct, deleteProduct } from '@/lib/services/products';
 import type { Product } from '@/lib/types';
-import { isUploadedImage } from '@/lib/product-media';
+import { isProductPhoto } from '@/lib/product-media';
 
 // Fields a vendor may edit on their own product. Deliberately excludes id and
 // vendorId — a vendor must never be able to reassign a product to a
@@ -40,7 +40,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
   const body = await request.json();
   const fields = pickEditableFields(body);
   // Every product keeps a photo: it can be replaced with a new upload, but not removed.
-  if ('imageUrl' in fields && !isUploadedImage(fields.imageUrl) && fields.imageUrl !== (await getProductById(productId))?.imageUrl) {
+  if ('imageUrl' in fields && !isProductPhoto(fields.imageUrl) && fields.imageUrl !== (await getProductById(productId))?.imageUrl) {
     return NextResponse.json({ error: 'A product needs a photo. Upload one to replace it.' }, { status: 400 });
   }
   await updateProduct(productId, fields);

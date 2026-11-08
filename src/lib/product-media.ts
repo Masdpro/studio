@@ -1,3 +1,5 @@
+import CATALOG_IMAGES from './catalog-images.json';
+
 /** A product can show up to this many photos (the first is the homepage photo). */
 export const MAX_PRODUCT_IMAGES = 5;
 
@@ -5,6 +7,18 @@ const IMAGE_RE = /^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/;
 
 /** True for a photo uploaded through this app (every new product must have one). */
 export const isUploadedImage = (value: unknown): value is string => typeof value === 'string' && IMAGE_RE.test(value);
+
+const CATALOG_RE = /^\/catalog\/([a-z0-9-]+)\.webp$/;
+
+/** True for one of the ready-made Quick add catalog photos (served from /public/catalog). */
+export const isCatalogImage = (value: unknown): value is string => {
+  if (typeof value !== 'string') return false;
+  const m = CATALOG_RE.exec(value);
+  return !!m && Object.prototype.hasOwnProperty.call(CATALOG_IMAGES, m[1]);
+};
+
+/** A valid main product photo: the vendor's own upload or a catalog photo. */
+export const isProductPhoto = (value: unknown): value is string => isUploadedImage(value) || isCatalogImage(value);
 const VIDEO_RE = /^\/api\/uploads\/[0-9a-f-]{36}\.(mp4|webm)$/;
 
 /** Extra photos beyond the main one: only images uploaded through this app are kept. */

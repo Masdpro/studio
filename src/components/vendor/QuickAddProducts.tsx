@@ -8,16 +8,16 @@ import { Label } from '@/components/ui/label';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { BUSINESS_TYPES, getBusinessType, type BusinessType } from '@/lib/product-catalog';
+import { ALL_CATALOG_ITEMS, BUSINESS_TYPES, catalogImageFor, getBusinessType, type BusinessType } from '@/lib/product-catalog';
 import {
-  ArrowLeft, Baby, Check, CupSoda, Loader2, Pill, Plus, Search, Shirt, ShoppingBasket, Smartphone, Sofa, Sparkles, Trash2, UtensilsCrossed,
+  ArrowLeft, Baby, Check, ImageIcon, X, CupSoda, Loader2, Pill, Plus, Search, Shirt, ShoppingBasket, Smartphone, Sofa, Sparkles, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   UtensilsCrossed, CupSoda, ShoppingBasket, Shirt, Smartphone, Sparkles, Pill, Sofa, Baby,
 };
 
-type Picked = { key: string; name: string; description: string; category: string; price: string; imageUrl: string };
+type Picked = { key: string; name: string; description: string; category: string; price: string; imageUrl: string; catalogImage?: string };
 type Step = 'type' | 'groups' | 'items' | 'details';
 
 const keyOf = (category: string, name: string) => `${category}::${name}`.toLowerCase();
@@ -32,8 +32,8 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
   const [type, setType] = useState<BusinessType | null>(null);
   const [groupIds, setGroupIds] = useState<string[]>([]);
   const [picked, setPicked] = useState<Picked[]>([]);
-  const [search, setSearch] = useState('');
   const [custom, setCustom] = useState('');
+  const [finder, setFinder] = useState('');
   const [saving, setSaving] = useState(false);
 
   const existing = useMemo(() => new Set(existingNames.map((n) => n.trim().toLowerCase())), [existingNames]);
@@ -62,22 +62,54 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
   const groups = useMemo(() => (type ? type.groups.filter((g) => groupIds.includes(g.id)) : []), [type, groupIds]);
   const pickedKeys = useMemo(() => new Set(picked.map((p) => p.key)), [picked]);
 
-  function toggle(category: string, name: string, description: string) {
+  const make = (category: string, name: string, description: string, image?: string): Picked => ({
+    key: keyOf(category, name),
+    name,
+    description,
+    category,
+    price: '',
+    imageUrl: image ?? '',
+    catalogImage: image,
+  });
+
+  function toggle(category: string, name: string, description: string, image?: string) {
     const key = keyOf(category, name);
-    setPicked((prev) => (prev.some((p) => p.key === key) ? prev.filter((p) => p.key !== key) : [...prev, { key, name, description, category, price: '', imageUrl: '' }]));
+    setPicked((prev) => (prev.some((p) => p.key === key) ? prev.filter((p) => p.key !== key) : [...prev, make(category, name, description, image)]));
+  }
+
+  function addCustomName(raw: string) {
+    const name = raw.trim().replace(/\s+/g, ' ').slice(0, 80);
+    if (name.length < 2) return;
+    const category = groups[0]?.label ?? type?.groups[0]?.label ?? 'Other';
+    const key = keyOf(category, name);
+    if (!pickedKeys.has(key)) setPicked((prev) => [...prev, make(category, name, name, catalogImageFor(name))]);
   }
 
   function addCustom() {
-    const name = custom.trim();
-    if (name.length < 2 || !groups[0]) return;
-    const category = groups[0].label;
-    const key = keyOf(category, name);
-    if (!pickedKeys.has(key)) setPicked((prev) => [...prev, { key, name, description: name, category, price: '', imageUrl: '' }]);
+    addCustomName(custom);
     setCustom('');
   }
 
+  // Search box at the top: finds any catalog product (all business types) or adds what was typed.
+  const fq = finder.trim().toLowerCase();
+  const finderHits = useMemo(() => {
+    if (fq.length < 2) return [];
+    const words = fq.split(/\s+/);
+    const seen = new Set<string>();
+    return ALL_CATALOG_ITEMS.filter((i) => {
+      const hay = `${i.name} ${i.groupLabel}`.toLowerCase();
+      if (!words.every((w) => hay.includes(w)) || seen.has(i.name.toLowerCase())) return false;
+      seen.add(i.name.toLowerCase());
+      return true;
+    })
+      .sort((a, b) => Number(b.typeId === type?.id) - Number(a.typeId === type?.id) || Number(!!b.image) - Number(!!a.image))
+      .slice(0, 30);
+  }, [fq, type]);
+  const exactHit = finderHits.some((i) => i.name.toLowerCase() === fq);
+
   const update = (key: string, patch: Partial<Picked>) => setPicked((prev) => prev.map((p) => (p.key === key ? { ...p, ...patch } : p)));
   const complete = (p: Picked) => p.name.trim().length >= 2 && Number(p.price.replace(/,/g, '')) > 0 && !!p.imageUrl;
+  const pickedNames = useMemo(() => new Set(picked.map((p) => p.name.toLowerCase())), [picked]);
   const ready = picked.filter(complete);
 
   async function save() {
@@ -110,11 +142,104 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
     }
   }
 
+  const Thumb = ({ src, alt }: { src?: string; alt: string }) =>
+    src ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt={alt} loading="lazy" className="h-10 w-10 shrink-0 rounded object-cover" />
+    ) : (
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
+        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+      </span>
+    );
+
+  const finderBox = (
+    <div className="relative">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        className="pl-8 pr-8"
+        placeholder="Type a product, e.g. Indomie, jollof, iPhone 13"
+        aria-label="Find or add a product"
+        value={finder}
+        onChange={(e) => setFinder(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!exactHit) addCustomName(finder);
+            setFinder('');
+          }
+        }}
+      />
+      {finder && (
+        <button type="button" aria-label="Clear search" onClick={() => setFinder('')} className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground">
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  const pickedBar =
+    picked.length > 0 && step !== 'details' ? (
+      <Button className="w-full" onClick={() => { setFinder(''); setStep('details'); }}>
+        Next: set prices ({picked.length})
+      </Button>
+    ) : null;
+
+  // ---- Search results (shown over any step while the vendor is typing) ----
+  if (fq.length >= 2) {
+    return (
+      <div className="space-y-3">
+        {finderBox}
+        <ul className="max-h-[55vh] divide-y overflow-y-auto rounded-md border">
+          {!exactHit && (
+            <li>
+              <button
+                type="button"
+                onClick={() => { addCustomName(finder); setFinder(''); }}
+                className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-accent"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary/10">
+                  <Plus className="h-4 w-4 text-primary" />
+                </span>
+                <span>
+                  Add <span className="font-medium">“{finder.trim()}”</span> as a new product
+                </span>
+              </button>
+            </li>
+          )}
+          {finderHits.map((i) => {
+            const listed = existing.has(i.name.toLowerCase());
+            const on = pickedNames.has(i.name.toLowerCase());
+            const id = `qf-${i.typeId}-${i.slug}`;
+            return (
+              <li key={id} className={cn('flex items-center gap-3 px-3 py-2', listed && 'opacity-60')}>
+                <Checkbox
+                  id={id}
+                  disabled={listed}
+                  checked={on}
+                  onCheckedChange={() =>
+                    on ? setPicked((prev) => prev.filter((p) => p.name.toLowerCase() !== i.name.toLowerCase())) : toggle(i.groupLabel, i.name, i.description, i.image)
+                  }
+                />
+                <Thumb src={i.image} alt={i.name} />
+                <Label htmlFor={id} className="flex-1 cursor-pointer text-sm font-normal">
+                  {i.name}
+                  <span className="block text-xs text-muted-foreground">{listed ? 'Already in your shop' : i.groupLabel}</span>
+                </Label>
+              </li>
+            );
+          })}
+        </ul>
+        {pickedBar}
+      </div>
+    );
+  }
+
   // ---- Step 1: business type ----
   if (step === 'type' || !type) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">What kind of business do you run?</p>
+        {finderBox}
+        <p className="text-sm text-muted-foreground">Can’t see it below? Type it above. Or pick the kind of business you run:</p>
         <div className="grid grid-cols-2 gap-2">
           {BUSINESS_TYPES.map((t) => {
             const Icon = ICONS[t.icon] ?? ShoppingBasket;
@@ -146,6 +271,7 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
   if (step === 'groups') {
     return (
       <div className="space-y-3">
+        {finderBox}
         <Back to="type" label="Change business type" />
         <p className="text-sm">
           <span className="font-medium">{type.label}.</span> <span className="text-muted-foreground">What do you sell? Pick all that apply.</span>
@@ -170,23 +296,20 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
         <Button className="w-full" disabled={!groupIds.length} onClick={() => setStep('items')}>
           Next: choose products
         </Button>
+        {pickedBar}
       </div>
     );
   }
 
   // ---- Step 3: tick products ----
   if (step === 'items') {
-    const q = search.trim().toLowerCase();
     return (
       <div className="space-y-3">
+        {finderBox}
         <Back to="groups" label="Change groups" />
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-8" placeholder="Search products" value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
         <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
           {groups.map((g) => {
-            const items = g.items.filter((i) => !q || i.name.toLowerCase().includes(q));
+            const items = g.items;
             if (!items.length) return null;
             const selectable = items.filter((i) => !existing.has(i.name.toLowerCase()));
             const allOn = selectable.length > 0 && selectable.every((i) => pickedKeys.has(keyOf(g.label, i.name)));
@@ -207,7 +330,7 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
                             ...prev,
                             ...selectable
                               .filter((i) => !pickedKeys.has(keyOf(g.label, i.name)))
-                              .map((i) => ({ key: keyOf(g.label, i.name), name: i.name, description: i.description, category: g.label, price: '', imageUrl: '' })),
+                              .map((i) => make(g.label, i.name, i.description, i.image)),
                           ]);
                         }
                       }}
@@ -222,7 +345,8 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
                     const id = `qa-${g.id}-${i.name}`;
                     return (
                       <li key={i.name} className={cn('flex items-center gap-3 px-3 py-2', listed && 'opacity-60')}>
-                        <Checkbox id={id} disabled={listed} checked={pickedKeys.has(keyOf(g.label, i.name))} onCheckedChange={() => toggle(g.label, i.name, i.description)} />
+                        <Checkbox id={id} disabled={listed} checked={pickedKeys.has(keyOf(g.label, i.name))} onCheckedChange={() => toggle(g.label, i.name, i.description, i.image)} />
+                        <Thumb src={i.image} alt={i.name} />
                         <Label htmlFor={id} className="flex-1 cursor-pointer text-sm font-normal">
                           {i.name}
                           {listed && <span className="ml-2 text-xs text-muted-foreground">Already in your shop</span>}
@@ -242,7 +366,7 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
           </Button>
         </div>
         <Button className="w-full" disabled={!picked.length} onClick={() => setStep('details')}>
-          Next: add prices and photos ({picked.length})
+          Next: set prices ({picked.length})
         </Button>
       </div>
     );
@@ -253,7 +377,10 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
     <div className="space-y-3">
       <Back to="items" label="Choose more products" />
       <p className="text-sm text-muted-foreground">
-        Every product needs a price and a clear photo of what the customer will get. You can list the finished ones now and come back for the rest.
+        Add a price for each product. Most come with a photo you can use straight away; tap the photo to use your own instead. Products without a photo need one before they can be listed.{' '}
+        <a href="/credits" target="_blank" rel="noopener noreferrer" className="underline">
+          Photo credits
+        </a>
       </p>
       <ul className="space-y-3">
         {picked.map((p) => (
@@ -272,6 +399,14 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
               <Input aria-label={`Price for ${p.name}`} inputMode="decimal" placeholder="Price" value={p.price} onChange={(e) => update(p.key, { price: e.target.value.replace(/[^\d.,]/g, '') })} className="h-9" />
             </div>
             <ImageUploadField value={p.imageUrl} onChange={(url) => update(p.key, { imageUrl: url })} endpoint="/api/vendor/upload" emptyLabel="Photo required" />
+            {p.catalogImage && p.imageUrl === p.catalogImage && (
+              <p className="text-xs text-muted-foreground">Sample photo. Upload your own anytime to show exactly what you sell.</p>
+            )}
+            {p.catalogImage && p.imageUrl !== p.catalogImage && (
+              <button type="button" className="text-xs font-medium text-primary hover:underline" onClick={() => update(p.key, { imageUrl: p.catalogImage! })}>
+                Use the sample photo instead
+              </button>
+            )}
           </li>
         ))}
       </ul>

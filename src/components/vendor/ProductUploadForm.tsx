@@ -1,5 +1,6 @@
 
 'use client';
+import { isProductPhoto } from '@/lib/product-media';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -29,7 +30,7 @@ const productSchema = z.object({
   name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
-  imageUrl: z.string().regex(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/, { message: 'Add at least one photo of the product.' }),
+  imageUrl: z.string().refine(isProductPhoto, { message: 'Add at least one photo of the product.' }),
   galleryImages: z.array(z.string()).optional(),
   videoUrl: z.string().optional(),
   category: z.string().optional(),

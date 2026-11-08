@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { userHasRole } from '@/lib/roles';
 import { tradingBlockReason } from '@/lib/verification';
 import { createProduct } from '@/lib/services/products';
-import { isUploadedImage } from '@/lib/product-media';
+import { isProductPhoto } from '@/lib/product-media';
 
 const MAX_ITEMS = 60;
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const price = Math.round(Number(raw?.price) * 100) / 100;
     if (name.length < 2) return NextResponse.json({ error: 'Every product needs a name.' }, { status: 400 });
     if (!Number.isFinite(price) || price <= 0 || price > 10_000_000) return NextResponse.json({ error: `Enter a price for ${name}.` }, { status: 400 });
-    if (!isUploadedImage(raw?.imageUrl)) return NextResponse.json({ error: `Add a photo for ${name}.` }, { status: 400 });
+    if (!isProductPhoto(raw?.imageUrl)) return NextResponse.json({ error: `Add a photo for ${name}.` }, { status: 400 });
     clean.push({
       name,
       price,

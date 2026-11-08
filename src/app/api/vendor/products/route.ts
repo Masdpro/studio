@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getBranchForUser, userHasRole } from '@/lib/roles';
 import { createProduct, getMainProductsByVendor, getProductsByBranch } from '@/lib/services/products';
 import { tradingBlockReason } from '@/lib/verification';
-import { isUploadedImage } from '@/lib/product-media';
+import { isProductPhoto } from '@/lib/product-media';
 
 /** Lists the signed-in vendor's products (or, for a branch account, that branch's own products). */
 export async function GET() {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   if (!data.name || typeof data.price !== 'number') {
     return NextResponse.json({ error: 'A product name and price are required.' }, { status: 400 });
   }
-  if (!isUploadedImage(data.imageUrl)) {
+  if (!isProductPhoto(data.imageUrl)) {
     return NextResponse.json({ error: 'Add a photo of the product.' }, { status: 400 });
   }
 
