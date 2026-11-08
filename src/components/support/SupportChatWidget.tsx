@@ -3,6 +3,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,8 @@ type DisplayMessage = {
 
 export function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  // On phones the vendor dashboard has a tab bar along the bottom; keep the bubble above it.
+  const aboveTabBar = usePathname() === '/vendor/dashboard';
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,7 +108,7 @@ export function SupportChatWidget() {
   return (
     <>
       {/* Chat Bubble Toggle Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className={cn('fixed right-6 z-50', aboveTabBar ? 'bottom-20 sm:bottom-6' : 'bottom-6')}>
         <Button
           size="icon"
           className="rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
@@ -117,7 +120,7 @@ export function SupportChatWidget() {
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-full max-w-sm">
+        <div className={cn('fixed right-6 z-50 w-full max-w-sm', aboveTabBar ? 'bottom-36 sm:bottom-24' : 'bottom-24')}>
           <Card className="flex flex-col h-[60vh] shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between border-b">
               <div className="flex items-center gap-3">

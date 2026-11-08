@@ -12,7 +12,7 @@ import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2, MapPin } from 'lucide-react';
+import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2, MapPin, BarChart3 } from 'lucide-react';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
@@ -126,8 +126,8 @@ export default function VendorDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold text-primary mb-6">
+    <div className="container mx-auto space-y-8 pb-24 pt-8 sm:pb-8">
+      <h1 id="vendor-dashboard-top" className="text-3xl font-bold text-primary mb-6 scroll-mt-20">
         {vendor?.businessName ?? 'Your'} Dashboard
       </h1>
       {!vendor && (
@@ -139,8 +139,35 @@ export default function VendorDashboardPage() {
           </CardContent>
         </Card>
       )}
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
+      <Tabs
+        defaultValue="profile"
+        className="w-full"
+        onValueChange={() => {
+          // On phones the tabs sit at the bottom of the screen: jump back to the top of the new section.
+          if (window.matchMedia('(max-width: 639px)').matches) document.getElementById('vendor-dashboard-top')?.scrollIntoView({ block: 'start' });
+        }}
+      >
+        {/* Phones: an app-style tab bar fixed to the bottom of the screen. */}
+        <TabsList className="fixed inset-x-0 bottom-0 z-40 grid h-auto w-full grid-cols-5 rounded-none border-t bg-background/95 p-0 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
+          {[
+            { value: 'profile', label: 'Profile', icon: Settings },
+            { value: 'branches', label: 'Branches', icon: MapPin },
+            { value: 'wallet', label: 'Wallet', icon: WalletIcon },
+            { value: 'analytics', label: 'Analytics', icon: BarChart3 },
+            { value: 'reviews', label: 'Reviews', icon: Star },
+          ].map(({ value, label, icon: Icon }) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="flex h-16 flex-col gap-1 rounded-none px-0 text-[11px] font-medium text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {/* Tablets and computers: tabs along the top. */}
+        <TabsList className="mb-6 hidden w-full grid-cols-5 sm:grid">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <Settings className="h-5 w-5" /> Profile
           </TabsTrigger>
@@ -150,7 +177,9 @@ export default function VendorDashboardPage() {
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
-           <TabsTrigger value="analytics" className="flex items-center gap-2">Analytics</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" /> Analytics
+          </TabsTrigger>
           <TabsTrigger value="reviews" className="flex items-center gap-2">
             <Star className="h-5 w-5" /> Reviews
           </TabsTrigger>

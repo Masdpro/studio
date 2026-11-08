@@ -5,7 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Wallet, Banknote } from 'lucide-react';
+import { Home, ListChecks, UserPlus, Truck, Route, Settings, Store, Bike, Edit3, SearchCheck, ShoppingBasket, History, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -107,12 +107,6 @@ export function AppSidebar() {
       if (isVendor) groups.push({ label: 'Vendor', items: mayTrade ? vendorItems : vendorItems.slice(0, 1) });
       if (isAgent) groups.push({ label: 'Delivery', items: mayTrade ? [...deliveryAgentItems, ...commonDeliveryItems] : deliveryAgentItems.slice(0, 1) });
       if (roles.includes('branch')) groups.push({ label: 'Branch', items: branchItems });
-      // One wallet per account, shared by every role: top-ups and purchases as a customer, earnings and withdrawals as a vendor or agent.
-      const earns = isVendor || isAgent;
-      groups.push({
-        label: 'Money',
-        items: [{ href: '/wallet', label: earns ? 'Wallet & earnings' : 'Wallet', icon: Wallet, tooltip: earns ? 'Balance, earnings and withdrawals' : 'Balance, top-ups and history' }],
-      });
       const more = becomeItems.filter((i) => (i.href.includes('/vendor') ? !isVendor : !isAgent));
       if (more.length && !roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: more });
     }
