@@ -253,4 +253,5 @@ These have only two or three states and live next to the code that uses them:
 - **Bank account change hold**: withdrawals pause for 24 hours after a payout bank account is changed. See `withdrawalBlockReason` in `src/lib/services/withdrawals.ts`.
 - **Sign-in throttle**: too many wrong passwords lock the email for a while. See `src/lib/login-throttle.ts`.
 - **Email and phone codes** (`verification_codes`): issued → used or expired. See `src/lib/verification.ts`.
+- **Live selfie check** (`liveness_checks`): started → passed (single use, 10 minutes to finish). The server picks random moves; the browser recognises them. See `src/lib/liveness.ts` and `src/lib/services/liveness.ts`.
 - **Screens with steps** (Quick add: business type → groups → products → prices; sign-up: form → email code): local UI state inside each component.

@@ -26,13 +26,15 @@ export async function POST(request: Request) {
   const file = form.get('file');
   const kind = String(form.get('kind') ?? '') as DocumentKind;
   if (!allowed.includes(kind)) return NextResponse.json({ error: 'That document type is not requested for your account.' }, { status: 400 });
+  // Selfies come only from the live camera check (POST /api/account/liveness), never from a saved photo.
+  if (kind === 'selfie') return NextResponse.json({ error: 'Take the live selfie check on the verification page instead of uploading a photo.' }, { status: 400 });
   if (!(file instanceof File)) return NextResponse.json({ error: 'No file was provided.' }, { status: 400 });
   if (file.size > MAX_DOCUMENT_BYTES) return NextResponse.json({ error: 'File is too large. The limit is 5 MB.' }, { status: 413 });
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const ext = detectDocumentExtension(buffer);
-  if (!ext || (ext === 'pdf' && (kind === 'selfie' || kind === 'store_photo'))) {
-    return NextResponse.json({ error: kind === 'selfie' || kind === 'store_photo' ? 'Upload a JPG, PNG or WebP photo.' : 'Upload a JPG, PNG, WebP image or a PDF.' }, { status: 415 });
+  if (!ext || (ext === 'pdf' && kind === 'store_photo')) {
+    return NextResponse.json({ error: kind === 'store_photo' ? 'Upload a JPG, PNG or WebP photo.' : 'Upload a JPG, PNG, WebP image or a PDF.' }, { status: 415 });
   }
 
   const fileName = `${randomUUID()}.${ext}`;

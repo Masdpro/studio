@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Circle, Loader2, ShieldCheck, FlaskConical, FileText, Upload, Clock, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, ShieldCheck, FlaskConical, FileText, Upload, Clock, XCircle, ScanFace } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LiveSelfieCheck } from '@/components/account/LiveSelfieCheck';
 
 export type VerificationState = {
   role: string;
@@ -19,7 +20,7 @@ export type VerificationState = {
   needsReview: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   approvalNote: string | null;
-  requiredDocuments: { kind: string; label: string; uploaded: boolean; id: string | null }[];
+  requiredDocuments: { kind: string; label: string; uploaded: boolean; id: string | null; live?: boolean }[];
   documentsComplete: boolean;
   readyForReview: boolean;
   mayTrade: boolean;
@@ -43,6 +44,7 @@ export function AccountVerification() {
   const [codeSent, setCodeSent] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [liveOpen, setLiveOpen] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/account/verification');
@@ -184,16 +186,35 @@ export function AccountVerification() {
                       View
                     </a>
                   )}
-                  <label className="inline-flex">
-                    <input type="file" className="sr-only" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => upload(d.kind, e.target.files?.[0])} />
-                    <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
-                      {busy === d.kind ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
-                      {d.uploaded ? 'Replace' : 'Upload'}
-                    </span>
-                  </label>
+                  {d.live ? (
+                    // Selfies come only from the live camera check, never from a saved photo.
+                    <Button type="button" variant={d.uploaded ? 'outline' : 'default'} size="sm" onClick={() => setLiveOpen(true)}>
+                      <ScanFace className="mr-1.5 h-4 w-4" />
+                      {d.uploaded ? 'Retake' : 'Start'}
+                    </Button>
+                  ) : (
+                    <label className="inline-flex">
+                      <input type="file" className="sr-only" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => upload(d.kind, e.target.files?.[0])} />
+                      <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
+                        {busy === d.kind ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
+                        {d.uploaded ? 'Replace' : 'Upload'}
+                      </span>
+                    </label>
+                  )}
                 </div>
               ))}
-              <p className="text-xs text-muted-foreground">JPG, PNG, WebP{state.role === 'vendor' ? ' or PDF' : ''} up to 5 MB. Only you and Closebuy admins can see these files.</p>
+              <p className="text-xs text-muted-foreground">
+                {state.requiredDocuments.some((d) => d.live) && 'The live selfie uses your front camera: no photo uploads. '}
+                Documents: JPG, PNG, WebP{state.role === 'vendor' ? ' or PDF' : ''} up to 5 MB. Only you and Closebuy admins can see these files.
+              </p>
+              <LiveSelfieCheck
+                open={liveOpen}
+                onOpenChange={setLiveOpen}
+                onPassed={() => {
+                  toast({ title: 'Live selfie saved' });
+                  void load();
+                }}
+              />
             </Step>
 
             <Step done={state.approvalStatus === 'approved'} title="Admin review">

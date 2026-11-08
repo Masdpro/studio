@@ -10,8 +10,32 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, CheckCircle2, Circle, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { VerificationState } from '@/components/account/AccountVerification';
+import { STEP_PROMPTS, type LivenessStep } from '@/lib/liveness';
 
-type Account = VerificationState & { id: string; name: string; createdAt: string };
+type LiveCheck = { id: string; steps: LivenessStep[]; frameCount: number; completedAt: string | null };
+type Account = VerificationState & { id: string; name: string; createdAt: string; liveCheck?: LiveCheck | null };
+
+/** The photos from an agent's live selfie check: straight on, then one per move they were asked to make. */
+function LiveCheckPhotos({ check }: { check: LiveCheck }) {
+  const labels = ['Straight on', ...check.steps.map((s) => STEP_PROMPTS[s].replace(/^Slowly /, ''))];
+  return (
+    <div className="space-y-1.5">
+      <p className="text-sm font-medium">
+        Live selfie check
+        {check.completedAt && <span className="font-normal text-muted-foreground"> · {new Date(check.completedAt).toLocaleString()}</span>}
+      </p>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {labels.slice(0, check.frameCount).map((label, i) => (
+          <a key={i} href={`/api/account/liveness/${check.id}/frames/${i}`} target="_blank" rel="noreferrer" className="w-24 shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-checked image */}
+            <img src={`/api/account/liveness/${check.id}/frames/${i}`} alt={label} className="h-28 w-24 rounded-md border object-cover" />
+            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">{label}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const Check = ({ ok, label }: { ok: boolean; label: string }) => (
   <span className="inline-flex items-center gap-1 text-sm">
@@ -103,6 +127,7 @@ export default function AdminVerificationsPage() {
             ),
           )}
         </div>
+        {a.liveCheck && <LiveCheckPhotos check={a.liveCheck} />}
         {a.approvalNote && <p className="text-sm text-destructive">Sent back: {a.approvalNote}</p>}
         {rejecting === a.id ? (
           <div className="space-y-2">

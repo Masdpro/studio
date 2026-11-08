@@ -48,6 +48,20 @@ export const verificationDocuments = sqliteTable('verification_documents', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// Live selfie checks for delivery agents. The server picks the random moves (turn, nod, open
+// mouth, blink); the browser watches the camera and sends one photo per move. A passed check
+// becomes the agent's "selfie" document; the move photos stay for the admin to review.
+export const livenessChecks = sqliteTable('liveness_checks', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  steps: text('steps').notNull(), // JSON array of move names, in the order asked
+  status: text('status', { enum: ['started', 'passed'] }).notNull().default('started'),
+  frames: text('frames'), // JSON array of private file names: [straight-on photo, one per move]
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+});
+
 export const markets = sqliteTable('markets', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

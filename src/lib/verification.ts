@@ -33,7 +33,7 @@ export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   business_proof: 'Business registration (CAC certificate, business permit or similar)',
   store_photo: 'Photo of your store or stall',
   government_id: 'Government ID (NIN slip, driver\'s licence, voter\'s card or passport)',
-  selfie: 'A clear selfie of your face',
+  selfie: 'Live selfie check (camera)',
 };
 
 const EMAIL_TTL_MS = 30 * 60 * 1000;
@@ -196,7 +196,8 @@ export function getVerificationState(userId: string) {
     needsReview,
     approvalStatus: user.approvalStatus,
     approvalNote: user.approvalNote,
-    requiredDocuments: required.map((kind) => ({ kind, label: DOCUMENT_LABELS[kind], uploaded: submitted.has(kind), id: documents.find((d) => d.kind === kind)?.id ?? null })),
+    // `live`: taken with the live camera check instead of uploaded.
+    requiredDocuments: required.map((kind) => ({ kind, label: DOCUMENT_LABELS[kind], uploaded: submitted.has(kind), id: documents.find((d) => d.kind === kind)?.id ?? null, live: kind === 'selfie' })),
     documentsComplete,
     // Everything an admin needs before they can approve:
     readyForReview: !needsReview ? true : !!user.emailVerifiedAt && phoneOk && documentsComplete,
