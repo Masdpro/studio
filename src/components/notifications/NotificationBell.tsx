@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Bell, CheckCheck, X, Zap } from 'lucide-react';
+import { Bell, CheckCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,11 @@ import type { AppNotification } from '@/lib/types';
 import { NotificationItem } from './NotificationItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast';
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const { toast } = useToast();
 
   const fetchNotifications = () => {
     fetch('/api/notifications')
@@ -57,45 +55,6 @@ export function NotificationBell() {
         setIsOpen(false);
     }
   };
-
-  const showBrowserNotification = (title: string, body: string, iconUrl?: string) => {
-    if (!('Notification' in window)) {
-      toast({ title: 'Error', description: 'This browser does not support desktop notification.', variant: 'destructive' });
-      return;
-    }
-
-    if (Notification.permission === 'granted') {
-      const notification = new Notification(title, { body, icon: iconUrl || '/logo-192.png' });
-      notification.onclick = () => {
-        window.focus(); // Bring window to focus
-        // Optionally navigate to a specific link or close popover
-        setIsOpen(false);
-      };
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          const notification = new Notification(title, { body, icon: iconUrl || '/logo-192.png' });
-           notification.onclick = () => {
-            window.focus();
-            setIsOpen(false);
-          };
-        } else {
-          toast({ title: 'Permission Denied', description: 'Desktop notifications were not granted.', variant: 'destructive'});
-        }
-      });
-    } else {
-       toast({ title: 'Permission Denied', description: 'Desktop notifications are currently denied. Please check your browser settings.', variant: 'destructive' });
-    }
-  };
-
-  const handleTestDesktopNotification = () => {
-    showBrowserNotification(
-      'Closebuy Test Notification',
-      'This is a test desktop notification from Closebuy!',
-      '/logo-192.png' // Placeholder icon
-    );
-  };
-
 
   if (!isClient) {
     return (
@@ -155,15 +114,7 @@ export function NotificationBell() {
           )}
         </ScrollArea>
         <Separator />
-        <div className="p-3 space-y-2">
-           <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={handleTestDesktopNotification}
-          >
-            <Zap className="mr-2 h-4 w-4" /> Test Desktop Notification
-          </Button>
+        <div className="p-3">
           <Button variant="link" size="sm" asChild className="text-primary w-full">
             <Link href="/notifications" onClick={() => setIsOpen(false)}>View All Notifications</Link>
           </Button>
