@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { confirmPhoneCode, normalizeNigerianPhone, sendPhoneCode } from '@/lib/verification';
 import { exposeDevCodes } from '@/lib/notify';
+import { limitByIp, tooMany } from '@/lib/rate-limit';
 
 /** POST { action: 'send', phone } texts a code; POST { action: 'verify', code } checks it. */
 export async function POST(request: Request) {
@@ -12,6 +13,8 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { action?: string; phone?: string; code?: string };
 
   if (body.action === 'send') {
+    const rl = limitByIp(request, 'phone-send', 10, 15 * 60 * 1000);
+    if (!rl.ok) return tooMany(rl.retryAfter);
     const phone = body.phone ? normalizeNigerianPhone(body.phone) : null;
     if (!phone) return NextResponse.json({ error: 'Enter a valid Nigerian mobile number, e.g. 08012345678.' }, { status: 400 });
     const result = await sendPhoneCode(session.user.id, phone);

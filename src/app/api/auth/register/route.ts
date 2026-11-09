@@ -10,6 +10,7 @@ import { normalizeNigerianPhone, sendEmailVerification, startTradingRole } from 
 import { getUserRoles, getBranchForUser } from '@/lib/roles';
 import { clearFailedPasswords, isLockedOut, recordFailedPassword } from '@/lib/login-throttle';
 import { exposeDevCodes } from '@/lib/notify';
+import { limitByIp, tooMany } from '@/lib/rate-limit';
 
 // Public self-registration is deliberately limited to these — 'admin' is
 // created from the command line (npm run create-admin), never chosen by
@@ -26,6 +27,9 @@ const pick = (src: Record<string, unknown>, keys: string[]) =>
   Object.fromEntries(keys.filter((k) => src[k] !== undefined).map((k) => [k, src[k]]));
 
 export async function POST(request: Request) {
+  // Per-IP cap: stops bulk sign-ups and account probing from one source.
+  const rl = limitByIp(request, 'register', 10, 10 * 60 * 1000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   const { password, role, displayName, phone, profile } = body as {

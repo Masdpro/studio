@@ -7,7 +7,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-import { clearFailedPasswords, isLockedOut, recordFailedPassword } from '@/lib/login-throttle';
+import { clearFailedPasswords, isLockedOut, recordFailedPassword, isIpLockedOut, recordFailedIp } from '@/lib/login-throttle';
 
 function currentSessionVersion(userId: string): number | null {
   const u = db.select({ v: users.sessionVersion }).from(users).where(eq(users.id, userId)).get();
@@ -26,8 +26,13 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        // Trust the proxy headers Fly/Cloudflare set; '' falls back to 'unknown' (never locked).
+        const h = (req?.headers ?? {}) as Record<string, string | undefined>;
+        const ip = (h['fly-client-ip'] || (h['x-forwarded-for'] ?? '').split(',')[0] || h['x-real-ip'] || 'unknown').trim() || 'unknown';
+        if (isIpLockedOut(ip)) throw new Error('TOO_MANY_ATTEMPTS');
 
         const email = credentials.email.trim().toLowerCase();
         if (isLockedOut(email)) throw new Error('TOO_MANY_ATTEMPTS');
@@ -36,6 +41,7 @@ export const authOptions: NextAuthOptions = {
         const valid = user ? await bcrypt.compare(credentials.password, user.passwordHash) : false;
         if (!user || !valid) {
           recordFailedPassword(email);
+          recordFailedIp(ip);
           return null;
         }
         clearFailedPasswords(email);

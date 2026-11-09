@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { resetPasswordWithToken } from '@/lib/verification';
+import { limitByIp, tooMany } from '@/lib/rate-limit';
 
 /** POST { uid, token, password } — sets a new password from an emailed reset link. */
 export async function POST(request: Request) {
+  // Caps guesses at a reset token from one source (the token itself is 256-bit).
+  const rl = limitByIp(request, 'reset', 15, 15 * 60 * 1000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
   const { uid, token, password } = (await request.json().catch(() => ({}))) as { uid?: string; token?: string; password?: string };
   if (typeof uid !== 'string' || typeof token !== 'string' || !uid || !token) {
     return NextResponse.json({ error: 'This reset link is incomplete. Please request a new one.' }, { status: 400 });
