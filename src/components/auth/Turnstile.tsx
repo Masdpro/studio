@@ -65,7 +65,7 @@ export function Turnstile({ onToken, onReady }: { onToken: (t: string | null) =>
       widgetId = window.turnstile.render(box.current, {
         sitekey: siteKey,
         action: 'auth',
-        theme: 'auto',
+        theme: 'light', // match the site's light design, whatever the device setting
         size: 'flexible',
         callback: (t: string) => cb.current.onToken(t),
         'expired-callback': () => cb.current.onToken(null),
