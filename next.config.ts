@@ -35,15 +35,16 @@ const nextConfig: NextConfig = {
         value: [
           "default-src 'self'",
           // Next.js injects inline/eval scripts; keep these until a nonce-based policy is in place.
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com data:",
           "img-src 'self' data: blob: https:",
           "media-src 'self' data: blob: https:",
+          // Cloudflare Turnstile (sign-up bot check) loads from challenges.cloudflare.com.
           // Live selfie model files (self-hosted, with Google's copy as a fallback) + Paystack + maps geocoding.
-          "connect-src 'self' https://storage.googleapis.com https://api.paystack.co https://nominatim.openstreetmap.org",
+          "connect-src 'self' https://storage.googleapis.com https://api.paystack.co https://nominatim.openstreetmap.org https://challenges.cloudflare.com",
           "worker-src 'self' blob:",
-          "frame-src 'self' https://checkout.paystack.com",
+          "frame-src 'self' https://checkout.paystack.com https://challenges.cloudflare.com",
           "frame-ancestors 'none'",
           "base-uri 'self'",
           "form-action 'self'",

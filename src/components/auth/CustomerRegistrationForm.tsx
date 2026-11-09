@@ -21,6 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { EmailCodeVerification } from '@/components/auth/CheckEmail';
+import { Turnstile, useTurnstile } from '@/components/auth/Turnstile';
 
 const customerRegistrationSchema = z
   .object({
@@ -42,6 +43,7 @@ export function CustomerRegistrationForm() {
   const [pending, setPending] = useState<{ email: string; password: string; devCode?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const captcha = useTurnstile();
 
   const form = useForm<CustomerRegistrationFormValues>({
     resolver: zodResolver(customerRegistrationSchema),
@@ -52,12 +54,13 @@ export function CustomerRegistrationForm() {
     setError(null);
     setIsLoading(true);
     try {
-      const { devCode } = await signUp(data.email, data.password, 'customer', data.displayName);
+      const { devCode } = await signUp(data.email, data.password, 'customer', data.displayName, { turnstileToken: captcha.token });
       setPending({ email: data.email, password: data.password, devCode });
       window.scrollTo({ top: 0 });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
+      captcha.reset();
       setIsLoading(false);
     }
   }
@@ -150,7 +153,8 @@ export function CustomerRegistrationForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Turnstile key={captcha.widgetKey} {...captcha.widgetProps} />
+            <Button type="submit" className="w-full" disabled={isLoading || captcha.waiting}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>

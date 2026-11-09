@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Turnstile, useTurnstile } from '@/components/auth/Turnstile';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -15,13 +16,14 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [devLink, setDevLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const captcha = useTurnstile();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setBusy(true);
     try {
-      const res = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+      const res = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, turnstileToken: captcha.token }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Something went wrong. Please try again.');
       setDevLink(data.devLink ?? null);
@@ -29,6 +31,7 @@ export default function ForgotPasswordPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
+      captcha.reset();
       setBusy(false);
     }
   }
@@ -58,7 +61,8 @@ export default function ForgotPasswordPage() {
                 <Label htmlFor="fp-email">Email</Label>
                 <Input id="fp-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
-              <Button type="submit" className="w-full" disabled={busy || !email}>
+              <Turnstile key={captcha.widgetKey} {...captcha.widgetProps} />
+              <Button type="submit" className="w-full" disabled={busy || !email || captcha.waiting}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send reset link
               </Button>
             </form>

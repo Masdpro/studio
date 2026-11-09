@@ -10,7 +10,8 @@ import { normalizeNigerianPhone, sendEmailVerification, startTradingRole } from 
 import { getUserRoles, getBranchForUser } from '@/lib/roles';
 import { clearFailedPasswords, isLockedOut, recordFailedPassword } from '@/lib/login-throttle';
 import { exposeDevCodes } from '@/lib/notify';
-import { limitByIp, tooMany } from '@/lib/rate-limit';
+import { clientIp, limitByIp, tooMany } from '@/lib/rate-limit';
+import { verifyTurnstile } from '@/lib/turnstile';
 
 // Public self-registration is deliberately limited to these — 'admin' is
 // created from the command line (npm run create-admin), never chosen by
@@ -32,6 +33,9 @@ export async function POST(request: Request) {
   if (!rl.ok) return tooMany(rl.retryAfter);
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
+  // Bot check before anything that could reveal whether an email already has an account.
+  const human = await verifyTurnstile((body as { turnstileToken?: unknown }).turnstileToken, clientIp(request));
+  if (!human.ok) return NextResponse.json({ error: human.error, code: 'CAPTCHA_FAILED' }, { status: 403 });
   const { password, role, displayName, phone, profile } = body as {
     email?: string;
     password?: string;

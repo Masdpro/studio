@@ -25,6 +25,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Bike, UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Turnstile, useTurnstile } from '@/components/auth/Turnstile';
 import { EmailCodeVerification } from '@/components/auth/CheckEmail';
 import { DEFAULT_COUNTRY } from '@/lib/places';
 import { CityInput, CountrySelect } from '@/components/forms/PlaceFields';
@@ -49,6 +50,7 @@ export function DeliveryAgentRegistrationForm() {
   const [pending, setPending] = useState<{ email: string; password: string; devCode?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const captcha = useTurnstile();
   const [redirecting, setRedirecting] = useState(false);
 
   const form = useForm<DeliveryAgentRegistrationFormValues>({
@@ -85,6 +87,7 @@ export function DeliveryAgentRegistrationForm() {
       }
       const { devCode, emailVerified, addedToExisting } = await signUp(email, password ?? "", 'delivery_agent', data.name, {
         phone: data.phone,
+        turnstileToken: captcha.token,
         profile: { email, ...agentProfile },
       });
       if (emailVerified) {
@@ -112,6 +115,7 @@ export function DeliveryAgentRegistrationForm() {
       toast({ variant: 'destructive', title: 'Could not register', description: msg });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
+      captcha.reset();
       setIsLoading(false);
     }
   }
@@ -272,7 +276,8 @@ export function DeliveryAgentRegistrationForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || redirecting}>
+            {!user && <Turnstile key={captcha.widgetKey} {...captcha.widgetProps} />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || redirecting || (!user && captcha.waiting)}>
               {(isLoading || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register as Delivery Agent
             </Button>

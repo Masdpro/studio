@@ -42,7 +42,7 @@ export function useAuth() {
     password: string,
     role: UserRole,
     displayName?: string,
-    extra?: { phone?: string; profile?: Record<string, unknown> },
+    extra?: { phone?: string; profile?: Record<string, unknown>; turnstileToken?: string | null },
   ): Promise<{ devCode?: string; emailVerified?: boolean; addedToExisting?: boolean }> => {
     const res = await fetch('/api/auth/register', {
       method: 'POST',

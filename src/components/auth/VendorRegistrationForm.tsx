@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
+import { Turnstile, useTurnstile } from '@/components/auth/Turnstile';
 import { EmailCodeVerification } from '@/components/auth/CheckEmail';
 import { DEFAULT_HOURS } from '@/lib/opening-hours';
 import { DEFAULT_COUNTRY } from '@/lib/places';
@@ -55,6 +56,7 @@ export function VendorRegistrationForm() {
   const [pending, setPending] = useState<{ email: string; password: string; devCode?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const captcha = useTurnstile();
   const [redirecting, setRedirecting] = useState(false);
 
   const form = useForm<VendorRegistrationFormValues>({
@@ -94,6 +96,7 @@ export function VendorRegistrationForm() {
       }
       const { devCode, emailVerified, addedToExisting } = await signUp(contactEmail, password ?? "", 'vendor', data.businessName, {
         phone: data.phone,
+        turnstileToken: captcha.token,
         profile: { contactEmail, ...vendorProfile },
       });
       if (emailVerified) {
@@ -121,6 +124,7 @@ export function VendorRegistrationForm() {
       toast({ variant: 'destructive', title: 'Could not register', description: msg });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
+      captcha.reset();
       setIsLoading(false);
     }
   }
@@ -317,7 +321,8 @@ export function VendorRegistrationForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || redirecting}>
+            {!user && <Turnstile key={captcha.widgetKey} {...captcha.widgetProps} />}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || redirecting || (!user && captcha.waiting)}>
               {(isLoading || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register
             </Button>
