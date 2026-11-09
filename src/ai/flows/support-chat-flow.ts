@@ -142,7 +142,6 @@ Use the following information about the app's features to answer user questions.
 - **Errand Requests:** Create a custom shopping list for items in open markets (e.g., "Get me 5kg of rice from Mile 12"). Specify items and a delivery address.
 - **Viewing & Accepting Quotes:** For errands, agents will submit quotes in Naira (₦) including item cost and delivery fee.
 - **User Wallet:** A Naira wallet to fund your account and pay for orders/errands.
-- **Closebuy Vouchers:** Buy or redeem gift codes for credit.
 
 **For Vendors:**
 - **Dashboard:** Manage your local shop profile and inventory.
