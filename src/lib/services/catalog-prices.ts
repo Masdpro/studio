@@ -13,6 +13,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { catalogPrices, jobRuns, products } from '@/db/schema';
 import { ALL_CATALOG_ITEMS } from '@/lib/product-catalog';
+import { BASELINE_PRICES } from '@/lib/catalog-price-baseline';
 
 export const PRICE_JOB = 'catalog-prices';
 /** Prices are refreshed when the last update is older than this (about a quarter). */
@@ -26,10 +27,25 @@ let running = false;
 /** What went wrong on the last attempt, if the online search failed (shown to admins). */
 let lastProblem: string | null = null;
 
-export type OnlineLookup = (names: string[]) => Promise<(number | null)[]>;
+/** Looks up current prices for a batch of names, all of one business type (e.g. 'food'). */
+export type OnlineLookup = (names: string[], typeId?: string) => Promise<(number | null)[]>;
+
+/** Where to look for each kind of product. Cooked food: the delivery apps' restaurant menus. */
+export const WHERE_TO_LOOK: Record<string, string> = {
+  food: 'restaurant menus on Chowdeck and Glovo in Lagos and Abuja (a single portion, without extra protein unless the dish includes it)',
+  drinks: 'Shoprite and Spar listings on Chowdeck and Glovo, Jumia, Konga and Supermart.ng; for drinks made to order (zobo, smoothies, chapman, parfait) use menus on Chowdeck and Glovo',
+  groceries: 'Shoprite and Spar listings on Chowdeck and Glovo, Jumia, Konga, Supermart.ng and Market Square; for market produce use local market listings on Chowdeck and Jiji',
+  fashion: 'Jumia, Konga and Jiji, and official brand stores in Nigeria',
+  electronics: 'Jumia, Konga, Slot, Pointek, 3CHub and Jiji (new items unless the name says UK used); for repairs, typical Lagos repair shop prices',
+  beauty: 'Jumia, Konga and Nigerian beauty stores; for salon services, typical Lagos salon prices',
+  health: 'HealthPlus, MedPlus and Jumia',
+  home: 'Jumia, Konga, Slot and Jiji',
+  kids: 'Jumia, Konga and Jiji',
+};
 
 const STOP = new Set(['the', 'and', 'with', 'for', 'of', 'a', 'an', 'in', 'per', 'pack', 'fresh', 'new', 'original']);
 export const nameKey = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
+const TYPE_OF = new Map(ALL_CATALOG_ITEMS.map((i) => [nameKey(i.name), i.typeId]));
 
 /** Lower-cased words that identify an item ("Caprice Rice 50kg" -> caprice, rice, 50kg). */
 export function nameTokens(name: string): string[] {
@@ -90,10 +106,11 @@ export function parsePriceReply(text: string, count: number): (number | null)[] 
 }
 
 /** One Google-grounded Gemini call for a batch of product names. */
-export const geminiLookup: OnlineLookup = async (names) => {
+export const geminiLookup: OnlineLookup = async (names, typeId) => {
   const { ai } = await import('@/ai/genkit');
   const list = names.map((n, i) => `${i}. ${n}`).join('\n');
-  const prompt = `You help small Nigerian shops price their products. Use Google Search to find what each item below sells for in Nigeria right now, in naira, on Nigerian online stores and marketplaces (for example Jumia, Konga, Jiji, Supermart.ng, Spar, Shoprite or brand sites). For cooked food and services, use typical prices at Nigerian restaurants and shops.
+  const where = (typeId && WHERE_TO_LOOK[typeId]) || 'Nigerian online stores and marketplaces such as Jumia, Konga, Jiji and Chowdeck';
+  const prompt = `You help small Nigerian shops price their products. Use Google Search to find what each item below sells for in Nigeria right now, in naira. Look at ${where}.
 
 Items:
 ${list}
@@ -122,9 +139,30 @@ export function lastPriceRun(): Date | null {
   return db.select({ at: jobRuns.lastRunAt }).from(jobRuns).where(eq(jobRuns.name, PRICE_JOB)).get()?.at ?? null;
 }
 
+/**
+ * Gives every catalog product without a suggested price its starting price (checked on Chowdeck,
+ * Glovo or Shoprite listings, or an estimate). Never overwrites a price that is already there.
+ */
+export function ensureBaselinePrices(now = new Date()) {
+  let added = 0;
+  for (const item of ALL_CATALOG_ITEMS) {
+    const base = BASELINE_PRICES[item.name];
+    if (!base) continue;
+    const res = db
+      .insert(catalogPrices)
+      .values({ nameKey: nameKey(item.name), name: item.name, price: base[0], source: base[1], updatedAt: now })
+      .onConflictDoNothing()
+      .run();
+    added += res.changes;
+  }
+  return added;
+}
+
 export function priceStatus() {
   const total = new Set(ALL_CATALOG_ITEMS.map((i) => nameKey(i.name))).size;
-  const priced = db.select({ n: sql<number>`count(*)` }).from(catalogPrices).get()?.n ?? 0;
+  const bySource: Record<string, number> = {};
+  for (const r of db.select({ s: catalogPrices.source, n: sql<number>`count(*)` }).from(catalogPrices).groupBy(catalogPrices.source).all()) bySource[r.s] = r.n;
+  const priced = Object.values(bySource).reduce((a, b) => a + b, 0);
   const last = lastPriceRun();
   return {
     total,
@@ -134,6 +172,7 @@ export function priceStatus() {
     running,
     onlineLookup: onlineLookupAvailable(),
     problem: lastProblem,
+    bySource,
   };
 }
 
@@ -145,18 +184,28 @@ export async function refreshCatalogPrices(lookup: OnlineLookup | null = onlineL
   if (running) return { started: false as const };
   running = true;
   try {
-    const names = Array.from(new Map(ALL_CATALOG_ITEMS.map((i) => [nameKey(i.name), i.name])).values());
+    ensureBaselinePrices(now);
+    // Grouped by business type, so each search looks in the right places (food on Chowdeck and Glovo).
+    const names = Array.from(new Map(ALL_CATALOG_ITEMS.map((i) => [nameKey(i.name), i.name])).values()).sort(
+      (a, b) => (TYPE_OF.get(nameKey(a)) ?? '').localeCompare(TYPE_OF.get(nameKey(b)) ?? ''),
+    );
+    const batches: { start: number; names: string[]; typeId?: string }[] = [];
+    for (let i = 0; i < names.length; i++) {
+      const t = TYPE_OF.get(nameKey(names[i]));
+      const last = batches[batches.length - 1];
+      if (last && last.typeId === t && last.names.length < BATCH) last.names.push(names[i]);
+      else batches.push({ start: i, names: [names[i]], typeId: t });
+    }
     const online: (number | null)[] = names.map(() => null);
     let failedBatches = 0;
     let okBatches = 0;
     let quotaErrors = 0;
     let lastError = '';
     if (lookup) {
-      for (let s = 0; s < names.length; s += BATCH) {
-        const batch = names.slice(s, s + BATCH);
+      for (const b of batches) {
         try {
-          const found = await Promise.race([lookup(batch), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 60_000))]);
-          batch.forEach((_, j) => (online[s + j] = found[j] ?? null));
+          const found = await Promise.race([lookup(b.names, b.typeId), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 60_000))]);
+          b.names.forEach((_, j) => (online[b.start + j] = found[j] ?? null));
           okBatches++;
           quotaErrors = 0;
         } catch (err) {
@@ -171,17 +220,19 @@ export async function refreshCatalogPrices(lookup: OnlineLookup | null = onlineL
     const searchFailed = !!lookup && okBatches === 0;
     lastProblem = searchFailed
       ? /429|quota/i.test(lastError)
-        ? 'The online price search was refused for quota. Google Search in Gemini needs billing turned on for the API key. Closebuy shop prices were used; it will try again tomorrow.'
-        : 'The online price search failed. Closebuy shop prices were used; it will try again tomorrow.'
+        ? 'The online price search was refused for quota. Google Search in Gemini needs billing turned on for the API key. Starting prices and Closebuy shop prices are in use; it will try again tomorrow.'
+        : 'The online price search failed. Starting prices and Closebuy shop prices are in use; it will try again tomorrow.'
       : null;
     let updated = 0;
     names.forEach((name, i) => {
       const local = closebuyPriceFor(name);
-      const price = local && (local.count >= CLOSEBUY_ENOUGH || !online[i]) ? local.median : online[i];
+      const useLocal = !!local && (local.count >= CLOSEBUY_ENOUGH || !online[i]);
+      const price = useLocal ? local!.median : online[i];
       if (!price) return;
+      const source = useLocal ? ('closebuy' as const) : ('online' as const);
       db.insert(catalogPrices)
-        .values({ nameKey: nameKey(name), name, price, updatedAt: now })
-        .onConflictDoUpdate({ target: catalogPrices.nameKey, set: { name, price, updatedAt: now } })
+        .values({ nameKey: nameKey(name), name, price, source, updatedAt: now })
+        .onConflictDoUpdate({ target: catalogPrices.nameKey, set: { name, price, source, updatedAt: now } })
         .run();
       updated++;
     });
@@ -209,6 +260,11 @@ let scheduled = false;
 export function startPriceSchedule() {
   if (scheduled || process.env.NODE_ENV === 'test') return;
   scheduled = true;
+  try {
+    ensureBaselinePrices();
+  } catch (err) {
+    console.error('[catalog-prices] could not add starting prices:', err);
+  }
   const check = () => {
     if (!onlineLookupAvailable()) return; // without the search key there is nothing new to learn
     if (pricesDue()) refreshCatalogPrices().catch((err) => console.error('[catalog-prices] refresh failed:', err));

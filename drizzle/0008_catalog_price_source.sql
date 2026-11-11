@@ -1,0 +1,1 @@
+ALTER TABLE `catalog_prices` ADD `source` text DEFAULT 'online' NOT NULL;

@@ -8,7 +8,8 @@ import { db } from '@/db';
 import { catalogPrices, jobRuns } from '@/db/schema';
 import { createProduct } from '@/lib/services/products';
 import { ALL_CATALOG_ITEMS } from '@/lib/product-catalog';
-import { catalogPriceMap, closebuyPriceFor, nameTokens, parsePriceReply, pricesDue, priceStatus, PRICE_JOB, refreshCatalogPrices, REFRESH_EVERY_MS, type OnlineLookup } from '@/lib/services/catalog-prices';
+import { BASELINE_PRICES } from '@/lib/catalog-price-baseline';
+import { catalogPriceMap, ensureBaselinePrices, WHERE_TO_LOOK, closebuyPriceFor, nameTokens, parsePriceReply, pricesDue, priceStatus, PRICE_JOB, refreshCatalogPrices, REFRESH_EVERY_MS, type OnlineLookup } from '@/lib/services/catalog-prices';
 import { GET as vendorPrices } from '@/app/api/vendor/catalog-prices/route';
 import { GET as adminStatus, POST as adminRefresh } from '@/app/api/admin/catalog-prices/route';
 import { makeUser, makeVendor, signInAs } from './helpers';
@@ -85,6 +86,41 @@ describe('quarterly update', () => {
     // A working search clears the warning.
     await refreshCatalogPrices(async (n) => n.map(() => null), new Date('2026-06-01T00:00:00Z'));
     expect(priceStatus().problem).toBeNull();
+  });
+});
+
+describe('starting prices', () => {
+  it('cover every product on the Quick add list', () => {
+    const missing = ALL_CATALOG_ITEMS.filter((i) => !BASELINE_PRICES[i.name]).map((i) => i.name);
+    expect(missing).toEqual([]);
+    expect(Object.keys(WHERE_TO_LOOK).sort()).toEqual(Array.from(new Set(ALL_CATALOG_ITEMS.map((i) => i.typeId))).sort());
+  });
+
+  it('fill gaps without overwriting prices already there, and say where they came from', () => {
+    db.insert(catalogPrices).values({ nameKey: 'nkwobi', name: 'Nkwobi', price: 7777, source: 'online', updatedAt: new Date() }).onConflictDoNothing().run();
+    db.delete(catalogPrices).where(eq(catalogPrices.nameKey, 'amala')).run();
+    ensureBaselinePrices();
+    expect(catalogPriceMap()['nkwobi']).not.toBe(BASELINE_PRICES['Nkwobi'][0]);
+    expect(db.select().from(catalogPrices).where(eq(catalogPrices.nameKey, 'amala')).get()).toMatchObject({ price: 500, source: 'checked' });
+    expect(priceStatus().priced).toBe(priceStatus().total);
+  });
+
+  it('the search looks for food on Chowdeck and Glovo and never mixes kinds of product in one search', async () => {
+    const seen: { names: string[]; typeId?: string }[] = [];
+    await refreshCatalogPrices(async (names, typeId) => {
+      seen.push({ names, typeId });
+      return names.map(() => null);
+    }, new Date('2026-07-01T00:00:00Z'));
+    const typeOf = new Map(ALL_CATALOG_ITEMS.map((i) => [i.name, i.typeId]));
+    for (const b of seen) expect(b.names.every((n) => typeOf.get(n) === b.typeId)).toBe(true);
+    expect(seen.find((b) => b.names.includes('Jollof Rice'))?.typeId).toBe('food');
+    expect(WHERE_TO_LOOK.food).toMatch(/Chowdeck and Glovo/);
+  });
+
+  it('an online price replaces a starting estimate', async () => {
+    await refreshCatalogPrices(async (names) => names.map((n) => (n === 'Kilishi' ? 4200 : null)), new Date('2026-08-01T00:00:00Z'));
+    const row = db.select().from(catalogPrices).where(eq(catalogPrices.nameKey, 'kilishi')).get();
+    expect(row).toMatchObject({ price: 4200, source: 'online' });
   });
 });
 

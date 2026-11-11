@@ -344,6 +344,9 @@ export const catalogPrices = sqliteTable('catalog_prices', {
   nameKey: text('name_key').primaryKey(), // lower-cased product name
   name: text('name').notNull(),
   price: real('price').notNull(),
+  // Where the price came from: online (search), closebuy (other shops), checked (hand-checked on
+  // Chowdeck/Glovo/Shoprite listings) or estimate (a starting figure until the search replaces it).
+  source: text('source', { enum: ['online', 'closebuy', 'checked', 'estimate'] }).notNull().default('online'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 

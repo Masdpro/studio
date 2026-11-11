@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type Status = { total: number; priced: number; lastRunAt: string | null; nextRunAt: string | null; running: boolean; onlineLookup: boolean; problem: string | null };
+type Status = { total: number; priced: number; lastRunAt: string | null; nextRunAt: string | null; running: boolean; onlineLookup: boolean; problem: string | null; bySource: Record<string, number> };
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -44,6 +44,18 @@ export function CatalogPricesCard() {
           {status.lastRunAt ? `Last updated ${day(status.lastRunAt)}; next update around ${day(status.nextRunAt!)}.` : 'Not updated yet.'}
           {!status.onlineLookup && ' Online prices need the Gemini key, so only Closebuy shop prices are used for now.'}
         </p>
+        {status.priced > 0 && (
+          <p className="text-muted-foreground">
+            {[
+              status.bySource.online && `${status.bySource.online} from online stores`,
+              status.bySource.closebuy && `${status.bySource.closebuy} from Closebuy shops`,
+              status.bySource.checked && `${status.bySource.checked} checked on Chowdeck, Glovo and Shoprite`,
+              status.bySource.estimate && `${status.bySource.estimate} starting estimates (replaced by the online search)`,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
         {status.problem && <p className="mt-1 text-amber-700">{status.problem}</p>}
       </div>
       <Button variant="outline" onClick={refresh} disabled={status.running} className="shrink-0">
