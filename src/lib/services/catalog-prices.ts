@@ -41,6 +41,10 @@ export const WHERE_TO_LOOK: Record<string, string> = {
   health: 'HealthPlus, MedPlus and Jumia',
   home: 'Jumia, Konga, Slot and Jiji',
   kids: 'Jumia, Konga and Jiji',
+  bakery: 'cake shops and bakeries on Chowdeck and Glovo in Lagos and Abuja, and bakers selling on Instagram',
+  scents: 'perfume shops on Chowdeck and Glovo, Jumia, Konga and Nigerian perfume stores (Arabian perfumes and oils included)',
+  gifts: 'florists and gift shops on Chowdeck and Glovo, Jumia, Konga and Lagos gift and party-supply stores',
+  meat: 'frozen food stores, butchers and markets on Chowdeck and Glovo, Shoprite and Spar listings, and Jiji',
 };
 
 const STOP = new Set(['the', 'and', 'with', 'for', 'of', 'a', 'an', 'in', 'per', 'pack', 'fresh', 'new', 'original']);
@@ -141,7 +145,8 @@ export function lastPriceRun(): Date | null {
 
 /**
  * Gives every catalog product without a suggested price its starting price (checked on Chowdeck,
- * Glovo or Shoprite listings, or an estimate). Never overwrites a price that is already there.
+ * Glovo or Shoprite listings, or an estimate), and brings older starting prices up to date when
+ * the list changes. Prices that came from the online search or Closebuy shops are never touched.
  */
 export function ensureBaselinePrices(now = new Date()) {
   let added = 0;
@@ -151,7 +156,11 @@ export function ensureBaselinePrices(now = new Date()) {
     const res = db
       .insert(catalogPrices)
       .values({ nameKey: nameKey(item.name), name: item.name, price: base[0], source: base[1], updatedAt: now })
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: catalogPrices.nameKey,
+        set: { price: base[0], source: base[1], updatedAt: now },
+        where: sql`${catalogPrices.source} in ('checked', 'estimate') and (${catalogPrices.price} <> ${base[0]} or ${catalogPrices.source} <> ${base[1]})`,
+      })
       .run();
     added += res.changes;
   }

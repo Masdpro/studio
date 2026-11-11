@@ -103,6 +103,11 @@ describe('starting prices', () => {
     expect(catalogPriceMap()['nkwobi']).not.toBe(BASELINE_PRICES['Nkwobi'][0]);
     expect(db.select().from(catalogPrices).where(eq(catalogPrices.nameKey, 'amala')).get()).toMatchObject({ price: 500, source: 'checked' });
     expect(priceStatus().priced).toBe(priceStatus().total);
+    // An older starting price is corrected; a searched price is left alone.
+    db.update(catalogPrices).set({ price: 1, source: 'estimate' }).where(eq(catalogPrices.nameKey, 'kilishi')).run();
+    ensureBaselinePrices();
+    expect(catalogPriceMap()['kilishi']).toBe(BASELINE_PRICES['Kilishi'][0]);
+    expect(catalogPriceMap()['nkwobi']).not.toBe(BASELINE_PRICES['Nkwobi'][0]);
   });
 
   it('the search looks for food on Chowdeck and Glovo and never mixes kinds of product in one search', async () => {

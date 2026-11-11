@@ -10,11 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ALL_CATALOG_ITEMS, BUSINESS_TYPES, catalogImageFor, getBusinessType, type BusinessType } from '@/lib/product-catalog';
 import {
-  ArrowLeft, Baby, Check, ImageIcon, X, CupSoda, Loader2, Pill, Plus, Search, Shirt, ShoppingBasket, Smartphone, Sofa, Sparkles, Trash2, UtensilsCrossed,
+  ArrowLeft, Baby, Beef, CakeSlice, Gift, SprayCan, Check, ImageIcon, X, CupSoda, Loader2, Pill, Plus, Search, Shirt, ShoppingBasket, Smartphone, Sofa, Sparkles, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  UtensilsCrossed, CupSoda, ShoppingBasket, Shirt, Smartphone, Sparkles, Pill, Sofa, Baby,
+  UtensilsCrossed, CupSoda, ShoppingBasket, Shirt, Smartphone, Sparkles, Pill, Sofa, Baby, CakeSlice, SprayCan, Gift, Beef,
 };
 
 /** priceFrom: 'suggested' while the price box holds our suggested price, 'own' once the vendor types. */
@@ -34,6 +34,10 @@ const TYPE_WORDS: Record<string, string> = {
   health: 'pharmacy chemist drugs medicine patent medicine health store',
   home: 'home kitchen furniture household appliances bedding',
   kids: 'baby kids children toys school supplies stationery',
+  bakery: 'cake cakes bakery baker bread pastry pastries confectionery cupcakes desserts small chops chin chin doughnut',
+  scents: 'perfume perfumes scent scents fragrance oil perfume arabian body mist body spray diffuser incense bakhoor candles',
+  gifts: 'gift gifts hamper hampers flowers florist bouquet roses balloons party supplies souvenirs events decor decoration surprise',
+  meat: 'meat butcher beef goat chicken turkey poultry fish fishmonger seafood frozen foods cold room snail',
 };
 
 /**
