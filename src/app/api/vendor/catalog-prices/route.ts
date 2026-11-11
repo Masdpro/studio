@@ -9,5 +9,5 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const id = session?.user?.id;
   if (!id || !userHasRole(id, 'vendor')) return NextResponse.json({ error: 'Vendor sign-in required.' }, { status: 401 });
-  return NextResponse.json({ prices: catalogPriceMap() }, { headers: { 'Cache-Control': 'private, max-age=3600' } });
+  return NextResponse.json({ prices: catalogPriceMap() }, { headers: { 'Cache-Control': 'no-store' } });
 }

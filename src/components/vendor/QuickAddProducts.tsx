@@ -58,12 +58,14 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
 
   const existing = useMemo(() => new Set(existingNames.map((n) => n.trim().toLowerCase())), [existingNames]);
 
+  // Fresh every time the vendor reaches the price step, so newly added suggestions always show.
   useEffect(() => {
-    fetch('/api/vendor/catalog-prices')
+    if (step !== 'details') return;
+    fetch('/api/vendor/catalog-prices', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d?.prices && setSuggested(d.prices))
       .catch(() => {});
-  }, []);
+  }, [step]);
 
   // Fill in the suggested price for picked products the vendor hasn't priced yet.
   useEffect(() => {
