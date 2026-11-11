@@ -95,8 +95,10 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
     if (!product) return;
     setIsSaving(true);
     try {
+      // Stock has its own controls (so this form can never switch tracking off by accident).
+      const { stock: _stock, ...rest } = data;
       const payload = {
-        ...data,
+        ...rest,
         discountPrice: Number.isFinite(data.discountPrice) ? data.discountPrice : undefined,
       };
       const res = await fetch(`/api/products/${product.id}`, {
@@ -246,20 +248,9 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantity in stock (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={0} step={1} inputMode="numeric" placeholder="Leave blank if you don't track stock" {...field} />
-                  </FormControl>
-                  <FormDescription>Shows "Only N left" at 5 or fewer and "Sold out" at 0. Goes down automatically with each order.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <p className="rounded-md bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+              Stock is updated from your products list: use + and −, or <strong>Manage stock</strong> to count by size, colour or branch.
+            </p>
             <FormField
               control={form.control}
               name="category"

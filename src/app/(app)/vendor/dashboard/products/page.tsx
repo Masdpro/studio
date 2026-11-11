@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
 import { QuickAddProducts } from '@/components/vendor/QuickAddProducts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ProductListItem } from '@/components/vendor/ProductListItem';
+import { StockManager } from '@/components/vendor/StockManager';
 import { EditProductDialog } from '@/components/vendor/EditProductDialog';
 import type { Product } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,8 +25,8 @@ export default function VendorProductManagementPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  // Only the first load shows the spinner; refreshes after a stock change update the list in place.
   const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
     try {
       const res = await fetch('/api/vendor/products');
       if (res.ok) {
@@ -130,30 +130,20 @@ export default function VendorProductManagementPage() {
         </Card>
       </div>
 
-      <div className="min-w-0 lg:col-span-2">
+      {/* On phones, once there are products, stock comes first: it's what vendors update every day. */}
+      <div className={`min-w-0 lg:col-span-2 ${products.length ? 'order-first lg:order-none' : ''}`}>
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackageSearch className="h-6 w-6 text-primary" />
-              Your Listed Products
+              Your products &amp; stock
             </CardTitle>
-            <CardDescription>View and manage your products listed on Closebuy.</CardDescription>
+            <CardDescription>Update stock with + and −, mark items sold out, or pause them without deleting. Select several to change them together.</CardDescription>
           </CardHeader>
           <CardContent>
-            {products.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">You haven&apos;t added any products yet.</p>
-            ) : (
-              <div className="space-y-4">
-                {products.map((product) => (
-                  <ProductListItem
-                    key={product.id}
-                    product={product}
-                    onEdit={handleEditProduct}
-                    onDelete={handleDeleteProduct}
-                  />
-                ))}
-              </div>
-            )}
+            <Suspense fallback={null}>
+              <StockManager products={products} onChanged={fetchProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

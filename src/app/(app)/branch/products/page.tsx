@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
-import { ProductListItem } from '@/components/vendor/ProductListItem';
+import { StockManager } from '@/components/vendor/StockManager';
 import { EditProductDialog } from '@/components/vendor/EditProductDialog';
 import type { Product } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,6 @@ export default function BranchProductManagementPage() {
   const { toast } = useToast();
 
   const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
     try {
       const res = await fetch('/api/vendor/products');
       if (res.ok) {
@@ -114,7 +113,7 @@ export default function BranchProductManagementPage() {
         </Card>
       </div>
 
-      <div className="lg:col-span-2">
+      <div className={`min-w-0 lg:col-span-2 ${products.length ? 'order-first lg:order-none' : ''}`}>
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
@@ -124,20 +123,9 @@ export default function BranchProductManagementPage() {
             <CardDescription>View and manage your products listed on Closebuy.</CardDescription>
           </CardHeader>
           <CardContent>
-            {products.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">You haven&apos;t added any products yet.</p>
-            ) : (
-              <div className="space-y-4">
-                {products.map((product) => (
-                  <ProductListItem
-                    key={product.id}
-                    product={product}
-                    onEdit={handleEditProduct}
-                    onDelete={handleDeleteProduct}
-                  />
-                ))}
-              </div>
-            )}
+            <Suspense fallback={null}>
+              <StockManager products={products} onChanged={fetchProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

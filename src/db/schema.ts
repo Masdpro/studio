@@ -2,7 +2,7 @@
 // database structure. Run `npm run db:push` after changing it to apply
 // the change to dev.db (see package.json).
 
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, primaryKey, index } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -130,8 +130,38 @@ export const products = sqliteTable('products', {
   videoUrl: text('video_url'),
   colorsJson: text('colors_json'), // JSON array of colour choices
   sizesJson: text('sizes_json'), // JSON array of size choices
-  stock: integer('stock'), // units left; NULL = not tracked (always available)
+  stock: integer('stock'), // units left in total (sum of stock_levels); NULL = not tracked (always available)
+  paused: integer('paused', { mode: 'boolean' }).notNull().default(false), // hidden from shoppers without deleting it
+  lowStockAt: integer('low_stock_at'), // the vendor is alerted when total stock falls to this (NULL = default of 5)
 });
+
+/**
+ * Stock counts. A tracked product has one or more rows here; products.stock is their total.
+ * location is 'main' (the vendor's main address) or a branch id. colour and size are '' when the
+ * product isn't counted separately by that option.
+ */
+export const stockLevels = sqliteTable('stock_levels', {
+  productId: text('product_id').notNull(),
+  location: text('location').notNull(),
+  color: text('color').notNull().default(''),
+  size: text('size').notNull().default(''),
+  quantity: integer('quantity').notNull(),
+}, (t) => [primaryKey({ columns: [t.productId, t.location, t.color, t.size] })]);
+
+/** Every change to a stock count, newest last: orders, cancellations and the vendor's own edits. */
+export const stockMovements = sqliteTable('stock_movements', {
+  id: text('id').primaryKey(),
+  productId: text('product_id').notNull(),
+  location: text('location').notNull(),
+  color: text('color').notNull().default(''),
+  size: text('size').notNull().default(''),
+  change: integer('change').notNull(), // + added, - taken
+  quantityAfter: integer('quantity_after').notNull(),
+  reason: text('reason', { enum: ['order', 'cancelled', 'adjusted', 'counted', 'sold_out'] }).notNull(),
+  orderId: text('order_id'),
+  userId: text('user_id'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => [index('stock_movements_product_idx').on(t.productId, t.createdAt)]);
 
 export const orders = sqliteTable('orders', {
   id: text('id').primaryKey(),

@@ -145,13 +145,14 @@ Use the following information about the app's features to answer user questions.
 
 **For Vendors:**
 - **Dashboard:** Manage your local shop profile and inventory.
-- **AI Inventory Scanner:** Scan Nigerian products (like a bag of rice or electronics) to auto-fill product details.
+- **Adding products:** "Quick add" lists ready-made products for your kind of business; tick them, then add a price and photo. Or add one product at a time.
+- **Stock:** Track how many units you have, overall or separately for each size, colour and branch. Use + and − on the products page, mark items sold out, or pause a product to hide it without deleting it. Stock goes down with each order and is put back if an order is cancelled before it leaves the shop. You get a notification when an item runs low or sells out, and a "Needs restocking" list on your dashboard.
 - **Market Listing:** Link your store to a major local market (e.g., Balogun Market) so customers can find you under the "Local Markets" tab.
 
 **For Delivery Agents:**
 - **Dashboard:** View available orders and errands in your city.
 - **Submitting Quotes:** For errands, suggest a price based on your knowledge of local market prices.
-- **Barcode Scanning:** Scan at the vendor and at the customer's gate/door to confirm status.
+- **Delivery code:** On delivery, the customer checks the goods and gives the agent a 4-digit code that confirms the order was delivered.
 - **AI Route Optimization:** Optimize your bike route across multiple stops in busy cities like Lagos to save on petrol and time.
 
 **Placing orders on the customer's behalf:**

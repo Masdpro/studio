@@ -12,7 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { track } from '@/lib/track';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { ProductOptionsPicker, hasOptions, selectionComplete, type ProductSelection } from '@/components/product/ProductOptionsPicker';
+import { ProductOptionsPicker, hasOptions, selectionComplete, stockForSelection, type ProductSelection } from '@/components/product/ProductOptionsPicker';
 import { setBranchChoice } from '@/lib/branch-choice';
 
 interface ProductCardProps {
@@ -80,6 +80,16 @@ export function ProductCard({
     if (product.stock !== undefined && items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0) >= product.stock) {
       toast({ title: 'No more available', description: `All ${product.stock} of ${product.name} are already in your cart.` });
       return;
+    }
+    // Stock counted per colour/size: check the chosen option too.
+    const optionLeft = stockForSelection(product, selection);
+    if (optionLeft !== undefined) {
+      const inCart = items.filter((i) => i.productId === product.id && (i.color ?? '') === (selection.color ?? '') && (i.size ?? '') === (selection.size ?? '')).reduce((n, i) => n + i.quantity, 0);
+      if (inCart >= optionLeft) {
+        const label = [selection.color, selection.size].filter(Boolean).join(' / ');
+        toast({ title: optionLeft === 0 ? 'Sold out' : 'No more available', description: optionLeft === 0 ? `${product.name} (${label}) is sold out.` : `All ${optionLeft} of ${product.name} (${label}) are already in your cart.` });
+        return;
+      }
     }
     track('add_to_cart', { productId: product.id, vendorId: product.vendorId });
     addItem(product, 1, selection);

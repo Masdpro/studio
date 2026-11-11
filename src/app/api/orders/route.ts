@@ -19,6 +19,7 @@ import type { CartItem } from '@/lib/types';
 import { recordEvent } from '@/lib/services/events';
 import { getBranchById } from '@/lib/services/branches';
 import { getProductById, reserveStock, releaseStock, suspendedVendorIds } from '@/lib/services/products';
+import { availableFor, getStockRows, type StockLine } from '@/lib/services/stock';
 
 /** Returns orders relevant to the signed-in user, based on their role. */
 export async function GET(request: Request) {
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
     if (!product) {
       return NextResponse.json({ error: `${item?.name ?? 'An item'} is no longer available. Please remove it from your cart.` }, { status: 400 });
     }
-    if (suspended.has(product.vendorId)) {
+    if (suspended.has(product.vendorId) || product.paused) {
       return NextResponse.json({ error: `${product.name} is no longer available. Please remove it from your cart.` }, { status: 400 });
     }
     const quantity = Math.floor(Number(item.quantity));
@@ -99,12 +100,20 @@ export async function POST(request: Request) {
     const optionError = color.error ?? size.error;
     if (optionError) return NextResponse.json({ error: optionError }, { status: 400 });
 
-    qtyByProduct.set(product.id, (qtyByProduct.get(product.id) ?? 0) + quantity);
-    if (product.stock !== undefined && qtyByProduct.get(product.id)! > product.stock) {
-      return NextResponse.json(
-        { error: product.stock === 0 ? `${product.name} is sold out.` : `Only ${product.stock} of ${product.name} left. Please reduce the quantity.`, code: 'OUT_OF_STOCK', productId: product.id, available: product.stock },
-        { status: 409 }
-      );
+    // Stock is checked for the exact colour/size, at the branch the customer collects from.
+    const optionKey = `${product.id}\u0000${color.value ?? ''}\u0000${size.value ?? ''}`;
+    qtyByProduct.set(optionKey, (qtyByProduct.get(optionKey) ?? 0) + quantity);
+    if (product.stock !== undefined) {
+      const wanted = branchSelections?.[product.vendorId];
+      const available = availableFor(getStockRows(product.id), { location: wanted && wanted !== 'main' ? wanted : 'main', color: color.value, size: size.value }) ?? product.stock;
+      if (qtyByProduct.get(optionKey)! > available) {
+        const label = [color.value, size.value].filter(Boolean).join(' / ');
+        const what = label ? `${product.name} (${label})` : product.name;
+        return NextResponse.json(
+          { error: available === 0 ? `${what} is sold out${wanted && wanted !== 'main' ? ' at that branch' : ''}.` : `Only ${available} of ${what} left. Please reduce the quantity.`, code: 'OUT_OF_STOCK', productId: product.id, available },
+          { status: 409 }
+        );
+      }
     }
     cleanItems.push({
       productId: product.id,
@@ -169,12 +178,14 @@ export async function POST(request: Request) {
   const grandTotal = vendorOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
   // Hold the stock first (all or nothing), then charge; give the stock back if the charge fails.
-  const stockLines = Array.from(qtyByProduct.entries()).map(([productId, quantity]) => ({ productId, quantity }));
+  const stockLines: StockLine[] = vendorOrders.flatMap((o) =>
+    o.vendorItems.map((i) => ({ productId: i.productId, quantity: i.quantity, location: o.branchId ?? 'main', color: i.color, size: i.size, orderId: o.orderId }))
+  );
   const reserved = reserveStock(stockLines);
   if (!reserved.ok) {
     const p = await getProductById(reserved.productId);
     return NextResponse.json(
-      { error: `${p?.name ?? 'An item'} just sold out or has fewer units left. Please update your cart.`, code: 'OUT_OF_STOCK', productId: reserved.productId, available: p?.stock ?? 0 },
+      { error: `${p?.name ?? 'An item'} just sold out or has fewer units left. Please update your cart.`, code: 'OUT_OF_STOCK', productId: reserved.productId, available: reserved.available },
       { status: 409 }
     );
   }

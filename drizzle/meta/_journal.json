@@ -43,6 +43,13 @@
       "when": 1794180303926,
       "tag": "0005_role_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794429104198,
+      "tag": "0006_stock_levels",
+      "breakpoints": true
     }
   ]
 }

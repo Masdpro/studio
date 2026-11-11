@@ -1,6 +1,7 @@
 // src/app/(app)/vendor/dashboard/page.tsx
 'use client';
 import { BranchPurchases } from '@/components/vendor/BranchPurchases';
+import { RestockAlert } from '@/components/vendor/RestockAlert';
 import { VendorAnalytics } from '@/components/vendor/VendorAnalytics';
 import { StoreLinkCard } from '@/components/vendor/StoreLinkCard';
 import { AccountVerification } from '@/components/account/AccountVerification';
@@ -133,6 +134,7 @@ export default function VendorDashboardPage() {
       <h1 id="vendor-dashboard-top" className="text-3xl font-bold text-primary mb-6 scroll-mt-20">
         {vendor?.businessName ?? 'Your'} Dashboard
       </h1>
+      <RestockAlert />
       {!vendor && (
         <Card className="border-dashed">
           <CardContent className="pt-6">

@@ -67,6 +67,9 @@ export type Product = {
   colors?: string[]; // colours the vendor offers (customer must pick one)
   sizes?: string[]; // sizes the vendor offers (customer must pick one)
   stock?: number; // units left; undefined = not tracked
+  paused?: boolean; // hidden from shoppers by the vendor
+  lowStockAt?: number; // vendor is alerted when stock falls to this (default 5)
+  variantStock?: { color: string; size: string; quantity: number }[]; // per colour/size totals when counted separately
 };
 
 export type CartItem = {

@@ -24,9 +24,8 @@ export async function refundCancelledOrder(order: Order, by: 'customer' | 'vendo
   // If the vendor / agent had already been paid for it (support cancelling a finished order), take that back.
   if (order.status === 'Delivered' || order.status === 'PickedUpByCustomer') await reverseOrderEarnings(order, reason);
   if (GOODS_STILL_AT_SHOP.includes(order.status)) {
-    const qty = new Map<string, number>();
-    for (const i of order.items) qty.set(i.productId, (qty.get(i.productId) ?? 0) + i.quantity);
-    releaseStock(Array.from(qty.entries()).map(([productId, quantity]) => ({ productId, quantity })));
+    // Back to the exact colour/size at the branch it was collected from.
+    releaseStock(order.items.map((i) => ({ productId: i.productId, quantity: i.quantity, location: order.branchId ?? 'main', color: i.color, size: i.size, orderId: order.id })));
   }
 
   const who = by === 'customer' ? 'You cancelled your order' : by === 'vendor' ? 'The vendor cancelled your order' : 'Closebuy support cancelled your order';
