@@ -63,12 +63,28 @@ describe('quarterly update', () => {
   it('still runs on Closebuy prices alone when the online search fails', async () => {
     await list('Peak Milk Powder 400g Sachet', 2600);
     const failing: OnlineLookup = async () => {
-      throw new Error('quota');
+      throw new Error('network down');
     };
     const res = await refreshCatalogPrices(failing, new Date('2026-04-01T00:00:00Z'));
     expect(res.started).toBe(true);
     if (catalogPriceMap()['peak milk powder 400g sachet'] !== undefined) expect(catalogPriceMap()['peak milk powder 400g sachet']).toBeGreaterThan(0);
-    expect(db.select().from(jobRuns).where(eq(jobRuns.name, PRICE_JOB)).get()?.note).toMatch(/search batches failed/);
+    // A search that failed completely doesn't count as the quarter's update, so it's retried.
+    expect(db.select().from(jobRuns).where(eq(jobRuns.name, PRICE_JOB)).get()?.lastRunAt).toEqual(new Date('2026-01-01T00:00:00Z'));
+    expect(priceStatus().problem).toMatch(/failed/);
+  });
+
+  it('stops early when the search is out of quota and says why', async () => {
+    let calls = 0;
+    const quota: OnlineLookup = async () => {
+      calls++;
+      throw new Error('[429 Too Many Requests] You exceeded your current quota');
+    };
+    await refreshCatalogPrices(quota, new Date('2026-05-01T00:00:00Z'));
+    expect(calls).toBe(2);
+    expect(priceStatus().problem).toMatch(/billing/);
+    // A working search clears the warning.
+    await refreshCatalogPrices(async (n) => n.map(() => null), new Date('2026-06-01T00:00:00Z'));
+    expect(priceStatus().problem).toBeNull();
   });
 });
 

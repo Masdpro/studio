@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type Status = { total: number; priced: number; lastRunAt: string | null; nextRunAt: string | null; running: boolean; onlineLookup: boolean };
+type Status = { total: number; priced: number; lastRunAt: string | null; nextRunAt: string | null; running: boolean; onlineLookup: boolean; problem: string | null };
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -44,6 +44,7 @@ export function CatalogPricesCard() {
           {status.lastRunAt ? `Last updated ${day(status.lastRunAt)}; next update around ${day(status.nextRunAt!)}.` : 'Not updated yet.'}
           {!status.onlineLookup && ' Online prices need the Gemini key, so only Closebuy shop prices are used for now.'}
         </p>
+        {status.problem && <p className="mt-1 text-amber-700">{status.problem}</p>}
       </div>
       <Button variant="outline" onClick={refresh} disabled={status.running} className="shrink-0">
         {status.running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}

@@ -23,6 +23,8 @@ const MAX_PRICE = 10_000_000;
 const CLOSEBUY_ENOUGH = 3;
 const BATCH = 10;
 let running = false;
+/** What went wrong on the last attempt, if the online search failed (shown to admins). */
+let lastProblem: string | null = null;
 
 export type OnlineLookup = (names: string[]) => Promise<(number | null)[]>;
 
@@ -131,6 +133,7 @@ export function priceStatus() {
     nextRunAt: last ? new Date(last.getTime() + REFRESH_EVERY_MS).toISOString() : null,
     running,
     onlineLookup: onlineLookupAvailable(),
+    problem: lastProblem,
   };
 }
 
@@ -145,18 +148,32 @@ export async function refreshCatalogPrices(lookup: OnlineLookup | null = onlineL
     const names = Array.from(new Map(ALL_CATALOG_ITEMS.map((i) => [nameKey(i.name), i.name])).values());
     const online: (number | null)[] = names.map(() => null);
     let failedBatches = 0;
+    let okBatches = 0;
+    let quotaErrors = 0;
+    let lastError = '';
     if (lookup) {
       for (let s = 0; s < names.length; s += BATCH) {
         const batch = names.slice(s, s + BATCH);
         try {
           const found = await Promise.race([lookup(batch), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 60_000))]);
           batch.forEach((_, j) => (online[s + j] = found[j] ?? null));
+          okBatches++;
+          quotaErrors = 0;
         } catch (err) {
           failedBatches++;
-          console.warn('[catalog-prices] online lookup failed:', (err as Error).message);
+          lastError = (err as Error).message ?? '';
+          console.warn('[catalog-prices] online lookup failed:', lastError.slice(0, 200));
+          // Out of quota: stop instead of sending the rest of the catalog into the same wall.
+          if (/429|quota|rate limit/i.test(lastError) && ++quotaErrors >= 2) break;
         }
       }
     }
+    const searchFailed = !!lookup && okBatches === 0;
+    lastProblem = searchFailed
+      ? /429|quota/i.test(lastError)
+        ? 'The online price search was refused for quota. Google Search in Gemini needs billing turned on for the API key. Closebuy shop prices were used; it will try again tomorrow.'
+        : 'The online price search failed. Closebuy shop prices were used; it will try again tomorrow.'
+      : null;
     let updated = 0;
     names.forEach((name, i) => {
       const local = closebuyPriceFor(name);
@@ -169,7 +186,9 @@ export async function refreshCatalogPrices(lookup: OnlineLookup | null = onlineL
       updated++;
     });
     const note = `${updated} of ${names.length} priced${lookup ? '' : ' (Closebuy prices only)'}${failedBatches ? `, ${failedBatches} search batches failed` : ''}`;
-    db.insert(jobRuns).values({ name: PRICE_JOB, lastRunAt: now, note }).onConflictDoUpdate({ target: jobRuns.name, set: { lastRunAt: now, note } }).run();
+    // If the online search didn't work at all, don't count this as the quarter's update, so the
+    // daily check tries again.
+    if (!searchFailed) db.insert(jobRuns).values({ name: PRICE_JOB, lastRunAt: now, note }).onConflictDoUpdate({ target: jobRuns.name, set: { lastRunAt: now, note } }).run();
     console.log(`[catalog-prices] ${note}`);
     return { started: true as const, updated, total: names.length };
   } finally {
