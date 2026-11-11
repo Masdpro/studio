@@ -17,7 +17,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   UtensilsCrossed, CupSoda, ShoppingBasket, Shirt, Smartphone, Sparkles, Pill, Sofa, Baby,
 };
 
-type Picked = { key: string; name: string; description: string; category: string; price: string; imageUrl: string; catalogImage?: string };
+/** priceFrom: 'suggested' while the price box holds our suggested price, 'own' once the vendor types. */
+type Picked = { key: string; name: string; description: string; category: string; price: string; priceFrom?: 'suggested' | 'own'; imageUrl: string; catalogImage?: string };
 type Step = 'type' | 'groups' | 'items' | 'details';
 
 const keyOf = (category: string, name: string) => `${category}::${name}`.toLowerCase();
@@ -48,8 +49,33 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
   const [custom, setCustom] = useState('');
   const [finder, setFinder] = useState('');
   const [saving, setSaving] = useState(false);
+  // Suggested prices for catalog products, by lower-cased name (kept up to date every quarter).
+  const [suggested, setSuggested] = useState<Record<string, number>>({});
 
   const existing = useMemo(() => new Set(existingNames.map((n) => n.trim().toLowerCase())), [existingNames]);
+
+  useEffect(() => {
+    fetch('/api/vendor/catalog-prices')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.prices && setSuggested(d.prices))
+      .catch(() => {});
+  }, []);
+
+  // Fill in the suggested price for picked products the vendor hasn't priced yet.
+  useEffect(() => {
+    if (!Object.keys(suggested).length) return;
+    setPicked((prev) => {
+      let changed = false;
+      const next = prev.map((p) => {
+        const s = suggested[p.name.trim().toLowerCase().replace(/\s+/g, ' ')];
+        if (p.priceFrom === 'own' || (p.price && p.priceFrom !== 'suggested')) return p;
+        if (s && p.price !== String(s)) return (changed = true), { ...p, price: String(s), priceFrom: 'suggested' as const };
+        if (!s && p.priceFrom === 'suggested') return (changed = true), { ...p, price: '', priceFrom: undefined };
+        return p;
+      });
+      return changed ? next : prev;
+    });
+  }, [suggested, picked]);
 
   // Start from the business type the vendor chose last time.
   useEffect(() => {
@@ -423,7 +449,7 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
     <div className="space-y-3">
       <Back to="items" label="Choose more products" />
       <p className="text-sm text-muted-foreground">
-        Add a price for each product. Most come with a photo you can use straight away; tap the photo to use your own instead. Products without a photo need one before they can be listed.{' '}
+        Add a price for each product. Where we have one, we&apos;ve filled in a suggested price; change it to your own if yours is different. Most come with a photo you can use straight away; tap the photo to use your own instead. Products without a photo need one before they can be listed.{' '}
         <a href="/credits" target="_blank" rel="noopener noreferrer" className="underline">
           Photo credits
         </a>
@@ -442,8 +468,9 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">₦</span>
-              <Input aria-label={`Price for ${p.name}`} inputMode="decimal" placeholder="Price" value={p.price} onChange={(e) => update(p.key, { price: e.target.value.replace(/[^\d.,]/g, '') })} className="h-9" />
+              <Input aria-label={`Price for ${p.name}`} inputMode="decimal" placeholder="Price" value={p.price} onChange={(e) => update(p.key, { price: e.target.value.replace(/[^\d.,]/g, ''), priceFrom: 'own' })} className="h-9" />
             </div>
+            {p.priceFrom === 'suggested' && <p className="text-xs text-muted-foreground">Suggested price. Enter your own if yours is different.</p>}
             <ImageUploadField value={p.imageUrl} onChange={(url) => update(p.key, { imageUrl: url })} endpoint="/api/vendor/upload" emptyLabel="Photo required" />
             {p.catalogImage && p.imageUrl === p.catalogImage && (
               <p className="text-xs text-muted-foreground">Sample photo. Upload your own anytime to show exactly what you sell.</p>

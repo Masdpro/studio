@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AdminGate } from '@/components/admin/AdminGate';
+import { CatalogPricesCard } from '@/components/admin/CatalogPricesCard';
 import { ProductFormDialog } from '@/components/admin/ProductFormDialog';
 import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog';
 import { SafeImage } from '@/components/ui/safe-image';
@@ -82,6 +83,8 @@ export default function AdminProductsPage() {
             <Plus className="h-4 w-4 mr-2" /> New Product
           </Button>
         </div>
+
+        <CatalogPricesCard />
 
         {isLoading ? (
           <div className="text-center py-16">

@@ -337,3 +337,19 @@ export const withdrawals = sqliteTable('withdrawals', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
 });
+
+// Suggested prices for the Quick add product list (one per catalog product name). Refreshed every
+// quarter from current Nigerian online prices and what Closebuy shops charge; see catalog-prices.ts.
+export const catalogPrices = sqliteTable('catalog_prices', {
+  nameKey: text('name_key').primaryKey(), // lower-cased product name
+  name: text('name').notNull(),
+  price: real('price').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+// When each background job last ran (e.g. the quarterly price update).
+export const jobRuns = sqliteTable('job_runs', {
+  name: text('name').primaryKey(),
+  lastRunAt: integer('last_run_at', { mode: 'timestamp' }).notNull(),
+  note: text('note'),
+});

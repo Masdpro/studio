@@ -50,6 +50,13 @@
       "when": 1794429104198,
       "tag": "0006_stock_levels",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794436287121,
+      "tag": "0007_catalog_prices",
+      "breakpoints": true
     }
   ]
 }
