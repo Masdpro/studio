@@ -7,7 +7,8 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { db } from '../src/db';
-import { markets, vendors, products, deliveryAgents, users, orders } from '../src/db/schema';
+import { sql } from 'drizzle-orm';
+import { markets, vendors, products, deliveryAgents, users, orders, verificationDocuments } from '../src/db/schema';
 import {
   sampleMarkets,
   sampleVendors,
@@ -26,7 +27,7 @@ async function main() {
 
   for (const v of sampleVendors) {
     db.insert(vendors)
-      .values({ ...v, profileManaged: v.profileManaged ?? true })
+      .values({ ...v, profileManaged: v.profileManaged ?? true, approvalStatus: 'approved' })
       .onConflictDoNothing()
       .run();
   }
@@ -40,7 +41,7 @@ async function main() {
 
   for (const a of sampleDeliveryAgents) {
     db.insert(deliveryAgents)
-      .values({ ...a, profileManaged: a.profileManaged ?? true })
+      .values({ ...a, profileManaged: a.profileManaged ?? true, approvalStatus: 'approved' })
       .onConflictDoNothing()
       .run();
   }
@@ -63,6 +64,32 @@ async function main() {
       .onConflictDoNothing()
       .run();
   }
+
+  // The demo vendor and agent are fully verified so their dashboards open straight away.
+  // (Placeholder document rows only; there are no files behind them.)
+  const demoDocs = [
+    { userId: 'vendor001', kind: 'business_proof' as const },
+    { userId: 'vendor001', kind: 'store_photo' as const },
+    { userId: 'agent001', kind: 'government_id' as const },
+    { userId: 'agent001', kind: 'selfie' as const },
+  ];
+  for (const d of demoDocs) {
+    db.insert(verificationDocuments)
+      .values({ id: `demo-${d.userId}-${d.kind}`, ...d, fileName: 'demo-placeholder', contentType: 'image/png', createdAt: new Date() })
+      .onConflictDoNothing()
+      .run();
+  }
+
+  // Give the demo vendor's products some stock (plenty, running low, sold out) so the stock tools have something to show.
+  const demoStock = [12, 3, 0];
+  db.all<{ id: string }>(sql`SELECT id FROM products WHERE vendor_id = 'vendor001' AND stock IS NULL ORDER BY id`).forEach((row, i) => {
+    if (i < demoStock.length) db.run(sql`UPDATE products SET stock = ${demoStock[i]} WHERE id = ${row.id}`);
+  });
+
+  // Sample products carry a stock number; give each one a matching stock row so it shows as tracked.
+  db.run(sql`INSERT OR IGNORE INTO stock_levels (product_id, location, color, size, quantity)
+    SELECT id, COALESCE(branch_id, 'main'), '', '', MAX(stock, 0) FROM products
+    WHERE stock IS NOT NULL AND id NOT IN (SELECT product_id FROM stock_levels)`);
 
   for (const o of masterSampleOrders) {
     db.insert(orders)
