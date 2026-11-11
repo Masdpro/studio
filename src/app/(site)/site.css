@@ -1,0 +1,79 @@
+/* Styles for the public website only (landing, about, contact, policies). The app keeps its own look. */
+
+.site-root {
+  font-family: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ink: 24 22% 9%;
+  --ink-soft: 24 14% 16%;
+  --coral: 14 100% 62%;
+  --coral-deep: 12 85% 52%;
+  --sun: 44 98% 62%;
+  --cream: 48 60% 95%;
+}
+
+.font-display {
+  font-family: 'Bricolage Grotesque Variable', 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+}
+
+/* Coral gradient used on buttons and highlighted words. */
+.bg-coral-gradient {
+  background-image: linear-gradient(135deg, hsl(18 100% 64%) 0%, hsl(var(--coral-deep)) 100%);
+}
+.text-coral-gradient {
+  background-image: linear-gradient(120deg, hsl(18 100% 58%) 0%, hsl(8 82% 50%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Soft dotted texture for the hero and the final call to action. */
+.bg-dots {
+  background-image: radial-gradient(hsl(24 22% 9% / 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.bg-dots-light {
+  background-image: radial-gradient(hsl(0 0% 100% / 0.18) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Gentle floating for the hero's status cards. */
+@keyframes site-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: site-float 6s ease-in-out infinite; }
+.animate-float-slow { animation: site-float 8s ease-in-out infinite; animation-delay: -3s; }
+
+/* Endless strip of products. The list is rendered twice, so moving it by half loops seamlessly. */
+@keyframes site-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee { animation: site-marquee 40s linear infinite; }
+.marquee:hover .animate-marquee { animation-play-state: paused; }
+
+/* Sections fade up as they scroll into view (see Reveal.tsx). */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes site-ping {
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.animate-soft-ping { animation: site-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow,
+  .animate-marquee,
+  .animate-soft-ping { animation: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}

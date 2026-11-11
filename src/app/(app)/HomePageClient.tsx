@@ -64,9 +64,11 @@ export default function HomePageClient({
   initialBranches = [],
 }: HomePageClientProps) {
   // Products / Markets is switched from the header (see HomeViewTabs) via ?view=
-  const activeView = parseHomeView(useSearchParams().get('view'));
+  const searchParams = useSearchParams();
+  const activeView = parseHomeView(searchParams.get('view'));
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
+  // ?q= pre-fills the search (used by the search box on the landing page).
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q')?.slice(0, 100) ?? '');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedVendorId, setSelectedVendorId] = useState<string>('All');
   const [selectedLocation, setSelectedLocation] = useState<string>(ALL_LOCATIONS_VALUE);
@@ -96,7 +98,8 @@ export default function HomePageClient({
 
   useEffect(() => {
     const storedSearchTerm = sessionStorage.getItem(SESSION_STORAGE_KEYS.searchTerm);
-    if (storedSearchTerm !== null) setSearchTerm(storedSearchTerm);
+    // A search from the landing page (?q=) wins over the one remembered from earlier.
+    if (storedSearchTerm !== null && !searchParams.get('q')) setSearchTerm(storedSearchTerm);
 
     const storedSelectedCategory = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedCategory);
     if (storedSelectedCategory) setSelectedCategory(storedSelectedCategory);

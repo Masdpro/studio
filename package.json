@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@genkit-ai/googleai": "1.28.0",
     "@genkit-ai/next": "1.28.0",
     "@hookform/resolvers": "^4.1.3",
