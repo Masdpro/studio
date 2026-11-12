@@ -54,3 +54,6 @@ firestore-debug.log
 
 # live selfie check engine + model (copied/downloaded by scripts/copy-mediapipe.mjs)
 /public/mediapipe/
+
+# Backups made by npm run db:repair-dev
+*.db.backup-*
