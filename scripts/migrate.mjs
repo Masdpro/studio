@@ -21,6 +21,19 @@ if (hasTable('users') && !hasTable('__drizzle_migrations')) {
   console.log('[migrate] Existing database: marked the baseline as already applied.');
 }
 
-migrate(drizzle(sqlite), { migrationsFolder: './drizzle' });
+try {
+  migrate(drizzle(sqlite), { migrationsFolder: './drizzle' });
+} catch (err) {
+  const msg = String(err?.cause?.message ?? err?.message ?? err);
+  // A local database changed by hand (e.g. with drizzle-kit push) no longer matches the update
+  // history. Never guess on the live server; locally, point at the repair and reset tools.
+  if (process.env.NODE_ENV !== 'production' && /duplicate column name|already exists/i.test(msg)) {
+    console.error(`\n[migrate] ${file} was changed outside the migration files (${msg}).`);
+    console.error('[migrate] Fix it with:  npm run db:repair-dev   (keeps your data)');
+    console.error('[migrate]          or:  npm run db:reset-dev    (fresh database with demo data)\n');
+    process.exit(1);
+  }
+  throw err;
+}
 sqlite.close();
 console.log(`[migrate] Database is up to date (${file}).`);

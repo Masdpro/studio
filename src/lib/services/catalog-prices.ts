@@ -14,6 +14,7 @@ import { db } from '@/db';
 import { catalogPrices, jobRuns, products } from '@/db/schema';
 import { ALL_CATALOG_ITEMS } from '@/lib/product-catalog';
 import { BASELINE_PRICES } from '@/lib/catalog-price-baseline';
+import { log } from '@/lib/log';
 
 export const PRICE_JOB = 'catalog-prices';
 /** Prices are refreshed when the last update is older than this (about a quarter). */
@@ -220,7 +221,7 @@ export async function refreshCatalogPrices(lookup: OnlineLookup | null = onlineL
         } catch (err) {
           failedBatches++;
           lastError = (err as Error).message ?? '';
-          console.warn('[catalog-prices] online lookup failed:', lastError.slice(0, 200));
+          log.warn('Online price search failed for a batch', { error: lastError.slice(0, 200) });
           // Out of quota: stop instead of sending the rest of the catalog into the same wall.
           if (/429|quota|rate limit/i.test(lastError) && ++quotaErrors >= 2) break;
         }
@@ -249,7 +250,8 @@ export async function refreshCatalogPrices(lookup: OnlineLookup | null = onlineL
     // If the online search didn't work at all, don't count this as the quarter's update, so the
     // daily check tries again.
     if (!searchFailed) db.insert(jobRuns).values({ name: PRICE_JOB, lastRunAt: now, note }).onConflictDoUpdate({ target: jobRuns.name, set: { lastRunAt: now, note } }).run();
-    console.log(`[catalog-prices] ${note}`);
+    if (searchFailed) log.warn('Suggested price update: online search did not work', { area: 'jobs', note, error: lastError.slice(0, 300) });
+    else log.info('Suggested prices updated', { note });
     return { started: true as const, updated, total: names.length };
   } finally {
     running = false;
@@ -272,11 +274,11 @@ export function startPriceSchedule() {
   try {
     ensureBaselinePrices();
   } catch (err) {
-    console.error('[catalog-prices] could not add starting prices:', err);
+    log.error('Could not add starting prices', { area: 'jobs', err });
   }
   const check = () => {
     if (!onlineLookupAvailable()) return; // without the search key there is nothing new to learn
-    if (pricesDue()) refreshCatalogPrices().catch((err) => console.error('[catalog-prices] refresh failed:', err));
+    if (pricesDue()) refreshCatalogPrices().catch((err) => log.error('Suggested price update failed', { area: 'jobs', err }));
   };
   setTimeout(check, 5 * 60 * 1000).unref?.();
   setInterval(check, 24 * 60 * 60 * 1000).unref?.();

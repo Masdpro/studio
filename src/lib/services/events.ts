@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { db } from '@/db';
 import { analyticsEvents } from '@/db/schema';
 import type { EventType } from '@/lib/analytics-events';
+import { log } from '@/lib/log';
 
 export function recordEvent(e: {
   type: EventType;
@@ -28,6 +29,6 @@ export function recordEvent(e: {
       })
       .run();
   } catch (err) {
-    console.error('recordEvent failed', err);
+    log.warn('Could not record an analytics event', { area: 'app', err });
   }
 }

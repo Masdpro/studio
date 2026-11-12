@@ -1,0 +1,14 @@
+{
+  // Codespaces / Dev Containers: the same Node version and system tools as the live server (see Dockerfile).
+  "name": "Closebuy",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends sqlite3 && npm ci && npm run db:migrate",
+  "forwardPorts": [3000],
+  "portsAttributes": { "3000": { "label": "Closebuy", "onAutoForward": "notify" } },
+  "customizations": {
+    "vscode": { "extensions": ["dbaeumer.vscode-eslint", "bradlc.vscode-tailwindcss"] }
+  }
+}

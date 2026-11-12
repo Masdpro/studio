@@ -9,6 +9,7 @@
  * The check is on only when BOTH are set. With either missing it is skipped, so local
  * development and tests work without Cloudflare.
  */
+import { log } from '@/lib/log';
 
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -39,10 +40,10 @@ export async function verifyTurnstile(token: unknown, ip?: string): Promise<Turn
     if (!res.ok) throw new Error(`siteverify HTTP ${res.status}`);
     const data = (await res.json()) as { success?: boolean; 'error-codes'?: string[] };
     if (data.success) return { ok: true };
-    console.warn('[turnstile] token rejected:', (data['error-codes'] ?? []).join(','));
+    log.info('Bot check rejected a request', { area: 'security', codes: (data['error-codes'] ?? []).join(',') });
     return { ok: false, error: 'The security check failed or expired. Please try again.' };
   } catch (err) {
-    console.error('[turnstile] could not reach Cloudflare; allowing request:', err instanceof Error ? err.message : err);
+    log.warn('Could not reach Cloudflare for the bot check; request allowed', { area: 'security', err });
     return { ok: true };
   }
 }

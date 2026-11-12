@@ -14,6 +14,7 @@ import { getVerificationState } from '@/lib/verification';
 import { createTransferRecipient, finalizeTransfer, initiateTransfer, listBanks, resendTransferOtp, resolveBankAccount, verifyTransfer } from '@/lib/paystack';
 import { sendEmail } from '@/lib/notify';
 import { renderEmail } from '@/lib/email-template';
+import { log } from '@/lib/log';
 
 export const MIN_WITHDRAWAL = 1000;
 /** After a bank account is changed (not first added), payouts wait this long, in case the change wasn't the owner. */
@@ -195,6 +196,7 @@ export async function approveWithdrawal(reference: string) {
     }
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'Could not reach Paystack.';
+    log.error('Paystack refused a payout', { area: 'payments', reference, err });
     await settleWithdrawal(reference, 'failed', reason);
     throw new Error(`Paystack refused the transfer: ${reason} The money is back in their wallet.`);
   }
@@ -244,6 +246,7 @@ export async function settleWithdrawal(reference: string, outcome: 'success' | '
     .where(and(eq(withdrawals.id, reference), eq(withdrawals.status, w.status)))
     .run();
   if (claimed.changes !== 1) return;
+  if (outcome === 'failed' || outcome === 'reversed') log.warn(`A payout ${outcome === 'failed' ? 'failed' : 'was reversed by the bank'}; the money went back to the wallet`, { area: 'payments', reference, reason });
 
   if (outcome === 'success') {
     await createNotification({ userId: w.userId, message: `${naira(w.net)} has been sent to ${w.bankName} ${maskAccount(w.accountNumber)}.`, category: 'Transaction', link: '/wallet', iconName: 'CheckCircle' });

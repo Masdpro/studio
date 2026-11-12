@@ -4,6 +4,7 @@ import { verifyPaystackTransaction } from '@/lib/paystack';
 import { getPaymentTransaction, completeWalletFunding } from '@/lib/services/wallets';
 import { settleWithdrawal } from '@/lib/services/withdrawals';
 import { verifyTransfer } from '@/lib/paystack';
+import { log } from '@/lib/log';
 
 /**
  * Paystack calls this when a payment succeeds, so a top-up is credited even if
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   const a = Buffer.from(signature, 'utf8');
   const b = Buffer.from(expected, 'utf8');
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    log.forRequest(request).warn('Webhook with a bad signature was refused', { area: 'payments' });
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 401 });
   }
 
@@ -41,7 +43,8 @@ export async function POST(request: Request) {
     try {
       const t = await verifyTransfer(reference);
       if (t.status === 'success' || t.status === 'failed' || t.status === 'reversed') await settleWithdrawal(reference, t.status, t.reason);
-    } catch {
+    } catch (err) {
+      log.forRequest(request).error('Webhook: could not verify a payout with Paystack', { area: 'payments', reference, err });
       return NextResponse.json({ error: 'Could not verify the transfer.' }, { status: 500 }); // Paystack will retry
     }
     return NextResponse.json({ ok: true });

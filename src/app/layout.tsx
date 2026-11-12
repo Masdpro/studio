@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { PageViewTracker } from '@/components/analytics/PageViewTracker';
 import { ServiceWorkerRegister } from '@/components/analytics/ServiceWorkerRegister';
+import { ErrorTracking } from '@/components/monitoring/ErrorTracking';
 
 // Removed geistSans and geistMono initializations
 
@@ -28,6 +29,7 @@ export default function RootLayout({
           <CartProvider>
             <PageViewTracker />
             <ServiceWorkerRegister />
+            <ErrorTracking />
             {children}
             <Toaster />
           </CartProvider>

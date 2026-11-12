@@ -356,3 +356,19 @@ export const jobRuns = sqliteTable('job_runs', {
   lastRunAt: integer('last_run_at', { mode: 'timestamp' }).notNull(),
   note: text('note'),
 });
+
+// Problems worth an admin's attention (failed payments checks, SMS/email that didn't send, background
+// jobs that failed, unexpected server errors). Shown on /admin/system; kept for 30 days.
+export const systemEvents = sqliteTable(
+  'system_events',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    at: integer('at', { mode: 'timestamp' }).notNull(),
+    level: text('level', { enum: ['warn', 'error'] }).notNull(),
+    area: text('area').notNull(), // payments | sms | email | jobs | stock | security | app
+    message: text('message').notNull(),
+    details: text('details'), // JSON, trimmed
+    requestId: text('request_id'),
+  },
+  (t) => [index('system_events_at_idx').on(t.at)],
+);

@@ -64,6 +64,13 @@
       "when": 1794438817153,
       "tag": "0008_catalog_price_source",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794520652672,
+      "tag": "0009_system_events",
+      "breakpoints": true
     }
   ]
 }

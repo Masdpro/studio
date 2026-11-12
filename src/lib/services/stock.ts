@@ -3,6 +3,7 @@ import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { products as productsTable, stockLevels, stockMovements, vendorBranches } from '@/db/schema';
 import { createNotification } from '@/lib/services/notifications';
+import { log } from '@/lib/log';
 
 /**
  * Stock for vendors: a product either isn't tracked (no rows, always available) or has one or more
@@ -152,7 +153,7 @@ export function reserveStock(lines: StockLine[]): { ok: true } | { ok: false; pr
     if (err instanceof StockShortError) return { ok: false, productId: err.productId, available: err.available };
     throw err;
   }
-  void alertVendors(before, soldOutKeys).catch((e) => console.error('[stock] alert failed', e));
+  void alertVendors(before, soldOutKeys).catch((err) => log.error('Low-stock alert failed', { area: 'stock', err }));
   return { ok: true };
 }
 

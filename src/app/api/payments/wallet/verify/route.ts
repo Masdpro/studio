@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { verifyPaystackTransaction } from '@/lib/paystack';
 import { getPaymentTransaction, completeWalletFunding, markWalletFundingFailed } from '@/lib/services/wallets';
+import { log } from '@/lib/log';
 
 /** Confirms a wallet-funding payment with Paystack and credits the wallet exactly once. */
 export async function GET(request: Request) {
@@ -46,6 +47,7 @@ export async function GET(request: Request) {
     const { newBalance } = await completeWalletFunding(reference);
     return NextResponse.json({ success: true, newBalance, amount: transaction.amount });
   } catch (err) {
+    log.forRequest(request).error('Could not verify a wallet top-up with Paystack', { area: 'payments', err });
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to verify payment.' },
       { status: 502 }

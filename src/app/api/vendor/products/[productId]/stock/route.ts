@@ -6,6 +6,7 @@ import { db } from '@/db';
 import { products } from '@/db/schema';
 import { manageableProduct } from '@/lib/product-access';
 import { adjustStock, getMovements, getStockRows, locationNames, setStock, StockInputError, type StockInput } from '@/lib/services/stock';
+import { log } from '@/lib/log';
 
 type Ctx = { params: Promise<{ productId: string }> };
 
@@ -22,7 +23,7 @@ async function guard(ctx: Ctx): Promise<{ ok: false; res: Response } | { ok: tru
 const fail = (err: unknown) =>
   err instanceof StockInputError
     ? NextResponse.json({ error: err.message }, { status: 400 })
-    : (console.error('[stock]', err), NextResponse.json({ error: 'Could not update stock.' }, { status: 500 }));
+    : (log.error('Could not update stock', { area: 'stock', err }), NextResponse.json({ error: 'Could not update stock.' }, { status: 500 }));
 
 /** GET — the product's stock counts, where they're kept, and recent changes. */
 export async function GET(_req: Request, ctx: Ctx): Promise<Response> {

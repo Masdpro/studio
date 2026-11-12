@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { initializePaystackTransaction } from '@/lib/paystack';
 import { createPendingWalletFunding } from '@/lib/services/wallets';
+import { log } from '@/lib/log';
 
 /** Starts a real Paystack payment to fund the signed-in user's wallet. */
 export async function POST(request: Request) {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ authorizationUrl, reference });
   } catch (err) {
+    log.forRequest(request).error('Could not start a wallet top-up with Paystack', { area: 'payments', err });
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to start payment.' },
       { status: 502 }
