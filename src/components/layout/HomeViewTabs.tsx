@@ -1,7 +1,8 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, Store } from 'lucide-react';
+import Link from 'next/link';
+import { ShoppingBag, Sparkles, Store } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +41,10 @@ export function HomeViewTabs({ className }: { className?: string }) {
           <span className="lg:hidden">Markets</span>
           <span className="hidden lg:inline">Local Markets</span>
         </TabsTrigger>
+        {/* Services are a separate side of Closebuy, with its own look. */}
+        <Link href="/services" className="inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-sm px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground sm:px-3 sm:text-sm">
+          <Sparkles className="mr-1.5 hidden h-3.5 w-3.5 lg:inline" />Services
+        </Link>
       </TabsList>
     </Tabs>
   );

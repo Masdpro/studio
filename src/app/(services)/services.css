@@ -1,0 +1,71 @@
+/* The services side of Closebuy: its own dark, professional look. Applied to <html> while a services page is open,
+   so dialogs and menus (which render outside the page) match too. */
+
+html.svc-theme {
+  color-scheme: dark;
+  --background: 228 26% 6%;
+  --foreground: 40 22% 94%;
+  --card: 228 22% 9%;
+  --card-foreground: 40 22% 94%;
+  --popover: 228 22% 10%;
+  --popover-foreground: 40 22% 94%;
+  --primary: 39 64% 63%; /* champagne */
+  --primary-foreground: 228 30% 8%;
+  --secondary: 228 18% 13%;
+  --secondary-foreground: 40 22% 94%;
+  --muted: 228 17% 13%;
+  --muted-foreground: 228 10% 64%;
+  --accent: 228 18% 15%;
+  --accent-foreground: 40 22% 94%;
+  --destructive: 0 72% 58%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 228 15% 17%;
+  --input: 228 15% 18%;
+  --ring: 39 64% 63%;
+  --gold: 39 64% 63%;
+  --gold-soft: 39 60% 72%;
+  --coral: 14 100% 64%;
+}
+html.svc-theme body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.svc-root {
+  font-family: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+.svc-display {
+  font-family: 'Bricolage Grotesque Variable', 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.03em;
+}
+.svc-gold-text {
+  background-image: linear-gradient(110deg, hsl(42 78% 74%) 0%, hsl(36 58% 56%) 55%, hsl(42 70% 70%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.svc-gold-btn {
+  background-image: linear-gradient(135deg, hsl(42 76% 70%) 0%, hsl(36 58% 54%) 100%);
+  color: hsl(228 30% 8%);
+}
+.svc-gold-btn:hover { filter: brightness(1.06); }
+/* A faint grid and glow behind the hero. */
+.svc-hero-bg {
+  background-image:
+    radial-gradient(60% 70% at 50% -10%, hsl(39 64% 63% / 0.16), transparent 70%),
+    linear-gradient(hsl(0 0% 100% / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / 0.035) 1px, transparent 1px);
+  background-size: auto, 44px 44px, 44px 44px;
+}
+.svc-card {
+  background: linear-gradient(180deg, hsl(228 22% 10%), hsl(228 24% 8%));
+  border: 1px solid hsl(var(--border));
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.svc-card:hover { border-color: hsl(39 64% 63% / 0.45); transform: translateY(-2px); }
+.svc-scroll { scrollbar-width: none; }
+.svc-scroll::-webkit-scrollbar { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .svc-card, .svc-card:hover { transition: none; transform: none; }
+}
