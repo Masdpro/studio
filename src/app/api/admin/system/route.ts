@@ -4,7 +4,7 @@ import { recentEvents, systemHealth } from '@/lib/services/system-health';
 
 export const dynamic = 'force-dynamic';
 
-const AREAS = ['payments', 'sms', 'email', 'jobs', 'stock', 'security', 'app'];
+const AREAS = ['payments', 'bookings', 'sms', 'email', 'jobs', 'stock', 'security', 'app'];
 
 /** GET ?area= -> health checks, problem counts and the latest problems (admins only). */
 export async function GET(request: Request) {

@@ -243,6 +243,56 @@ stateDiagram-v2
 | `pending`, `approved`, `rejected` | `rejected` | admin rejects with a reason (or updates the reason) | admin | — |
 | `rejected` | `pending` | user uploads a document that role needs again (or redoes the live selfie) | user | — |
 
+## Booking
+
+A customer booking a vendor's service for a time slot. Paid upfront from the wallet and held by Closebuy until the job is done.
+
+Stored in `bookings.status`. Starts as `Requested` or `Confirmed`.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Requested
+  [*] --> Confirmed
+  Requested --> Confirmed : vendor accepts the request (vendor)
+  Requested --> Declined : vendor declines the request (vendor)
+  Requested --> Expired : the vendor didn't answer in time (timer)
+  Requested --> Cancelled : customer cancels (free until 24 hours before) (customer)
+  Confirmed --> Cancelled : customer cancels (free until 24 hours before) (customer)
+  Confirmed --> Cancelled : vendor cancels (full refund) (vendor)
+  Confirmed --> Completed : vendor enters the customer's code (vendor)
+  Confirmed --> NoShow : vendor marks the customer as a no-show (vendor)
+  Requested --> Cancelled : support cancels with a reason (refunds in full) (admin)
+  Confirmed --> Cancelled : support cancels with a reason (refunds in full) (admin)
+  Confirmed --> Completed : support settles a finished job the vendor couldn't close (pays the vendor) (admin)
+  Completed --> [*]
+  Declined --> [*]
+  Expired --> [*]
+  Cancelled --> [*]
+  NoShow --> [*]
+```
+
+| Status | Meaning |
+| --- | --- |
+| `Requested` | Paid and waiting for the vendor to accept (vendors who approve each booking). Lapses after 4 hours, or 1 hour before the slot. |
+| `Confirmed` | The slot is booked. The customer has a 4-digit code to give the vendor when the job is done. |
+| `Completed` | The vendor entered the customer's code. The vendor is paid. _(final)_ |
+| `Declined` | The vendor turned the request down. Refunded in full. _(final)_ |
+| `Expired` | The vendor didn't answer in time. Refunded in full. _(final)_ |
+| `Cancelled` | Cancelled. Full refund, except a customer cancelling within 24 hours of the slot: the vendor keeps 50%. _(final)_ |
+| `NoShow` | The customer didn't turn up. The vendor keeps 50%; the rest is refunded. _(final)_ |
+
+| From | To | When | Who | Rules |
+| --- | --- | --- | --- | --- |
+| `Requested` | `Confirmed` | vendor accepts the request | vendor | the slot is still free |
+| `Requested` | `Declined` | vendor declines the request | vendor | — |
+| `Requested` | `Expired` | the vendor didn't answer in time (timer) | system | — |
+| `Requested`, `Confirmed` | `Cancelled` | customer cancels (free until 24 hours before) | customer | — |
+| `Confirmed` | `Cancelled` | vendor cancels (full refund) | vendor | — |
+| `Confirmed` | `Completed` | vendor enters the customer's code | vendor | correct code (5 tries); from 30 minutes before the start |
+| `Confirmed` | `NoShow` | vendor marks the customer as a no-show | vendor | at least 15 minutes after the start |
+| `Requested`, `Confirmed` | `Cancelled` | support cancels with a reason (refunds in full) | admin | — |
+| `Confirmed` | `Completed` | support settles a finished job the vendor couldn't close (pays the vendor) | admin | — |
+
 ## Smaller rules that are not modelled as machines
 
 These have only two or three states and live next to the code that uses them:

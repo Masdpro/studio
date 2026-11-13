@@ -372,3 +372,66 @@ export const systemEvents = sqliteTable(
   },
   (t) => [index('system_events_at_idx').on(t.at)],
 );
+
+// ---- Services (booked, not bought) ----
+
+// A service a vendor offers: booked for a time slot, paid upfront and held until the job is done.
+export const services = sqliteTable(
+  'services',
+  {
+    id: text('id').primaryKey(),
+    vendorId: text('vendor_id').notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    imageUrl: text('image_url'),
+    price: real('price').notNull(), // Naira
+    priceFrom: integer('price_from', { mode: 'boolean' }).notNull().default(false), // shown as "from ₦X"
+    durationMin: integer('duration_min').notNull(),
+    location: text('location', { enum: ['shop', 'home', 'either'] }).notNull().default('shop'),
+    callOutFee: real('call_out_fee'), // added when done at the customer's place
+    paused: integer('paused', { mode: 'boolean' }).notNull().default(false),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [index('services_vendor_idx').on(t.vendorId)],
+);
+
+// When a vendor takes bookings. Hours are Lagos time, as JSON: { "1": [["09:00","13:00"],["14:00","18:00"]], ... } (0 = Sunday).
+export const serviceSettings = sqliteTable('service_settings', {
+  vendorId: text('vendor_id').primaryKey(),
+  weeklyHours: text('weekly_hours').notNull(),
+  capacity: integer('capacity').notNull().default(1), // customers served at the same time
+  instantBooking: integer('instant_booking', { mode: 'boolean' }).notNull().default(true),
+  daysOff: text('days_off').notNull().default('[]'), // JSON list of "YYYY-MM-DD"
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const bookings = sqliteTable(
+  'bookings',
+  {
+    id: text('id').primaryKey(),
+    serviceId: text('service_id').notNull(),
+    vendorId: text('vendor_id').notNull(),
+    customerId: text('customer_id').notNull(),
+    serviceName: text('service_name').notNull(),
+    startsAt: integer('starts_at', { mode: 'timestamp_ms' }).notNull(),
+    endsAt: integer('ends_at', { mode: 'timestamp_ms' }).notNull(),
+    location: text('location', { enum: ['shop', 'home'] }).notNull(),
+    address: text('address'), // where to go, for a home visit
+    note: text('note'),
+    price: real('price').notNull(),
+    callOutFee: real('call_out_fee').notNull().default(0),
+    total: real('total').notNull(),
+    status: text('status').notNull(),
+    respondBy: integer('respond_by', { mode: 'timestamp_ms' }), // a request lapses after this
+    completionCode: text('completion_code').notNull(),
+    codeAttempts: integer('code_attempts').notNull().default(0),
+    movedByVendor: integer('moved_by_vendor', { mode: 'boolean' }).notNull().default(false),
+    remindedDay: integer('reminded_day', { mode: 'boolean' }).notNull().default(false),
+    remindedHour: integer('reminded_hour', { mode: 'boolean' }).notNull().default(false),
+    cancelledBy: text('cancelled_by'),
+    cancelReason: text('cancel_reason'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [index('bookings_vendor_time_idx').on(t.vendorId, t.startsAt), index('bookings_customer_idx').on(t.customerId), index('bookings_status_idx').on(t.status)],
+);

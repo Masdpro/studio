@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SafeImage } from '@/components/ui/safe-image';
 import { ProductCard } from '@/components/product/ProductCard';
+import { StoreServices } from '@/components/services/StoreServices';
 import { getBranchChoice, setBranchChoice } from '@/lib/branch-choice';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
@@ -134,6 +135,8 @@ export function VendorStorefront({
           ))}
         </div>
       </section>
+
+      <StoreServices vendorId={vendor.id} vendorName={vendor.businessName} />
 
       <h2 id="products" className="text-lg font-semibold mb-3 scroll-mt-20">Products</h2>
       {multi && (

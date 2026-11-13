@@ -5,7 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { Activity, Home, ListChecks, UserPlus, Truck, Settings, Store, Bike, SearchCheck, ShoppingBasket, ClipboardList, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote } from 'lucide-react';
+import { Activity, Home, ListChecks, UserPlus, Truck, Settings, Store, Bike, SearchCheck, ShoppingBasket, ClipboardList, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote, CalendarCheck, CalendarCog } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -23,6 +23,7 @@ import {
 const customerNavItems = [
   { href: '/shop', label: 'Home', icon: Home, tooltip: "Browse Products" },
   { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
+  { href: '/bookings', label: 'My Bookings', icon: CalendarCheck, tooltip: "Services you've booked" },
 ];
 
 const customerErrandItems = [
@@ -43,7 +44,9 @@ const branchItems = [
 const vendorItems = [
   { href: '/vendor/dashboard', label: 'Vendor Dashboard', icon: Store, tooltip: "Manage Your Store" },
   { href: '/vendor/orders', label: 'Orders', icon: ListChecks, tooltip: "Manage Customer Orders" },
+  { href: '/vendor/bookings', label: 'Bookings', icon: CalendarCheck, tooltip: "Booked services" },
   { href: '/vendor/dashboard/products', label: 'Manage Products', icon: Settings, tooltip: "Add/Edit Products" },
+  { href: '/vendor/dashboard/services', label: 'Services & Hours', icon: CalendarCog, tooltip: "Services customers can book, and your hours" },
 ];
 
 const deliveryAgentItems = [
@@ -59,6 +62,7 @@ const adminItems = [
   { href: '/admin/agents', label: 'Agents', icon: Bike, tooltip: "Manage Delivery Agents" },
   { href: '/admin/verifications', label: 'Verifications', icon: ShieldCheck, tooltip: "Review vendor and agent verifications" },
   { href: '/admin/orders', label: 'Orders', icon: Receipt, tooltip: "All orders and refunds" },
+  { href: '/admin/bookings', label: 'Bookings', icon: CalendarCheck, tooltip: "Service bookings to settle" },
   { href: '/admin/users', label: 'Users', icon: Users, tooltip: "Look up and suspend accounts" },
   { href: '/admin/payouts', label: 'Payouts', icon: Banknote, tooltip: "Vendor and agent withdrawals" },
   { href: '/admin/system', label: 'System health', icon: Activity, tooltip: "Is everything working? Recent problems" },

@@ -8,7 +8,7 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { db } from '../src/db';
 import { sql } from 'drizzle-orm';
-import { markets, vendors, products, deliveryAgents, users, orders, verificationDocuments } from '../src/db/schema';
+import { markets, vendors, products, deliveryAgents, users, orders, verificationDocuments, services } from '../src/db/schema';
 import {
   sampleMarkets,
   sampleVendors,
@@ -91,6 +91,15 @@ async function main() {
     SELECT id, COALESCE(branch_id, 'main'), '', '', MAX(stock, 0) FROM products
     WHERE stock IS NOT NULL AND id NOT IN (SELECT product_id FROM stock_levels)`);
 
+  // Two bookable services for the demo vendor, so the booking flow has something to show.
+  const demoServices = [
+    { id: 'svc_demo_private_chef', name: 'Private chef for a dinner', description: 'We cook a 3-course Nigerian dinner in your kitchen for up to 8 guests.', price: 45000, durationMin: 180, location: 'home' as const, callOutFee: 5000 },
+    { id: 'svc_demo_cooking_class', name: 'Jollof cooking class', description: 'Learn our party jollof, hands-on, at the shop.', price: 15000, durationMin: 120, location: 'shop' as const, callOutFee: null },
+  ];
+  for (const s of demoServices) {
+    db.insert(services).values({ ...s, vendorId: 'vendor001', priceFrom: false, paused: false, createdAt: new Date() }).onConflictDoNothing().run();
+  }
+
   for (const o of masterSampleOrders) {
     db.insert(orders)
       .values({
@@ -112,7 +121,7 @@ async function main() {
       .run();
   }
 
-  console.log(`Seeded markets, vendors, products, delivery agents, sample orders, and ${demoUsers.length} demo logins.`);
+  console.log(`Seeded markets, vendors, products, 2 demo services, delivery agents, sample orders, and ${demoUsers.length} demo logins.`);
   console.log('Demo logins (password: password123):');
   demoUsers.forEach((u) => console.log(`  ${u.role}: ${u.email}`));
 }

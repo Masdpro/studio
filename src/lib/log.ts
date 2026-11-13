@@ -13,7 +13,7 @@
 import * as Sentry from '@sentry/nextjs';
 
 export type Level = 'debug' | 'info' | 'warn' | 'error';
-export type Area = 'payments' | 'sms' | 'email' | 'jobs' | 'stock' | 'security' | 'app';
+export type Area = 'payments' | 'bookings' | 'sms' | 'email' | 'jobs' | 'stock' | 'security' | 'app';
 /** `report: false` skips Sentry (for errors already sent there). */
 export type Fields = { area?: Area; err?: unknown; requestId?: string | null; report?: boolean; [key: string]: unknown };
 

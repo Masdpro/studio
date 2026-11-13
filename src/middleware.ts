@@ -11,9 +11,11 @@ const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_age
   { prefix: '/branch', role: 'branch' },
   { prefix: '/vendor/dashboard', role: 'vendor' },
   { prefix: '/vendor/orders', role: 'vendor' },
+  { prefix: '/vendor/bookings', role: 'vendor' },
   { prefix: '/delivery-agent', role: 'delivery_agent' },
   { prefix: '/errands', role: 'customer' },
   { prefix: '/orders', role: true },
+  { prefix: '/bookings', role: true },
   { prefix: '/profile', role: true },
   { prefix: '/account', role: true },
   { prefix: '/notifications', role: true },
@@ -21,7 +23,7 @@ const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_age
 ];
 
 /** The pages that need a sign-in: a trailing /* covers everything under that path, otherwise the exact path only. */
-const PROTECTED = ['/admin/*', '/branch/*', '/vendor/dashboard/*', '/vendor/orders', '/delivery-agent/*', '/errands/*', '/orders', '/profile', '/account/*', '/notifications', '/wallet'];
+const PROTECTED = ['/admin/*', '/branch/*', '/vendor/dashboard/*', '/vendor/orders', '/vendor/bookings', '/delivery-agent/*', '/errands/*', '/orders', '/bookings', '/profile', '/account/*', '/notifications', '/wallet'];
 function isProtected(pathname: string) {
   return PROTECTED.some((p) => (p.endsWith('/*') ? pathname === p.slice(0, -2) || pathname.startsWith(p.slice(0, -1)) : pathname === p));
 }

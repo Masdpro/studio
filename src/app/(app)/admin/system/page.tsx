@@ -21,6 +21,7 @@ type Data = {
 
 const AREAS: { id: string; label: string }[] = [
   { id: 'payments', label: 'Payments' },
+  { id: 'bookings', label: 'Bookings' },
   { id: 'sms', label: 'SMS' },
   { id: 'email', label: 'Email' },
   { id: 'jobs', label: 'Background jobs' },

@@ -1,6 +1,6 @@
 import type { Instrumentation } from 'next';
 
-/** Runs once when the server starts: error tracking, the quarterly price update and log clean-up. */
+/** Runs once when the server starts: error tracking, the quarterly price update, booking reminders and log clean-up. */
 export async function register() {
   // Written this way so the Node-only code is left out of the edge (middleware) build.
   if (process.env.NEXT_RUNTIME === 'nodejs') {
@@ -9,6 +9,8 @@ export async function register() {
     startPriceSchedule();
     const { startEventCleanup } = await import('./lib/services/system-events');
     startEventCleanup();
+    const { startBookingSchedule } = await import('./lib/services/bookings');
+    startBookingSchedule();
   }
   if (process.env.NEXT_RUNTIME === 'edge') {
     await import('./sentry.edge.config');
