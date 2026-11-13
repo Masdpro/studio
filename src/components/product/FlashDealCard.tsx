@@ -9,6 +9,7 @@ import { Zap, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { track } from '@/lib/track';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -22,11 +23,13 @@ export function FlashDealCard({ product }: FlashDealCardProps) {
   const { toast } = useToast();
   const { addItem, items } = useCart();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const { user } = useAuth();
+  const ownStore = !!user?.ownVendorId && user.ownVendorId === product.vendorId;
   const [selection, setSelection] = useState<ProductSelection>({});
 
   const handleAddToCart = () => {
     // Colours/sizes must be chosen first.
-    if (product.stock === 0) return;
+    if (product.stock === 0 || ownStore) return;
     if (hasOptions(product) && !selectionComplete(product, selection)) { setPickerOpen(true); return; }
     if (product.stock !== undefined && items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0) >= product.stock) {
       toast({ title: 'No more available', description: `All ${product.stock} of ${product.name} are already in your cart.` });
@@ -81,8 +84,8 @@ export function FlashDealCard({ product }: FlashDealCardProps) {
         </div>
       </div>
       <CardContent className="p-3">
-        <Button onClick={handleAddToCart} disabled={product.stock === 0} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-          <ShoppingCart className="h-4 w-4 mr-2" /> {product.stock === 0 ? 'Sold out' : hasOptions(product) ? 'Choose options' : 'Grab Deal'}
+        <Button onClick={handleAddToCart} disabled={product.stock === 0 || ownStore} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+          <ShoppingCart className="h-4 w-4 mr-2" /> {ownStore ? 'Your store' : product.stock === 0 ? 'Sold out' : hasOptions(product) ? 'Choose options' : 'Grab Deal'}
         </Button>
       </CardContent>
       <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setSelection({}); }}>

@@ -43,6 +43,15 @@ export function getDisplayName(userId: string): string | null {
   return u ? (u.n ?? u.e) : null;
 }
 
+/**
+ * The business this account sells for, if any: its own store (vendor id = account id), or the
+ * store a branch login belongs to. Used to stop anyone ordering from their own business.
+ */
+export function ownBusinessId(userId: string): string | null {
+  if (db.select({ id: vendors.id }).from(vendors).where(eq(vendors.id, userId)).get()) return userId;
+  return getBranchForUser(userId)?.vendorId ?? null;
+}
+
 export function userHasRole(userId: string, role: AppRole): boolean {
   return getUserRoles(userId).includes(role);
 }

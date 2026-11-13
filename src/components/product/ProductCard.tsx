@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { track } from '@/lib/track';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { ProductOptionsPicker, hasOptions, selectionComplete, stockForSelection, type ProductSelection } from '@/components/product/ProductOptionsPicker';
 import { setBranchChoice } from '@/lib/branch-choice';
 
@@ -42,6 +43,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const { toast } = useToast();
   const { addItem, items } = useCart();
+  const { user } = useAuth();
+  // Vendors (and their branch logins) can't order from their own business.
+  const ownStore = !!user?.ownVendorId && user.ownVendorId === product.vendorId;
   
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [mediaIdx, setMediaIdx] = useState(0);
@@ -75,7 +79,7 @@ export function ProductCard({
   const handleAddToCart = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     // Products with colours/sizes need a choice first, so open the details to pick one.
-    if (soldOut) return;
+    if (soldOut || ownStore) return;
     if (choiceMissing) { setDetailsOpen(true); return; }
     if (product.stock !== undefined && items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0) >= product.stock) {
       toast({ title: 'No more available', description: `All ${product.stock} of ${product.name} are already in your cart.` });
@@ -156,8 +160,8 @@ export function ProductCard({
         <p className="text-lg font-bold text-primary mt-auto">₦{product.price.toLocaleString()}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart} disabled={orderBranch?.unavailable || soldOut}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> {soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : needsChoice ? 'Choose options' : 'Add to Cart'}
+        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart} disabled={orderBranch?.unavailable || soldOut || ownStore} title={ownStore ? "You can't order from your own store" : undefined}>
+          <ShoppingCart className="mr-2 h-4 w-4" /> {ownStore ? 'Your store' : soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : needsChoice ? 'Choose options' : 'Add to Cart'}
         </Button>
       </CardFooter>
     </Card>
@@ -222,8 +226,8 @@ export function ProductCard({
           ) : (
             <Button asChild variant="outline" className="flex-1"><Link href={vendorMarketId ? `/market/${vendorMarketId}/vendor/${product.vendorId}` : `/vendor/${product.vendorId}/profile`}>View store</Link></Button>
           )}
-          <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { handleAddToCart(); setDetailsOpen(false); }} disabled={orderBranch?.unavailable || choiceMissing || soldOut}>
-            <ShoppingCart className="mr-2 h-4 w-4" /> {soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : 'Add to Cart'}
+          <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { handleAddToCart(); setDetailsOpen(false); }} disabled={orderBranch?.unavailable || choiceMissing || soldOut || ownStore}>
+            <ShoppingCart className="mr-2 h-4 w-4" /> {ownStore ? 'Your store' : soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : 'Add to Cart'}
           </Button>
           </div>
         </div>

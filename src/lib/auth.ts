@@ -1,4 +1,4 @@
-import { getUserRoles, getDisplayName } from '@/lib/roles';
+import { getUserRoles, getDisplayName, ownBusinessId } from '@/lib/roles';
 
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -72,6 +72,7 @@ export const authOptions: NextAuthOptions = {
         // Throwing makes next-auth clear the session cookie and treat the visitor as signed out.
         if (sv === null || sv !== ((token.sv as number | undefined) ?? 0)) throw new Error('SESSION_REVOKED');
         token.roles = getUserRoles(token.id as string);
+        token.ownVendorId = ownBusinessId(token.id as string) ?? undefined;
         token.name = getDisplayName(token.id as string) ?? token.name;
       }
       return token;
@@ -81,6 +82,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
         (session.user as any).roles = token.roles;
+        (session.user as any).ownVendorId = token.ownVendorId;
       }
       return session;
     },

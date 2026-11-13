@@ -1,4 +1,4 @@
-import { userHasRole, getBranchForUser } from '@/lib/roles';
+import { userHasRole, getBranchForUser, ownBusinessId } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -76,12 +76,20 @@ export async function POST(request: Request) {
   // come from the product record, quantities must be sensible whole numbers,
   // and colour/size must be one the vendor actually offers.
   const cleanItems: CartItem[] = [];
+  // Nobody orders from their own business (their store or the store their branch login belongs to).
+  const ownVendorId = ownBusinessId(session.user.id);
   const suspended = suspendedVendorIds();
   const qtyByProduct = new Map<string, number>();
   for (const item of items) {
     const product = item?.productId ? await getProductById(String(item.productId)) : undefined;
     if (!product) {
       return NextResponse.json({ error: `${item?.name ?? 'An item'} is no longer available. Please remove it from your cart.` }, { status: 400 });
+    }
+    if (ownVendorId && product.vendorId === ownVendorId) {
+      return NextResponse.json(
+        { error: `${product.name} is from your own store, and you can't order from your own business. Please remove it from your cart.`, code: 'OWN_STORE', productId: product.id },
+        { status: 400 }
+      );
     }
     if (suspended.has(product.vendorId) || product.paused) {
       return NextResponse.json({ error: `${product.name} is no longer available. Please remove it from your cart.` }, { status: 400 });

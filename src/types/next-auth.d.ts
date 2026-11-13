@@ -6,6 +6,8 @@ declare module 'next-auth' {
       id: string;
       role: 'customer' | 'vendor' | 'delivery_agent' | 'admin';
     roles?: ('customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch')[];
+    /** The store this account sells for (its own, or the one its branch login belongs to). */
+    ownVendorId?: string;
     } & DefaultSession['user'];
   }
 
@@ -13,6 +15,8 @@ declare module 'next-auth' {
     id: string;
     role: 'customer' | 'vendor' | 'delivery_agent' | 'admin';
     roles?: ('customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch')[];
+    /** The store this account sells for (its own, or the one its branch login belongs to). */
+    ownVendorId?: string;
   }
 }
 
@@ -21,5 +25,7 @@ declare module 'next-auth/jwt' {
     id: string;
     role: 'customer' | 'vendor' | 'delivery_agent' | 'admin';
     roles?: ('customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch')[];
+    /** The store this account sells for (its own, or the one its branch login belongs to). */
+    ownVendorId?: string;
   }
 }

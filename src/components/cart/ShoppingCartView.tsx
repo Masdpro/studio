@@ -25,6 +25,8 @@ export function ShoppingCartView() {
   const router = useRouter();
   const { items: cartItems, updateQuantity, removeItem, clear, subtotal } = useCart();
   const { user } = useAuth();
+  // Items from the shopper's own business (e.g. added before they opened a store) can't be ordered.
+  const ownItems = user?.ownVendorId ? cartItems.filter((i) => i.vendorId === user.ownVendorId) : [];
   const [isDeliverySelected, setIsDeliverySelected] = useState(true);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -200,6 +202,11 @@ export function ShoppingCartView() {
           <p className="text-muted-foreground text-center py-8">Your cart is empty.</p>
         ) : (
           <div className="space-y-4">
+            {ownItems.length > 0 && (
+              <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {ownItems.length === 1 ? `${ownItems[0].name} is` : `${ownItems.length} items are`} from your own store. You can&apos;t order from your own business, so please remove {ownItems.length === 1 ? 'it' : 'them'} to check out.
+              </p>
+            )}
             {cartItems.map((item) => (
               <CartItem
                 key={cartLineKey(item)}
@@ -304,7 +311,7 @@ export function ShoppingCartView() {
             size="lg"
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground mt-1.5"
             onClick={handleProceedToCheckout}
-            disabled={isPlacingOrder}
+            disabled={isPlacingOrder || ownItems.length > 0}
           >
             {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Proceed to Checkout
