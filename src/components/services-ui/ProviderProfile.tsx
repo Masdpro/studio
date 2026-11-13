@@ -114,7 +114,7 @@ export function ProviderProfile({ slug }: { slug: string }) {
 }
 
 /** The booking step, with free times worked out from the provider's hours. Paying is switched off in the preview. */
-function PreviewBookDialog({ p, s, now, onClose }: { p: PreviewProvider; s: PreviewService; now: number; onClose: () => void }) {
+export function PreviewBookDialog({ p, s, now, onClose }: { p: PreviewProvider; s: PreviewService; now: number; onClose: () => void }) {
   const dates = useMemo(() => {
     const out: string[] = [];
     for (let i = 0; i < 14; i++) {

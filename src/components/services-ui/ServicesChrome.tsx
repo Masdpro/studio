@@ -2,10 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { CalendarCheck, UserRound } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
 /** Turns on the dark services look for the whole page (dialogs included) while a services page is open. */
@@ -15,7 +11,8 @@ export function ServicesThemeOn() {
     html.classList.add('svc-theme', 'dark');
     return () => html.classList.remove('svc-theme', 'dark');
   }, []);
-  return null;
+  // Also switch it on before the page first paints, so a fresh load doesn't flash the light shop colours.
+  return <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('svc-theme','dark')" }} />;
 }
 
 /**
@@ -62,33 +59,5 @@ export function SideToggle({ active, className }: { active: 'products' | 'servic
         Services
       </span>
     </button>
-  );
-}
-
-export function ServicesHeader() {
-  const { user } = useAuth();
-  return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-        {/* Logo with the Shop / Services toggle directly under it */}
-        <div className="flex flex-col items-start gap-2">
-          <Link href="/services" className="flex items-center gap-2">
-            <Image src="/logo-mark-orange.png" alt="" width={22} height={28} unoptimized />
-            <span className="svc-display text-lg font-semibold leading-none">
-              Closebuy <span className="svc-gold-text">Services</span>
-            </span>
-          </Link>
-          <SideToggle active="services" />
-        </div>
-        <div className="ml-auto flex items-center gap-1">
-          <Link href="/bookings" className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-            <CalendarCheck className="h-4 w-4" /><span className="hidden md:inline">My bookings</span>
-          </Link>
-          <Link href={user ? '/profile' : '/auth/login?callbackUrl=/services'} className="flex h-9 w-9 items-center justify-center rounded-full border border-border hover:border-primary/60" aria-label={user ? 'Your account' : 'Sign in'}>
-            {user?.name ? <span className="text-sm font-semibold">{user.name.slice(0, 1).toUpperCase()}</span> : <UserRound className="h-4 w-4" />}
-          </Link>
-        </div>
-      </div>
-    </header>
   );
 }

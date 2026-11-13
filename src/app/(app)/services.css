@@ -25,19 +25,22 @@ html.svc-theme {
   --gold: 39 64% 63%;
   --gold-soft: 39 60% 72%;
   --coral: 14 100% 64%;
+  --sidebar-background: 228 24% 8%;
+  --sidebar-foreground: 40 18% 88%;
+  --sidebar-primary: 39 64% 63%;
+  --sidebar-primary-foreground: 228 30% 8%;
+  --sidebar-accent: 228 18% 14%;
+  --sidebar-accent-foreground: 40 22% 94%;
+  --sidebar-border: 228 15% 15%;
+  --sidebar-ring: 39 64% 63%;
 }
 html.svc-theme body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
 }
 
-.svc-root {
-  font-family: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
 .svc-display {
-  font-family: 'Bricolage Grotesque Variable', 'Plus Jakarta Sans Variable', system-ui, sans-serif;
-  font-optical-sizing: auto;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 .svc-gold-text {
   background-image: linear-gradient(110deg, hsl(42 78% 74%) 0%, hsl(36 58% 56%) 55%, hsl(42 70% 70%) 100%);
@@ -68,4 +71,8 @@ html.svc-theme body {
 .svc-scroll::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .svc-card, .svc-card:hover { transition: none; transform: none; }
+}
+/* Default border colour on the services side (the stock light grey shows up as bright lines on dark). */
+:where(html.svc-theme) *, :where(html.svc-theme) ::before, :where(html.svc-theme) ::after {
+  border-color: hsl(var(--border));
 }

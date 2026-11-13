@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ClipboardList, Home, ListChecks, ShoppingCart } from 'lucide-react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { CalendarCheck, ClipboardList, Home, ListChecks, ShoppingCart, Users } from 'lucide-react';
+import { sideForPath } from '@/lib/side';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { cn } from '@/lib/utils';
@@ -64,13 +65,24 @@ export function MobileBottomNav() {
   const scrolling = useScrolling();
   if (!shows) return null;
 
-  const items = [
-    { href: '/shop', label: 'Home', icon: Home },
-    { href: '/orders', label: 'Orders', icon: ListChecks },
-    { href: '/cart', label: 'Cart', icon: ShoppingCart, badge: itemCount },
-    { href: '/errands', label: 'Errands', icon: ClipboardList },
-  ];
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const items: { href: string; label: string; icon: typeof Home; badge?: number }[] = sideForPath(pathname) === 'services'
+    ? [
+        { href: '/services', label: 'Home', icon: Home },
+        { href: '/services?view=pros', label: 'Professionals', icon: Users },
+        { href: '/bookings', label: 'Bookings', icon: CalendarCheck },
+      ]
+    : [
+        { href: '/shop', label: 'Home', icon: Home },
+        { href: '/orders', label: 'Orders', icon: ListChecks },
+        { href: '/cart', label: 'Cart', icon: ShoppingCart, badge: itemCount },
+        { href: '/errands', label: 'Errands', icon: ClipboardList },
+      ];
+  const view = useSearchParams().get('view');
+  const isActive = (href: string) => {
+    const [path, query] = href.split('?');
+    if (path === '/services') return pathname === '/services' && (query ? view === 'pros' : view !== 'pros');
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
 
   return (
     <nav
@@ -81,7 +93,7 @@ export function MobileBottomNav() {
       )}
       style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
     >
-      <div className="grid grid-cols-4 p-1.5">
+      <div className={cn('grid p-1.5', items.length === 3 ? 'grid-cols-3' : 'grid-cols-4')}>
         {items.map(({ href, label, icon: Icon, badge }) => {
           const active = isActive(href);
           return (

@@ -12,7 +12,9 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { HomeViewTabs } from '@/components/layout/HomeViewTabs';
-import { SideToggle } from '@/components/services-ui/ServicesChrome';
+import { SideToggle, ServicesThemeOn } from '@/components/services-ui/ServicesChrome';
+import { ServicesViewTabs } from '@/components/services-ui/ServicesViewTabs';
+import { sideForPath } from '@/lib/side';
 import {
   Sheet,
   SheetContent,
@@ -43,13 +45,15 @@ export function AppHeader() {
   const isAdmin = useAuth().role === 'admin';
   const router = useRouter();
   const pathname = usePathname();
+  const side = sideForPath(pathname);
+  const services = side === 'services';
   useEffect(() => { if (isAdmin && pathname === '/shop') router.replace('/admin'); }, [isAdmin, pathname, router]);
 
   return (
     <>
       <header className="sticky top-0 z-50 flex h-16 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur sm:px-4 md:px-6">
         {/* The full logo lives at the top of the sidebar on desktop; keep a compact one where the sidebar is hidden. */}
-        <Link href={isAdmin ? '/admin' : '/shop'} className="flex items-center gap-1 md:hidden">
+        <Link href={isAdmin ? '/admin' : services ? '/services' : '/shop'} className="flex items-center gap-1 md:hidden">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block" />
           <span className="sr-only">Closebuy</span>
           <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
@@ -57,9 +61,12 @@ export function AppHeader() {
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
+        {services && <ServicesThemeOn />}
         {!isAdmin && (
           <Suspense fallback={null}>
-            <HomeViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />
+            {services
+              ? <ServicesViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />
+              : <HomeViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />}
           </Suspense>
         )}
         <div className="ml-auto flex min-w-0 items-center md:gap-2">
@@ -74,7 +81,7 @@ export function AppHeader() {
             <UserWalletDisplay />
           </Suspense>}
           <NotificationBell />
-          {!isAdmin && <Button variant="ghost" size="icon" className="relative hidden md:inline-flex" onClick={() => setIsCartSheetOpen(true)}>
+          {!isAdmin && !services && <Button variant="ghost" size="icon" className="relative hidden md:inline-flex" onClick={() => setIsCartSheetOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
               <Badge
@@ -92,14 +99,16 @@ export function AppHeader() {
       {/* Phones and tablets (no sidebar): the Shop / Services toggle sits directly under the logo, with the home tabs beside it on phones. */}
       {!isAdmin && (
         <div className="sticky top-16 z-40 flex items-center gap-2 border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:px-4 md:hidden">
-          <SideToggle active="products" />
+          <SideToggle active={side} />
           <Suspense fallback={null}>
-            <HomeViewTabs className="min-w-0 flex-1 sm:hidden [&>div]:w-full [&_button]:flex-1" />
+            {services
+              ? <ServicesViewTabs className="min-w-0 flex-1 sm:hidden [&>div]:w-full [&_button]:flex-1" />
+              : <HomeViewTabs className="min-w-0 flex-1 sm:hidden [&>div]:w-full [&_button]:flex-1" />}
           </Suspense>
         </div>
       )}
 
-      <MobileBottomNav />
+      <Suspense fallback={null}><MobileBottomNav /></Suspense>
 
       {/* Cart Sheet */}
       <Sheet open={isCartSheetOpen} onOpenChange={setIsCartSheetOpen}>

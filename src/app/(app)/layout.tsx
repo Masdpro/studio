@@ -2,6 +2,7 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { VerificationBanner } from '@/components/account/VerificationBanner';
+import './services.css';
 
 export default function AppLayout({
   children,

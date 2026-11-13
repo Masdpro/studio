@@ -3,6 +3,8 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { sideForPath, type Side } from '@/lib/side';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import { SideToggle } from '@/components/services-ui/ServicesChrome';
@@ -24,7 +26,19 @@ import {
 const customerNavItems = [
   { href: '/shop', label: 'Home', icon: Home, tooltip: "Browse Products" },
   { href: '/orders', label: 'My Orders', icon: ListChecks, tooltip: "Track Your Orders" },
+];
+
+// The services side has its own menu: booking services, never products.
+const serviceCustomerItems = [
+  { href: '/services', label: 'Home', icon: Home, tooltip: 'Browse services' },
   { href: '/bookings', label: 'My Bookings', icon: CalendarCheck, tooltip: "Services you've booked" },
+];
+const serviceVendorItems = [
+  { href: '/vendor/bookings', label: 'Bookings', icon: CalendarCheck, tooltip: 'Bookings from your customers' },
+  { href: '/vendor/dashboard/services', label: 'Services & Hours', icon: CalendarCog, tooltip: 'Services customers can book, and your hours' },
+];
+const serviceGrowItems = [
+  { href: '/auth/register/vendor', label: 'Offer your services', icon: UserPlus, tooltip: 'List your services on Closebuy' },
 ];
 
 const customerErrandItems = [
@@ -45,9 +59,7 @@ const branchItems = [
 const vendorItems = [
   { href: '/vendor/dashboard', label: 'Vendor Dashboard', icon: Store, tooltip: "Manage Your Store" },
   { href: '/vendor/orders', label: 'Orders', icon: ListChecks, tooltip: "Manage Customer Orders" },
-  { href: '/vendor/bookings', label: 'Bookings', icon: CalendarCheck, tooltip: "Booked services" },
   { href: '/vendor/dashboard/products', label: 'Manage Products', icon: Settings, tooltip: "Add/Edit Products" },
-  { href: '/vendor/dashboard/services', label: 'Services & Hours', icon: CalendarCog, tooltip: "Services customers can book, and your hours" },
 ];
 
 const deliveryAgentItems = [
@@ -95,6 +107,7 @@ const customerGroup = { label: 'Customer', items: [...customerNavItems, ...custo
 /** The menu sections the signed-in person should see (shared by the desktop sidebar and the phone account menu). */
 export function useNavGroups(): NavGroup[] {
   const { role, roles, loading } = useAuth();
+  const side: Side = sideForPath(usePathname());
   // Each role is approved on its own, so each menu opens up when its own role is approved.
   const { state } = useTradingStatus();
   const roleMayTrade = (role: 'vendor' | 'delivery_agent') => !!state?.tradingRoles?.find((r) => r.role === role)?.mayTrade;
@@ -104,6 +117,11 @@ export function useNavGroups(): NavGroup[] {
   if (!loading) {
     if (role === 'admin') {
       groups = [{ label: 'Admin', items: adminItems }];
+    } else if (side === 'services') {
+      const isVendor = roles.includes('vendor');
+      groups = [{ label: 'Customer', items: serviceCustomerItems }];
+      if (isVendor && roleMayTrade('vendor')) groups.push({ label: 'Vendor', items: serviceVendorItems });
+      if (!isVendor && !roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: serviceGrowItems });
     } else {
       const isVendor = roles.includes('vendor');
       const isAgent = roles.includes('delivery_agent');
@@ -122,6 +140,7 @@ export function AppSidebar() {
   const { role } = useAuth();
   const groups = useNavGroups();
   const { isMobile } = useSidebar();
+  const side = sideForPath(usePathname());
 
   // Phones have no side menu: the bottom tab bar and the account menu cover navigation there.
   if (isMobile) return null;
@@ -130,7 +149,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" side="left" variant="sidebar">
       {/* Logo pinned to the top: only the menu below scrolls. */}
       <SidebarHeader className="h-16 shrink-0 justify-center border-b px-4">
-        <Link href={role === 'admin' ? '/admin' : '/shop'} className="flex items-center gap-2">
+        <Link href={role === 'admin' ? '/admin' : side === 'services' ? '/services' : '/shop'} className="flex items-center gap-2">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block shrink-0" />
           <span className="text-xl font-bold text-primary group-data-[collapsible=icon]:hidden">Closebuy</span>
           <span className="sr-only">Closebuy home</span>
@@ -139,7 +158,7 @@ export function AppSidebar() {
       {/* Shop / Services toggle directly under the logo (hidden when the sidebar is collapsed to icons). */}
       {role !== 'admin' && (
         <div className="px-3 pt-3 group-data-[collapsible=icon]:hidden">
-          <SideToggle active="products" className="w-full" />
+          <SideToggle active={side} className="w-full" />
         </div>
       )}
       <SidebarContent>
