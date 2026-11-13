@@ -12,6 +12,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { HomeViewTabs } from '@/components/layout/HomeViewTabs';
+import { SideToggle } from '@/components/services-ui/ServicesChrome';
 import {
   Sheet,
   SheetContent,
@@ -51,8 +52,10 @@ export function AppHeader() {
         <Link href={isAdmin ? '/admin' : '/shop'} className="flex items-center gap-1 md:hidden">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block" />
           <span className="sr-only">Closebuy</span>
-          <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
+          <h1 className="hidden text-xl font-bold text-primary sm:block">Closebuy</h1>
         </Link>
+        {/* Shop / Services toggle beside the logo (the sidebar logo sits just to its left on desktop). */}
+        {!isAdmin && <SideToggle active="products" className="ml-1 md:ml-0" />}
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
