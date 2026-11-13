@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CalendarCheck, ShoppingBag, Sparkles, UserRound } from 'lucide-react';
+import { CalendarCheck, UserRound } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -55,11 +55,11 @@ export function SideToggle({ active, className }: { active: 'products' | 'servic
           on ? 'translate-x-full bg-[linear-gradient(135deg,hsl(42_76%_70%),hsl(36_58%_54%))]' : 'translate-x-0 bg-primary',
         )}
       />
-      <span className={cn('relative z-10 flex items-center justify-center gap-1 px-1.5 transition-colors min-[400px]:px-2 sm:px-2.5 duration-200', on ? 'text-[hsl(220_10%_62%)]' : 'text-primary-foreground')}>
-        <ShoppingBag className="hidden h-3.5 w-3.5 min-[400px]:block" />Shop
+      <span className={cn('relative z-10 flex items-center justify-center px-3 transition-colors duration-200', on ? 'text-[hsl(220_10%_62%)]' : 'text-primary-foreground')}>
+        Shop
       </span>
-      <span className={cn('relative z-10 flex items-center justify-center gap-1 px-1.5 transition-colors min-[400px]:px-2 sm:px-2.5 duration-200', on ? 'text-[hsl(228_30%_8%)]' : 'text-muted-foreground')}>
-        <Sparkles className="hidden h-3.5 w-3.5 min-[400px]:block" />Services
+      <span className={cn('relative z-10 flex items-center justify-center px-3 transition-colors duration-200', on ? 'text-[hsl(228_30%_8%)]' : 'text-muted-foreground')}>
+        Services
       </span>
     </button>
   );
@@ -69,14 +69,17 @@ export function ServicesHeader() {
   const { user } = useAuth();
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
-        <Link href="/services" className="flex items-center gap-2">
-          <Image src="/logo-mark-orange.png" alt="" width={24} height={31} unoptimized />
-          <span className="svc-display hidden text-lg font-semibold leading-none sm:inline">
-            Closebuy <span className="svc-gold-text">Services</span>
-          </span>
-        </Link>
-        <SideToggle active="services" />
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
+        {/* Logo with the Shop / Services toggle directly under it */}
+        <div className="flex flex-col items-start gap-2">
+          <Link href="/services" className="flex items-center gap-2">
+            <Image src="/logo-mark-orange.png" alt="" width={22} height={28} unoptimized />
+            <span className="svc-display text-lg font-semibold leading-none">
+              Closebuy <span className="svc-gold-text">Services</span>
+            </span>
+          </Link>
+          <SideToggle active="services" />
+        </div>
         <div className="ml-auto flex items-center gap-1">
           <Link href="/bookings" className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
             <CalendarCheck className="h-4 w-4" /><span className="hidden md:inline">My bookings</span>

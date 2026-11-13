@@ -5,6 +5,7 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
+import { SideToggle } from '@/components/services-ui/ServicesChrome';
 import { Activity, Home, ListChecks, UserPlus, Truck, Settings, Store, Bike, SearchCheck, ShoppingBasket, ClipboardList, ShieldCheck, MapPin, ShoppingBag, Receipt, Users, Banknote, CalendarCheck, CalendarCog } from 'lucide-react';
 import {
   Sidebar,
@@ -135,6 +136,12 @@ export function AppSidebar() {
           <span className="sr-only">Closebuy home</span>
         </Link>
       </SidebarHeader>
+      {/* Shop / Services toggle directly under the logo (hidden when the sidebar is collapsed to icons). */}
+      {role !== 'admin' && (
+        <div className="px-3 pt-3 group-data-[collapsible=icon]:hidden">
+          <SideToggle active="products" className="w-full" />
+        </div>
+      )}
       <SidebarContent>
         <SidebarMenu>
           {groups.map((g, i) => (

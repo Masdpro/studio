@@ -52,10 +52,8 @@ export function AppHeader() {
         <Link href={isAdmin ? '/admin' : '/shop'} className="flex items-center gap-1 md:hidden">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block" />
           <span className="sr-only">Closebuy</span>
-          <h1 className="hidden text-xl font-bold text-primary sm:block">Closebuy</h1>
+          <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
         </Link>
-        {/* Shop / Services toggle beside the logo (the sidebar logo sits just to its left on desktop). */}
-        {!isAdmin && <SideToggle active="products" className="ml-1 md:ml-0" />}
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
@@ -91,9 +89,15 @@ export function AppHeader() {
           <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />
         </div>
       </header>
-      {!isAdmin && <Suspense fallback={null}>
-        <HomeViewTabs className="sticky top-16 z-40 flex justify-center border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:hidden [&>div]:w-full [&_button]:flex-1" />
-      </Suspense>}
+      {/* Phones and tablets (no sidebar): the Shop / Services toggle sits directly under the logo, with the home tabs beside it on phones. */}
+      {!isAdmin && (
+        <div className="sticky top-16 z-40 flex items-center gap-2 border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:px-4 md:hidden">
+          <SideToggle active="products" />
+          <Suspense fallback={null}>
+            <HomeViewTabs className="min-w-0 flex-1 sm:hidden [&>div]:w-full [&_button]:flex-1" />
+          </Suspense>
+        </div>
+      )}
 
       <MobileBottomNav />
 
