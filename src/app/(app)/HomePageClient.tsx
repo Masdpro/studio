@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
+import { useRevealMore } from '@/hooks/use-reveal-more';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -446,6 +447,10 @@ export default function HomePageClient({
     });
   }, [searchTerm, selectedCategory, selectedVendorId, selectedLocation, userCoords, locationError, isLocating, initialBranches]);
 
+  // Draw the first products at once and the rest as the person scrolls (keeps the Shop page instant to open).
+  const shownProducts = useRevealMore(filteredProducts.length, filteredProducts);
+  const vendorById = useMemo(() => new Map(mockVendors.map((v) => [v.id, v])), [mockVendors]);
+
   // The Awoof row can be folded away; the choice is remembered in this browser.
   const [dealsOpen, setDealsOpen] = useState(true);
   useEffect(() => {
@@ -671,8 +676,8 @@ export default function HomePageClient({
                   Explore Local Items
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {filteredProducts.map((product) => {
-                    const vendor = mockVendors.find(v => v.id === product.vendorId);
+                  {filteredProducts.slice(0, shownProducts.count).map((product) => {
+                    const vendor = vendorById.get(product.vendorId);
                     const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';
                     const vendorLocation = vendor ? (vendor.city || vendor.locationTag) : 'Unknown Location';
                     const vendorStreetAddress = vendor?.streetAddress || '';
@@ -694,6 +699,7 @@ export default function HomePageClient({
                     );
                   })}
                 </div>
+                {shownProducts.hasMore && <div ref={shownProducts.sentinelRef} aria-hidden className="h-px" />}
               </section>
             ) : matchedStores.length > 0 ? null : (
                <div className="text-center py-20">

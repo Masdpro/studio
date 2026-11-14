@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PrefetchKind } from 'next/dist/client/components/router-reducer/router-reducer-types';
 import { cn } from '@/lib/utils';
 
 /** Turns on the dark services look for the whole page (dialogs included) while a services page is open. */
@@ -17,18 +18,19 @@ export function ServicesThemeOn() {
 
 /**
  * The Shop / Services toggle that sits beside the logo on both sides of Closebuy.
- * The knob slides across, then we move to the other side.
+ * The other side is loaded in full in the background as soon as a page opens, so switching shows it straight
+ * away; the knob slides while the page changes. If it isn't loaded yet, a skeleton (loading.tsx) shows at once.
  */
 export function SideToggle({ active, className }: { active: 'products' | 'services'; className?: string }) {
   const router = useRouter();
   const [on, setOn] = useState(active === 'services');
   const target = active === 'services' ? '/shop' : '/services';
-  useEffect(() => { router.prefetch(target); }, [router, target]);
+  useEffect(() => { router.prefetch(target, { kind: PrefetchKind.FULL }); }, [router, target]);
   useEffect(() => { setOn(active === 'services'); }, [active]);
 
   const flip = () => {
     setOn((v) => !v);
-    window.setTimeout(() => router.push(target), 180);
+    router.push(target);
   };
 
   return (
