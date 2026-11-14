@@ -26,7 +26,7 @@ export function ProviderProfile({ slug }: { slug: string }) {
     <>
       <PreviewNotice />
       <section className="relative border-b border-border/60">
-        <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(70% 120% at 15% 0%, hsl(${p.hue} 55% 28% / 0.75), transparent 65%), radial-gradient(50% 80% at 100% 0%, hsl(39 64% 63% / 0.10), transparent 70%)` }} />
+        <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(70% 120% at 15% 0%, hsl(${p.hue} 55% 28% / 0.75), transparent 65%), radial-gradient(50% 80% at 100% 0%, hsl(220 20% 90% / 0.06), transparent 70%)` }} />
         <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-6">
           <Link href="/services" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />All services</Link>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
@@ -44,7 +44,7 @@ export function ProviderProfile({ slug }: { slug: string }) {
                 <span>Since {p.since}</span>
               </div>
             </div>
-            <a href="#services" className="svc-gold-btn inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold"><CalendarCheck className="h-4 w-4" />Book now</a>
+            <a href="#services" className="svc-accent-btn inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold"><CalendarCheck className="h-4 w-4" />Book now</a>
           </div>
         </div>
       </section>
@@ -71,7 +71,7 @@ export function ProviderProfile({ slug }: { slug: string }) {
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
                     <p className="svc-display text-xl font-semibold text-primary">{s.priceFrom && <span className="mr-1 text-xs font-normal text-muted-foreground">from</span>}{naira(s.price)}</p>
-                    <button onClick={() => setBooking(s)} className="svc-gold-btn rounded-xl px-5 py-2 text-sm font-semibold">Book</button>
+                    <button onClick={() => setBooking(s)} className="svc-accent-btn rounded-xl px-5 py-2 text-sm font-semibold">Book</button>
                   </div>
                 </div>
               ))}
@@ -159,7 +159,7 @@ export function PreviewBookDialog({ p, s, now, onClose }: { p: PreviewProvider; 
           )}
           <div className="svc-scroll flex max-w-full gap-2 overflow-x-auto pb-1">
             {dates.map((d) => (
-              <button key={d} onClick={() => { setDate(d); setTime(null); }} className={cn('shrink-0 rounded-xl border px-3 py-2 text-sm', d === date ? 'svc-gold-btn border-transparent font-semibold' : 'border-border text-muted-foreground hover:text-foreground')}>
+              <button key={d} onClick={() => { setDate(d); setTime(null); }} className={cn('shrink-0 rounded-xl border px-3 py-2 text-sm', d === date ? 'svc-accent-btn border-transparent font-semibold' : 'border-border text-muted-foreground hover:text-foreground')}>
                 {d === lagosDate(now) ? 'Today' : dayLabel(d)}
               </button>
             ))}
@@ -176,7 +176,7 @@ export function PreviewBookDialog({ p, s, now, onClose }: { p: PreviewProvider; 
             {place === 'home' && !!s.callOutFee && <div className="flex justify-between text-muted-foreground"><span>Home visit</span><span>{naira(s.callOutFee)}</span></div>}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-semibold"><span>Pay now, held by Closebuy</span><span className="text-primary">{naira(total)}</span></div>
           </div>
-          <button disabled className="svc-gold-btn w-full cursor-not-allowed rounded-xl py-3 text-sm font-semibold opacity-60">
+          <button disabled className="svc-accent-btn w-full cursor-not-allowed rounded-xl py-3 text-sm font-semibold opacity-60">
             {time ? `Book ${dayLabel(lagosDate(time))}, ${clock12(time)}` : 'Choose a time'}
           </button>
           <p className="text-center text-xs text-muted-foreground">Preview: booking opens when this provider goes live.</p>

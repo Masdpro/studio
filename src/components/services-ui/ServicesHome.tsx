@@ -183,7 +183,7 @@ function ServiceCard({ l: { p, s }, now, onBook, compact }: { l: Listing; now: n
     <Card className="flex w-full flex-col overflow-hidden rounded-lg shadow-lg shadow-black/40 transition-colors hover:border-primary/50">
       <div
         className={cn('relative w-full overflow-hidden', compact ? 'h-36' : 'h-48')}
-        style={{ backgroundImage: `radial-gradient(110% 120% at 0% 0%, hsl(${p.hue} 55% 34% / 0.95), transparent 65%), radial-gradient(70% 90% at 100% 0%, hsl(39 64% 63% / 0.14), transparent 70%), linear-gradient(135deg, hsl(228 22% 13%), hsl(228 26% 8%))` }}
+        style={{ backgroundImage: `radial-gradient(110% 120% at 0% 0%, hsl(${p.hue} 55% 34% / 0.95), transparent 65%), radial-gradient(70% 90% at 100% 0%, hsl(220 20% 90% / 0.08), transparent 70%), linear-gradient(135deg, hsl(228 22% 13%), hsl(228 26% 8%))` }}
       >
         <Icon aria-hidden className="absolute right-4 top-4 h-16 w-16 text-white/10" strokeWidth={1.25} />
         {next?.today && (
@@ -204,7 +204,7 @@ function ServiceCard({ l: { p, s }, now, onBook, compact }: { l: Listing; now: n
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="svc-gold-btn w-full border-0" onClick={() => onBook({ p, s })}>
+        <Button className="svc-accent-btn w-full border-0" onClick={() => onBook({ p, s })}>
           <CalendarCheck className="mr-2 h-4 w-4" />Book
         </Button>
       </CardFooter>

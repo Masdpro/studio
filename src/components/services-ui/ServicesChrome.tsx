@@ -40,7 +40,7 @@ export function SideToggle({ active, className }: { active: 'products' | 'servic
       onClick={flip}
       className={cn(
         'relative grid h-7 shrink-0 grid-cols-2 items-center rounded-full border p-0.5 text-[11px] font-semibold sm:h-8 sm:text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        on ? 'border-[hsl(39_64%_63%/0.35)] bg-[hsl(228_24%_12%)]' : 'border-border bg-muted',
+        on ? 'border-[hsl(220_14%_86%/0.35)] bg-[hsl(228_24%_12%)]' : 'border-border bg-muted',
         className,
       )}
     >
@@ -49,7 +49,7 @@ export function SideToggle({ active, className }: { active: 'products' | 'servic
         aria-hidden
         className={cn(
           'absolute bottom-0.5 left-0.5 top-0.5 w-[calc(50%-2px)] rounded-full shadow-sm transition-transform duration-200 ease-out',
-          on ? 'translate-x-full bg-[linear-gradient(135deg,hsl(42_76%_70%),hsl(36_58%_54%))]' : 'translate-x-0 bg-primary',
+          on ? 'translate-x-full bg-[linear-gradient(135deg,hsl(220_16%_94%),hsl(220_10%_74%))]' : 'translate-x-0 bg-primary',
         )}
       />
       <span className={cn('relative z-10 flex items-center justify-center px-3 transition-colors duration-200', on ? 'text-[hsl(220_10%_62%)]' : 'text-primary-foreground')}>
