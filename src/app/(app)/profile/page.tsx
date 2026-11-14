@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { DeleteAccountCard } from '@/components/account/DeleteAccountCard';
 
 type Profile = { name: string; email: string; phone: string; phoneVerified: boolean; address: string };
 
@@ -187,6 +188,9 @@ export default function CustomerProfilePage() {
           )}
         </CardContent>
       </Card>
+      <div className="mx-auto mt-6 max-w-2xl">
+        <DeleteAccountCard onDeleted={async () => { toast({ title: 'Your account has been deleted' }); await signOut(); router.replace('/shop'); }} />
+      </div>
     </div>
   );
 }

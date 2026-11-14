@@ -1,0 +1,76 @@
+# Builds the Closebuy mobile app (mobile/) on every push that changes it, or on demand from the Actions tab.
+# - Android: a test APK you can install on a phone (download it from the run's "Artifacts").
+#   With signing secrets set, it also builds the signed .aab to upload to Google Play.
+# - iPhone: checks the app compiles for the simulator. Store builds need an Apple developer account (see mobile/README.md).
+name: Mobile app
+
+on:
+  push:
+    paths: ['mobile/**', '.github/workflows/mobile-app.yml']
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Build test APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closebuy-android-test-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Build signed Play Store bundle (only when signing secrets are set)
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        env:
+          CLOSEBUY_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CLOSEBUY_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CLOSEBUY_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          CLOSEBUY_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          export CLOSEBUY_KEYSTORE="$RUNNER_TEMP/upload.jks"
+          cd android && ./gradlew bundleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('mobile/android/app/build/outputs/bundle/release/*.aab') != '' }}
+        with:
+          name: closebuy-android-play-bundle
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+
+  ios:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npx cap sync ios
+      - name: Build for the iPhone simulator (no signing needed)
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -20
