@@ -63,6 +63,8 @@ export function MobileBottomNav() {
   const { itemCount } = useCart();
   const shows = useShowsBottomNav();
   const scrolling = useScrolling();
+  // Every hook must run on every render, before the early return below (admins don't get this bar).
+  const view = useSearchParams().get('view');
   if (!shows) return null;
 
   const items: { href: string; label: string; icon: typeof Home; badge?: number }[] = sideForPath(pathname) === 'services'
@@ -77,7 +79,6 @@ export function MobileBottomNav() {
         { href: '/cart', label: 'Cart', icon: ShoppingCart, badge: itemCount },
         { href: '/errands', label: 'Errands', icon: ClipboardList },
       ];
-  const view = useSearchParams().get('view');
   const isActive = (href: string) => {
     const [path, query] = href.split('?');
     if (path === '/services') return pathname === '/services' && (query ? view === 'pros' : view !== 'pros');
