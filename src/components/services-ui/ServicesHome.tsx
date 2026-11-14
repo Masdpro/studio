@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CalendarCheck, CalendarClock, ChevronDown, Clock, MapPin, Search, Sparkles, Users, UserRound } from 'lucide-react';
+import { CalendarCheck, CalendarClock, ChevronDown, Clock, Images, MapPin, Search, Sparkles, Users, UserRound } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,60 +14,66 @@ import { FitChips } from '@/components/home/FitChips';
 import { DealsScroller } from '@/components/home/DealsScroller';
 import { cn } from '@/lib/utils';
 import { durationLabel, naira } from '@/lib/booking-time';
-import { PREVIEW_PROVIDERS, SERVICE_CATEGORIES, categoryLabel, type PreviewProvider, type PreviewService } from '@/lib/services-preview';
-import { CATEGORY_ICON, PreviewNotice, ProviderCard, nextFree } from './parts';
-import { PreviewBookDialog } from './ProviderProfile';
+import { SERVICE_CATEGORIES, categoryLabel } from '@/lib/service-categories';
+import { categoryIcon, coverStyle, ProviderCard, type PublicProvider, type PublicService } from './parts';
+import { BookDialog } from './BookDialog';
+import { PortfolioViewer } from './PortfolioViewer';
 import { parseServicesView } from './ServicesViewTabs';
 
-type Listing = { p: PreviewProvider; s: PreviewService };
+type Listing = { p: PublicProvider; s: PublicService };
 const ALL = 'All';
+const key = (l: Listing) => l.s.id;
 
 /**
- * The services home: laid out exactly like the shop home (filters, a "today" row, then the grid),
- * in the services colours. Each card is a service you can book, the way a shop card is an item you can buy.
+ * The services home: laid out like the shop home (filters, a "today" row, then the grid), in the
+ * services colours. Each card is a service you can book, the way a shop card is an item you can buy.
  */
-export function ServicesHome() {
+export function ServicesHome({ providers: all }: { providers: PublicProvider[] }) {
   const view = parseServicesView(useSearchParams().get('view'));
-  const [now, setNow] = useState(() => Date.now());
   const [area, setArea] = useState(ALL);
   const [provider, setProvider] = useState(ALL);
   const [category, setCategory] = useState(ALL);
   const [search, setSearch] = useState('');
   const [todayOpen, setTodayOpen] = useState(true);
   const [booking, setBooking] = useState<Listing | null>(null);
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(t); }, []);
+  const [viewing, setViewing] = useState<Listing | null>(null);
 
-  const areas = useMemo(() => [ALL, ...Array.from(new Set(PREVIEW_PROVIDERS.map((p) => p.area))).sort()], []);
-  const categories = useMemo(() => [ALL, ...SERVICE_CATEGORIES.map((c) => c.label)], []);
+  const areas = useMemo(() => [ALL, ...Array.from(new Set(all.map((p) => p.area))).sort()], [all]);
+  // Only the kinds of service someone actually offers.
+  const categories = useMemo(() => [ALL, ...SERVICE_CATEGORIES.filter((c) => all.some((p) => p.category === c.id)).map((c) => c.label)], [all]);
+  const words = useMemo(() => search.toLowerCase().split(/\s+/).filter(Boolean), [search]);
 
-  const providers = useMemo(() => {
-    const words = search.toLowerCase().split(/\s+/).filter(Boolean);
-    return PREVIEW_PROVIDERS.filter((p) => {
-      if (area !== ALL && p.area !== area) return false;
-      if (provider !== ALL && p.slug !== provider) return false;
-      if (category !== ALL && categoryLabel(p.category) !== category) return false;
-      if (!words.length) return true;
-      const hay = [p.name, p.tagline, p.area, categoryLabel(p.category), ...p.services.map((s) => s.name)].join(' ').toLowerCase();
-      return words.every((w) => hay.includes(w));
-    });
-  }, [area, provider, category, search]);
+  const providers = useMemo(() => all.filter((p) => {
+    if (area !== ALL && p.area !== area) return false;
+    if (provider !== ALL && p.slug !== provider) return false;
+    if (category !== ALL && categoryLabel(p.category) !== category) return false;
+    if (!words.length) return true;
+    const hay = [p.businessName, p.tagline, p.area, categoryLabel(p.category), ...p.services.map((s) => s.name)].join(' ').toLowerCase();
+    return words.every((w) => hay.includes(w));
+  }), [all, area, provider, category, words]);
 
-  const listings: Listing[] = useMemo(() => {
-    const words = search.toLowerCase().split(/\s+/).filter(Boolean);
-    return providers.flatMap((p) => p.services
-      .filter((s) => !words.length || words.every((w) => [s.name, s.description, p.name, p.tagline, p.area, categoryLabel(p.category)].join(' ').toLowerCase().includes(w)))
-      .map((s) => ({ p, s })));
-  }, [providers, search]);
+  const listings: Listing[] = useMemo(() => providers.flatMap((p) => p.services
+    .filter((s) => !words.length || words.every((w) => [s.name, s.description, p.businessName, p.tagline, p.area, categoryLabel(p.category)].join(' ').toLowerCase().includes(w)))
+    .map((s) => ({ p, s }))), [providers, words]);
 
   // The twin of the shop's Awoof row: services from professionals who still have time today.
-  const today = useMemo(() => listings.filter((l) => nextFree(l.p, now)?.today), [listings, now]);
-  const providerOptions = useMemo(() => PREVIEW_PROVIDERS.filter((p) => area === ALL || p.area === area), [area]);
+  const today = useMemo(() => listings.filter((l) => l.p.nextFree?.today), [listings]);
+  const providerOptions = useMemo(() => all.filter((p) => area === ALL || p.area === area), [all, area]);
+
+  if (all.length === 0) {
+    return (
+      <div className="container mx-auto max-w-xl py-20 text-center">
+        <Sparkles className="mx-auto mb-4 h-12 w-12 text-primary/60" />
+        <h1 className="mb-2 text-2xl font-bold">Services are coming to your area</h1>
+        <p className="mb-6 text-muted-foreground">No professionals are taking bookings yet. Are you one? List your services and be the first customers find.</p>
+        <Button asChild><Link href="/auth/register/provider">Offer your services</Link></Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
       <div className="container mx-auto flex-1 px-4 pb-8 pt-2 md:px-6 md:pt-3">
-        <div className="mb-4 overflow-hidden rounded-lg border border-primary/20 [&>div]:border-0"><PreviewNotice /></div>
-
         {/* Shared filter block, as on the shop */}
         <div className="mb-8 space-y-4 rounded-xl border bg-card p-4 shadow-md shadow-black/30 md:p-5">
           <div className="grid items-start gap-4 md:grid-cols-[1fr_1fr_auto]">
@@ -76,7 +82,7 @@ export function ServicesHome() {
               <Select value={area} onValueChange={(v) => { setArea(v); setProvider(ALL); }}>
                 <SelectTrigger className="h-10 w-full rounded-lg"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {areas.map((a) => <SelectItem key={a} value={a}>{a === ALL ? 'All Locations' : `${a}, Lagos`}</SelectItem>)}
+                  {areas.map((a) => <SelectItem key={a} value={a}>{a === ALL ? 'All Locations' : a}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -86,7 +92,7 @@ export function ServicesHome() {
                 <SelectTrigger className="h-10 w-full rounded-lg"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL}>All Professionals</SelectItem>
-                  {providerOptions.map((p) => <SelectItem key={p.slug} value={p.slug}>{p.name}</SelectItem>)}
+                  {providerOptions.map((p) => <SelectItem key={p.slug} value={p.slug}>{p.businessName}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -109,7 +115,7 @@ export function ServicesHome() {
               </Popover>
             </div>
           </div>
-          <FitChips items={categories} selected={category} onSelect={setCategory} />
+          {categories.length > 2 && <FitChips items={categories} selected={category} onSelect={setCategory} />}
         </div>
 
         {view === 'services' ? (
@@ -132,8 +138,8 @@ export function ServicesHome() {
                 {todayOpen && (
                   <DealsScroller>
                     {today.map((l) => (
-                      <div key={`${l.p.slug}-${l.s.name}`} className="w-72 shrink-0 snap-start">
-                        <ServiceCard l={l} now={now} onBook={setBooking} compact />
+                      <div key={key(l)} className="w-72 shrink-0 snap-start">
+                        <ServiceCard l={l} onBook={setBooking} onPortfolio={setViewing} compact />
                       </div>
                     ))}
                   </DealsScroller>
@@ -145,7 +151,7 @@ export function ServicesHome() {
               <section>
                 <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold"><Sparkles className="h-6 w-6 text-primary" />Explore Local Services</h2>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {listings.map((l) => <ServiceCard key={`${l.p.slug}-${l.s.name}`} l={l} now={now} onBook={setBooking} />)}
+                  {listings.map((l) => <ServiceCard key={key(l)} l={l} onBook={setBooking} onPortfolio={setViewing} />)}
                 </div>
               </section>
             ) : <Empty what="services" />}
@@ -154,13 +160,14 @@ export function ServicesHome() {
           <section>
             <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold"><Users className="h-6 w-6 text-primary" />Local Professionals <span className="text-base font-normal text-muted-foreground">({providers.length})</span></h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {providers.map((p) => <ProviderCard key={p.slug} p={p} now={now} />)}
+              {providers.map((p) => <ProviderCard key={p.slug} p={p} />)}
             </div>
           </section>
         ) : <Empty what="professionals" />}
       </div>
 
-      {booking && <PreviewBookDialog p={booking.p} s={booking.s} now={now} onClose={() => setBooking(null)} />}
+      {booking && <BookDialog provider={booking.p} service={booking.s} onClose={() => setBooking(null)} />}
+      {viewing && <PortfolioViewer serviceId={viewing.s.id} onClose={() => setViewing(null)} onBook={() => { setBooking(viewing); setViewing(null); }} />}
     </div>
   );
 }
@@ -175,23 +182,23 @@ function Empty({ what }: { what: string }) {
   );
 }
 
-/** The services twin of the shop's product card: a cover with who and where, then the service, price and a Book button. */
-function ServiceCard({ l: { p, s }, now, onBook, compact }: { l: Listing; now: number; onBook: (l: Listing) => void; compact?: boolean }) {
-  const Icon = CATEGORY_ICON[p.category];
-  const next = nextFree(p, now);
+/** The services twin of the shop's product card: a cover with who and where, then the service, price, portfolio and a Book button. */
+function ServiceCard({ l, onBook, onPortfolio, compact }: { l: Listing; onBook: (l: Listing) => void; onPortfolio: (l: Listing) => void; compact?: boolean }) {
+  const { p, s } = l;
+  const Icon = categoryIcon(p.category);
   return (
     <Card className="flex w-full flex-col overflow-hidden rounded-lg shadow-lg shadow-black/40 transition-colors hover:border-primary/50">
-      <div
-        className={cn('relative w-full overflow-hidden', compact ? 'h-36' : 'h-48')}
-        style={{ backgroundImage: `radial-gradient(110% 120% at 0% 0%, hsl(${p.hue} 55% 34% / 0.95), transparent 65%), radial-gradient(70% 90% at 100% 0%, hsl(220 20% 90% / 0.08), transparent 70%), linear-gradient(135deg, hsl(228 22% 13%), hsl(228 26% 8%))` }}
-      >
-        <Icon aria-hidden className="absolute right-4 top-4 h-16 w-16 text-white/10" strokeWidth={1.25} />
-        {next?.today && (
-          <span className="absolute left-2 top-2 z-10 rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-semibold text-white shadow">Free today</span>
+      <div className={cn('relative w-full overflow-hidden', compact ? 'h-36' : 'h-48')} style={s.cover ? undefined : coverStyle(p.businessName)}>
+        {s.cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={s.cover} alt={`${s.name} by ${p.businessName}`} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <Icon aria-hidden className="absolute right-4 top-4 h-16 w-16 text-white/10" strokeWidth={1.25} />
         )}
+        {p.nextFree?.today && <span className="absolute left-2 top-2 z-10 rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-semibold text-white shadow">Free today</span>}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-10 text-white">
           <Link href={`/services/p/${p.slug}`} className="flex max-w-full items-center gap-1.5 text-sm font-semibold drop-shadow hover:underline">
-            <UserRound className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{p.name}</span>
+            <UserRound className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{p.businessName}</span>
           </Link>
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/90 drop-shadow"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{p.area}, {p.city}</span></p>
         </div>
@@ -203,8 +210,11 @@ function ServiceCard({ l: { p, s }, now, onBook, compact }: { l: Listing; now: n
           <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" />{durationLabel(s.durationMin)}</span>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button className="svc-accent-btn w-full border-0" onClick={() => onBook({ p, s })}>
+      <CardFooter className="flex flex-col gap-2 p-4 pt-0">
+        <Button variant="outline" className="w-full" onClick={() => onPortfolio(l)} disabled={s.portfolioCount === 0}>
+          <Images className="mr-2 h-4 w-4" />{s.portfolioCount ? <>View portfolio <span className="ml-1 text-muted-foreground">({s.portfolioCount})</span></> : 'No portfolio yet'}
+        </Button>
+        <Button className="svc-accent-btn w-full border-0" onClick={() => onBook(l)}>
           <CalendarCheck className="mr-2 h-4 w-4" />Book
         </Button>
       </CardFooter>

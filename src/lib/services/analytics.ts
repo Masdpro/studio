@@ -151,10 +151,10 @@ export async function getDashboardData(days: number) {
   const trackedSince = allEvents.length ? new Date(Math.min(...allEvents.map((e) => e.createdAt.getTime()))).toISOString() : null;
 
   // ---- users & verification ----
-  const roles = ['customer', 'vendor', 'delivery_agent'] as const;
+  const roles = ['customer', 'vendor', 'provider', 'delivery_agent'] as const;
   const signupsByRole = roles.map((r) => ({ role: r, count: usersCur.filter((u) => u.role === r).length, total: allUsers.filter((u) => u.role === r).length }));
   const nonAdmin = allUsers.filter((u) => u.role !== 'admin');
-  const needsApproval = nonAdmin.filter((u) => u.role === 'vendor' || u.role === 'delivery_agent');
+  const needsApproval = nonAdmin.filter((u) => u.role === 'vendor' || u.role === 'delivery_agent' || u.role === 'provider');
   const verification = [
     { step: 'Registered', value: nonAdmin.length },
     { step: 'Email verified', value: nonAdmin.filter((u) => u.emailVerifiedAt).length },

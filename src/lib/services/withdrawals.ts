@@ -69,7 +69,7 @@ export function withdrawalBlockReason(userId: string): string | null {
   if (!user) return 'Account not found.';
   if (user.suspendedAt) return 'Your account is suspended, so withdrawals are on hold. Contact Closebuy support.';
   const roles = getUserRoles(userId);
-  if (!roles.includes('vendor') && !roles.includes('delivery_agent')) return 'Only vendors and delivery agents can withdraw earnings.';
+  if (!roles.includes('vendor') && !roles.includes('delivery_agent') && !roles.includes('provider')) return 'Only vendors, service providers and delivery agents can withdraw earnings.';
   const v = getVerificationState(userId);
   if (!v?.mayTrade) return 'Finish account verification and wait for approval before withdrawing.';
   const bank = getBankAccount(userId);

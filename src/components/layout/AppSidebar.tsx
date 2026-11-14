@@ -33,12 +33,13 @@ const serviceCustomerItems = [
   { href: '/services', label: 'Home', icon: Home, tooltip: 'Browse services' },
   { href: '/bookings', label: 'My Bookings', icon: CalendarCheck, tooltip: "Services you've booked" },
 ];
-const serviceVendorItems = [
-  { href: '/vendor/bookings', label: 'Bookings', icon: CalendarCheck, tooltip: 'Bookings from your customers' },
-  { href: '/vendor/dashboard/services', label: 'Services & Hours', icon: CalendarCog, tooltip: 'Services customers can book, and your hours' },
+const providerItems = [
+  { href: '/provider/dashboard', label: 'Business Dashboard', icon: Store, tooltip: 'Your service business' },
+  { href: '/provider/bookings', label: 'Bookings', icon: CalendarCheck, tooltip: 'Bookings from your customers' },
+  { href: '/provider/services', label: 'Services & Portfolio', icon: CalendarCog, tooltip: 'Services, photos of past work, and your hours' },
 ];
 const serviceGrowItems = [
-  { href: '/auth/register/vendor', label: 'Offer your services', icon: UserPlus, tooltip: 'List your services on Closebuy' },
+  { href: '/auth/register/provider', label: 'Offer your services', icon: UserPlus, tooltip: 'Register your service business' },
 ];
 
 const customerErrandItems = [
@@ -110,7 +111,7 @@ export function useNavGroups(): NavGroup[] {
   const side: Side = sideForPath(usePathname());
   // Each role is approved on its own, so each menu opens up when its own role is approved.
   const { state } = useTradingStatus();
-  const roleMayTrade = (role: 'vendor' | 'delivery_agent') => !!state?.tradingRoles?.find((r) => r.role === role)?.mayTrade;
+  const roleMayTrade = (role: 'vendor' | 'delivery_agent' | 'provider') => !!state?.tradingRoles?.find((r) => r.role === role)?.mayTrade;
 
   // Each role only sees its own menu. Customers (and visitors) also get the two ways to become a vendor or agent.
   let groups: NavGroup[] = [];
@@ -118,10 +119,10 @@ export function useNavGroups(): NavGroup[] {
     if (role === 'admin') {
       groups = [{ label: 'Admin', items: adminItems }];
     } else if (side === 'services') {
-      const isVendor = roles.includes('vendor');
+      const isProvider = roles.includes('provider');
       groups = [{ label: 'Customer', items: serviceCustomerItems }];
-      if (isVendor && roleMayTrade('vendor')) groups.push({ label: 'Vendor', items: serviceVendorItems });
-      if (!isVendor && !roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: serviceGrowItems });
+      if (isProvider) groups.push({ label: 'Service business', items: roleMayTrade('provider') ? providerItems : providerItems.slice(0, 1) });
+      else if (!roles.includes('branch')) groups.push({ label: 'Grow with Closebuy', items: serviceGrowItems });
     } else {
       const isVendor = roles.includes('vendor');
       const isAgent = roles.includes('delivery_agent');

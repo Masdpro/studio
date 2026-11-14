@@ -13,11 +13,11 @@ import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
 import { MoveDialog } from '@/components/services/MoveDialog';
 
 type Booking = {
-  id: string; serviceId: string; vendorId: string; vendorName: string; serviceName: string; startsAt: string; endsAt: string; location: 'shop' | 'home';
-  address: string | null; total: number; status: string; completionCode: string; canCancelFree: boolean; movedByVendor: boolean; respondBy: string | null;
+  id: string; serviceId: string; providerId: string; providerName: string; providerSlug: string; providerAddress: string; serviceName: string; startsAt: string; endsAt: string; location: 'shop' | 'home';
+  address: string | null; total: number; status: string; completionCode: string; canCancelFree: boolean; movedByProvider: boolean; respondBy: string | null;
 };
 
-/** A customer's bookings: upcoming first, with the code to give the vendor, and cancel / move. */
+/** A customer's bookings: upcoming first, with the code to give the provider, and cancel / move. */
 export default function MyBookingsPage() {
   const { user, loading } = useAuth();
   const [list, setList] = useState<Booking[] | null>(null);
@@ -56,29 +56,29 @@ function Row({ b, onCancel, onMove }: { b: Booking; onCancel?: () => void; onMov
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
         <div>
           <CardTitle className="text-base">{b.serviceName}</CardTitle>
-          <p className="text-sm text-muted-foreground">{b.vendorName}</p>
+          <p className="text-sm text-muted-foreground">{b.providerName}</p>
         </div>
         <BookingStatusBadge status={b.status} />
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
           <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{whenLabel(start)}</span>
-          <span className="flex items-center gap-1">{b.location === 'home' ? <Home className="h-3.5 w-3.5" /> : <Store className="h-3.5 w-3.5" />}{b.location === 'home' ? b.address : 'At the shop'}</span>
+          <span className="flex items-center gap-1">{b.location === 'home' ? <Home className="h-3.5 w-3.5" /> : <Store className="h-3.5 w-3.5" />}{b.location === 'home' ? b.address : b.providerAddress || 'At their place of work'}</span>
           <span>{naira(b.total)}</span>
         </div>
         {b.status === 'Confirmed' && b.completionCode && (
           <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
-            <p className="text-xs text-muted-foreground">Your code: give it to the vendor only when the job is done</p>
+            <p className="text-xs text-muted-foreground">Your code: give it to the provider only when the job is done</p>
             <p className="font-mono text-2xl font-bold tracking-[0.3em]">{b.completionCode}</p>
           </div>
         )}
-        {b.status === 'Requested' && b.respondBy && <p className="text-xs text-muted-foreground">Waiting for the vendor to accept by {whenLabel(new Date(b.respondBy).getTime())}. If they don&apos;t, you&apos;re refunded in full.</p>}
-        {b.movedByVendor && b.status === 'Confirmed' && <p className="text-xs text-muted-foreground">The vendor moved this booking. If the new time doesn&apos;t suit you, you can cancel for a full refund.</p>}
+        {b.status === 'Requested' && b.respondBy && <p className="text-xs text-muted-foreground">Waiting for the provider to accept by {whenLabel(new Date(b.respondBy).getTime())}. If they don&apos;t, you&apos;re refunded in full.</p>}
+        {b.movedByProvider && b.status === 'Confirmed' && <p className="text-xs text-muted-foreground">{b.providerName} moved this booking. If the new time doesn&apos;t suit you, you can cancel for a full refund.</p>}
         {(onCancel || onMove) && (
           <div className="flex gap-2">
             {onMove && (b.canCancelFree || b.status === 'Requested') && <Button size="sm" variant="outline" onClick={onMove}>Change time</Button>}
             {onCancel && <Button size="sm" variant="outline" onClick={onCancel}>Cancel</Button>}
-            {b.location === 'shop' && <Button size="sm" variant="ghost" asChild><Link href={`/vendor/${b.vendorId}`}><MapPin className="mr-1 h-3.5 w-3.5" />Store</Link></Button>}
+            {b.location === 'shop' && <Button size="sm" variant="ghost" asChild><Link href={`/services/p/${b.providerSlug}`}><MapPin className="mr-1 h-3.5 w-3.5" />{b.providerName}</Link></Button>}
           </div>
         )}
       </CardContent>
@@ -88,7 +88,7 @@ function Row({ b, onCancel, onMove }: { b: Booking; onCancel?: () => void; onMov
 
 function CancelDialog({ b, onDone }: { b: Booking; onDone: () => void }) {
   const { toast } = useToast();
-  const [terms, setTerms] = useState<{ refund: number; vendorKeeps: number; late: boolean } | null>(null);
+  const [terms, setTerms] = useState<{ refund: number; providerKeeps: number; late: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { fetch(`/api/bookings/${b.id}`, { cache: 'no-store' }).then((r) => r.json()).then((d) => setTerms(d.terms)); }, [b.id]);
   const go = async () => {
@@ -109,7 +109,7 @@ function CancelDialog({ b, onDone }: { b: Booking; onDone: () => void }) {
           <DialogDescription>{b.serviceName}, {whenLabel(new Date(b.startsAt).getTime())}</DialogDescription>
         </DialogHeader>
         {!terms ? <Loader2 className="h-5 w-5 animate-spin" /> : terms.late ? (
-          <p className="text-sm">It&apos;s less than 24 hours to your booking, so the vendor keeps {naira(terms.vendorKeeps)}. You get <strong>{naira(terms.refund)}</strong> back.</p>
+          <p className="text-sm">It&apos;s less than 24 hours to your booking, so the provider keeps {naira(terms.providerKeeps)}. You get <strong>{naira(terms.refund)}</strong> back.</p>
         ) : (
           <p className="text-sm">You get the full <strong>{naira(terms.refund)}</strong> back in your wallet.</p>
         )}

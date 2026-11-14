@@ -12,13 +12,13 @@ export async function signedInId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/** The signed-in vendor's id, or a response to send back. Set `trading` for actions that need a verified vendor. */
-export async function vendorOr401(opts: { trading?: boolean } = {}): Promise<{ id: string } | { res: NextResponse }> {
+/** The signed-in service provider's id, or a response to send back. Set `trading` for actions that need an approved provider. */
+export async function providerOr401(opts: { trading?: boolean } = {}): Promise<{ id: string } | { res: NextResponse }> {
   const id = await signedInId();
   if (!id) return { res: NextResponse.json({ error: 'Sign-in required.' }, { status: 401 }) };
-  if (!userHasRole(id, 'vendor')) return { res: NextResponse.json({ error: 'Vendor sign-in required.' }, { status: 403 }) };
+  if (!userHasRole(id, 'provider')) return { res: NextResponse.json({ error: 'Sign in with a service business to do this.' }, { status: 403 }) };
   if (opts.trading) {
-    const blocked = tradingBlockReason(id, 'vendor');
+    const blocked = tradingBlockReason(id, 'provider');
     if (blocked) return { res: NextResponse.json({ error: blocked }, { status: 403 }) };
   }
   return { id };

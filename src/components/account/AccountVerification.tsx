@@ -12,7 +12,7 @@ import { LiveSelfieCheck } from '@/components/account/LiveSelfieCheck';
 
 type Doc = { kind: string; label: string; uploaded: boolean; id: string | null; live?: boolean };
 export type RoleVerification = {
-  role: 'vendor' | 'delivery_agent';
+  role: 'vendor' | 'delivery_agent' | 'provider';
   label: string;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   approvalNote: string | null;
@@ -52,7 +52,7 @@ const Step = ({ done, title, children }: { done: boolean; title: string; childre
 );
 
 /** `focus`: show this role's documents and review first (used on that role's dashboard). */
-export function AccountVerification({ focus }: { focus?: 'vendor' | 'delivery_agent' } = {}) {
+export function AccountVerification({ focus }: { focus?: 'vendor' | 'delivery_agent' | 'provider' } = {}) {
   const { toast } = useToast();
   const [state, setState] = useState<VerificationState | null>(null);
   const [phone, setPhone] = useState('');

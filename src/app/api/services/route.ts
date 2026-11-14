@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
-import { bookableDates, bookableServices, getServiceSettings } from '@/lib/services/bookings';
+import { bookableDates, getService, isListedProvider } from '@/lib/services/bookings';
+import { listedProviders } from '@/lib/services/providers';
 
 export const dynamic = 'force-dynamic';
 
-/** GET ?vendorId= -> the services customers can book at that store, and the dates it's open. */
+/**
+ * GET -> every listed service business with its bookable services.
+ * GET ?serviceId= -> the dates that service's business is open (for the booking dialog).
+ */
 export async function GET(request: Request) {
-  const vendorId = new URL(request.url).searchParams.get('vendorId') ?? '';
-  const list = bookableServices(vendorId);
-  return NextResponse.json({
-    services: list.map(({ paused: _p, ...s }) => s),
-    dates: list.length ? bookableDates(vendorId) : [],
-    instantBooking: getServiceSettings(vendorId).instantBooking,
-  });
+  const serviceId = new URL(request.url).searchParams.get('serviceId');
+  if (serviceId) {
+    const s = getService(serviceId);
+    if (!s || s.paused || !isListedProvider(s.providerId)) return NextResponse.json({ error: 'This service is no longer available.' }, { status: 404 });
+    return NextResponse.json({ dates: bookableDates(s.providerId) });
+  }
+  return NextResponse.json({ providers: listedProviders() });
 }

@@ -6,6 +6,8 @@ import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { upsertVendor } from '@/lib/services/vendors';
 import { upsertDeliveryAgent } from '@/lib/services/deliveryAgents';
+import { PROVIDER_FIELDS, upsertProvider } from '@/lib/services/providers';
+import { BookingError } from '@/lib/services/bookings';
 import { normalizeNigerianPhone, sendEmailVerification, startTradingRole } from '@/lib/verification';
 import { getUserRoles, getBranchForUser } from '@/lib/roles';
 import { clearFailedPasswords, isLockedOut, recordFailedPassword } from '@/lib/login-throttle';
@@ -16,15 +18,16 @@ import { verifyTurnstile } from '@/lib/turnstile';
 // Public self-registration is deliberately limited to these — 'admin' is
 // created from the command line (npm run create-admin), never chosen by
 // whoever happens to POST to this endpoint.
-type PublicRole = 'customer' | 'vendor' | 'delivery_agent';
-const PUBLIC_ROLES: PublicRole[] = ['customer', 'vendor', 'delivery_agent'];
+type PublicRole = 'customer' | 'vendor' | 'delivery_agent' | 'provider';
+const PUBLIC_ROLES: PublicRole[] = ['customer', 'vendor', 'delivery_agent', 'provider'];
 function isPublicRole(role: string): role is PublicRole {
   return (PUBLIC_ROLES as string[]).includes(role);
 }
 
 const VENDOR_FIELDS = ['businessName', 'contactEmail', 'phone', 'streetAddress', 'city', 'country', 'externalStoreUrl', 'operatingHours', 'status', 'imageUrl'];
 const AGENT_FIELDS = ['name', 'email', 'phone', 'streetAddress', 'city', 'country', 'vehicleDetails'];
-const pick = (src: Record<string, unknown>, keys: string[]) =>
+const ROLE_WORD: Record<Exclude<PublicRole, 'customer'>, string> = { vendor: 'store', delivery_agent: 'delivery agent profile', provider: 'service business' };
+const pick = (src: Record<string, unknown>, keys: readonly string[]) =>
   Object.fromEntries(keys.filter((k) => src[k] !== undefined).map((k) => [k, src[k]]));
 
 export async function POST(request: Request) {
@@ -82,7 +85,7 @@ export async function POST(request: Request) {
       recordFailedPassword(email);
       return NextResponse.json(
         {
-          error: 'This email already has a Closebuy account. Enter that account’s password to add your ' + (role === 'vendor' ? 'business' : 'delivery agent profile') + ' to it, or reset your password.',
+          error: 'This email already has a Closebuy account. Enter that account’s password to add your ' + ROLE_WORD[role] + ' to it, or reset your password.',
           code: 'EXISTING_ACCOUNT_PASSWORD',
         },
         { status: 401 },
@@ -95,7 +98,16 @@ export async function POST(request: Request) {
     }
     const roles = getUserRoles(existing.id);
     if (roles.includes(role)) {
-      return NextResponse.json({ error: `You are already registered as a ${role === 'vendor' ? 'vendor' : 'delivery agent'}. Sign in instead.`, code: 'ACCOUNT_EXISTS' }, { status: 409 });
+      return NextResponse.json({ error: `You already have a ${ROLE_WORD[role]} on this account. Sign in instead.`, code: 'ACCOUNT_EXISTS' }, { status: 409 });
+    }
+    if (role === 'provider') {
+      // A service business is separate from a store: one login can own both.
+      try {
+        upsertProvider(existing.id, pick(profile ?? {}, PROVIDER_FIELDS));
+      } catch (err) {
+        if (err instanceof BookingError) return NextResponse.json({ error: err.message }, { status: 400 });
+        throw err;
+      }
     }
     if (role === 'vendor' && profile) {
       const v = pick(profile, VENDOR_FIELDS) as Record<string, unknown>;
@@ -103,7 +115,7 @@ export async function POST(request: Request) {
       await upsertVendor(existing.id, v as any);
     }
     if (role === 'delivery_agent' && profile) await upsertDeliveryAgent(existing.id, pick(profile, AGENT_FIELDS) as any);
-    startTradingRole(existing.id, normalizedPhone, roles.includes('vendor') || roles.includes('delivery_agent'));
+    startTradingRole(existing.id, normalizedPhone, roles.includes('vendor') || roles.includes('delivery_agent') || roles.includes('provider'));
     if (!existing.displayName && displayName) db.update(users).set({ displayName }).where(eq(users.id, existing.id)).run();
 
     let devCode: string | undefined;
@@ -117,18 +129,27 @@ export async function POST(request: Request) {
   const passwordHash = await bcrypt.hash(password, 10);
   const id = randomUUID();
 
-  db.insert(users)
-    .values({
-      id,
-      email,
-      passwordHash,
-      role,
-      displayName,
-      phone: normalizedPhone,
-      approvalStatus: role === 'customer' ? 'approved' : 'pending',
-      createdAt: new Date(),
-    })
-    .run();
+  // The account and (for a service business) its profile are saved together, or not at all.
+  try {
+    db.transaction(() => {
+      db.insert(users)
+        .values({
+          id,
+          email,
+          passwordHash,
+          role,
+          displayName,
+          phone: normalizedPhone,
+          approvalStatus: role === 'customer' ? 'approved' : 'pending',
+          createdAt: new Date(),
+        })
+        .run();
+      if (role === 'provider') upsertProvider(id, pick(profile ?? {}, PROVIDER_FIELDS));
+    });
+  } catch (err) {
+    if (err instanceof BookingError) return NextResponse.json({ error: err.message }, { status: 400 });
+    throw err;
+  }
 
   if (role === 'vendor' && profile) {
     const v = pick(profile, VENDOR_FIELDS) as Record<string, unknown>;

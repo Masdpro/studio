@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { naira, whenLabel } from '@/lib/booking-time';
 import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
 
-type Booking = { id: string; serviceName: string; vendorName: string; startsAt: string; endsAt: string; total: number; status: string; location: string; cancelReason: string | null };
+type Booking = { id: string; serviceName: string; providerName: string; startsAt: string; endsAt: string; total: number; status: string; location: string; cancelReason: string | null };
 
 /** Support's view of bookings: jobs that ended without being closed come first, to settle. */
 export default function AdminBookingsPage() {
@@ -52,7 +52,7 @@ export default function AdminBookingsPage() {
           <TableRow key={b.id}>
             <TableCell className="whitespace-nowrap">{whenLabel(new Date(b.startsAt).getTime())}</TableCell>
             <TableCell>{b.serviceName}{b.location === 'home' ? ' (home)' : ''}</TableCell>
-            <TableCell>{b.vendorName}</TableCell>
+            <TableCell>{b.providerName}</TableCell>
             <TableCell>{naira(b.total)}</TableCell>
             <TableCell><BookingStatusBadge status={b.status} />{b.cancelReason && <p className="mt-1 max-w-48 text-xs text-muted-foreground">{b.cancelReason}</p>}</TableCell>
             {actions && (
@@ -73,7 +73,7 @@ export default function AdminBookingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">To settle ({overdue.length})</CardTitle>
-          <CardDescription>Jobs that ended over an hour ago without the vendor entering the code. Nothing is paid out on its own: check with both sides, then pay the vendor or refund the customer.</CardDescription>
+          <CardDescription>Jobs that ended over an hour ago without the provider entering the code. Nothing is paid out on its own: check with both sides, then pay the provider or refund the customer.</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">{overdue.length ? table(overdue, true) : <p className="text-sm text-muted-foreground">Nothing to settle.</p>}</CardContent>
       </Card>
@@ -85,8 +85,8 @@ export default function AdminBookingsPage() {
         <Dialog open onOpenChange={(o) => !o && setSettling(null)}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>{settling.action === 'complete' ? 'Pay the vendor?' : 'Cancel and refund in full?'}</DialogTitle>
-              <DialogDescription>{settling.b.serviceName} · {settling.b.vendorName} · {naira(settling.b.total)}</DialogDescription>
+              <DialogTitle>{settling.action === 'complete' ? 'Pay the provider?' : 'Cancel and refund in full?'}</DialogTitle>
+              <DialogDescription>{settling.b.serviceName} · {settling.b.providerName} · {naira(settling.b.total)}</DialogDescription>
             </DialogHeader>
             <Textarea rows={3} placeholder="Reason (required), e.g. customer confirmed by phone" value={reason} onChange={(e) => setReason(e.target.value)} />
             <DialogFooter><Button disabled={!reason.trim() || busy} onClick={go}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{settling.action === 'complete' ? 'Pay vendor' : 'Refund customer'}</Button></DialogFooter>

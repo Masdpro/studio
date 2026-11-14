@@ -15,8 +15,8 @@ export async function PUT(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
   const userId = session.user.id;
   const roles = getUserRoles(userId);
-  if (!roles.includes('vendor') && !roles.includes('delivery_agent')) {
-    return NextResponse.json({ error: 'Only vendors and delivery agents can add a payout account.' }, { status: 403 });
+  if (!roles.includes('vendor') && !roles.includes('delivery_agent') && !roles.includes('provider')) {
+    return NextResponse.json({ error: 'Only vendors, service providers and delivery agents can add a payout account.' }, { status: 403 });
   }
   const { bankCode, accountNumber, password } = (await request.json().catch(() => ({}))) as { bankCode?: string; accountNumber?: string; password?: string };
   const user = db.select().from(users).where(eq(users.id, userId)).get();

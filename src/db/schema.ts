@@ -2,13 +2,13 @@
 // database structure. Run `npm run db:push` after changing it to apply
 // the change to dev.db (see package.json).
 
-import { sqliteTable, text, integer, real, primaryKey, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, primaryKey, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
-  role: text('role', { enum: ['customer', 'vendor', 'delivery_agent', 'admin'] }).notNull(),
+  role: text('role', { enum: ['customer', 'vendor', 'delivery_agent', 'provider', 'admin'] }).notNull(),
   displayName: text('display_name'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
@@ -376,11 +376,38 @@ export const systemEvents = sqliteTable(
 // ---- Services (booked, not bought) ----
 
 // A service a vendor offers: booked for a time slot, paid upfront and held until the job is done.
+// A service business: someone who is booked (a barber, a tailor, a cleaner), separate from a product store.
+// One login can own a store (vendors) and a service business (here); both use the account's id.
+export const serviceProviders = sqliteTable(
+  'service_providers',
+  {
+    id: text('id').primaryKey(), // matches users.id for the provider's account
+    businessName: text('business_name').notNull(),
+    slug: text('slug').notNull(), // public link: /services/p/<slug>
+    category: text('category').notNull(), // id from src/lib/service-categories.ts
+    tagline: text('tagline'),
+    about: text('about'),
+    contactEmail: text('contact_email').notNull(),
+    phone: text('phone').notNull(),
+    streetAddress: text('street_address').notNull(),
+    area: text('area').notNull(), // neighbourhood shown to customers, e.g. "Lekki Phase 1"
+    city: text('city').notNull(),
+    country: text('country').notNull().default('Nigeria'),
+    imageUrl: text('image_url'),
+    since: integer('since'), // year started
+    // Approved on its own, like vendors and delivery agents.
+    approvalStatus: text('approval_status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('pending'),
+    approvalNote: text('approval_note'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [uniqueIndex('service_providers_slug_idx').on(t.slug)],
+);
+
 export const services = sqliteTable(
   'services',
   {
     id: text('id').primaryKey(),
-    vendorId: text('vendor_id').notNull(),
+    providerId: text('provider_id').notNull(),
     name: text('name').notNull(),
     description: text('description'),
     imageUrl: text('image_url'),
@@ -392,12 +419,27 @@ export const services = sqliteTable(
     paused: integer('paused', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   },
-  (t) => [index('services_vendor_idx').on(t.vendorId)],
+  (t) => [index('services_provider_idx').on(t.providerId)],
 );
 
-// When a vendor takes bookings. Hours are Lagos time, as JSON: { "1": [["09:00","13:00"],["14:00","18:00"]], ... } (0 = Sunday).
+// Photos of past work for one service, so customers see the kind of job they're booking.
+export const servicePortfolio = sqliteTable(
+  'service_portfolio',
+  {
+    id: text('id').primaryKey(),
+    serviceId: text('service_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    imageUrl: text('image_url').notNull(),
+    caption: text('caption'),
+    position: integer('position').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [index('service_portfolio_service_idx').on(t.serviceId)],
+);
+
+// When a provider takes bookings. Hours are Lagos time, as JSON: { "1": [["09:00","13:00"],["14:00","18:00"]], ... } (0 = Sunday).
 export const serviceSettings = sqliteTable('service_settings', {
-  vendorId: text('vendor_id').primaryKey(),
+  providerId: text('provider_id').primaryKey(),
   weeklyHours: text('weekly_hours').notNull(),
   capacity: integer('capacity').notNull().default(1), // customers served at the same time
   instantBooking: integer('instant_booking', { mode: 'boolean' }).notNull().default(true),
@@ -410,7 +452,7 @@ export const bookings = sqliteTable(
   {
     id: text('id').primaryKey(),
     serviceId: text('service_id').notNull(),
-    vendorId: text('vendor_id').notNull(),
+    providerId: text('provider_id').notNull(),
     customerId: text('customer_id').notNull(),
     serviceName: text('service_name').notNull(),
     startsAt: integer('starts_at', { mode: 'timestamp_ms' }).notNull(),
@@ -425,7 +467,7 @@ export const bookings = sqliteTable(
     respondBy: integer('respond_by', { mode: 'timestamp_ms' }), // a request lapses after this
     completionCode: text('completion_code').notNull(),
     codeAttempts: integer('code_attempts').notNull().default(0),
-    movedByVendor: integer('moved_by_vendor', { mode: 'boolean' }).notNull().default(false),
+    movedByProvider: integer('moved_by_provider', { mode: 'boolean' }).notNull().default(false),
     remindedDay: integer('reminded_day', { mode: 'boolean' }).notNull().default(false),
     remindedHour: integer('reminded_hour', { mode: 'boolean' }).notNull().default(false),
     cancelledBy: text('cancelled_by'),
@@ -433,5 +475,5 @@ export const bookings = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   },
-  (t) => [index('bookings_vendor_time_idx').on(t.vendorId, t.startsAt), index('bookings_customer_idx').on(t.customerId), index('bookings_status_idx').on(t.status)],
+  (t) => [index('bookings_provider_time_idx').on(t.providerId, t.startsAt), index('bookings_customer_idx').on(t.customerId), index('bookings_status_idx').on(t.status)],
 );

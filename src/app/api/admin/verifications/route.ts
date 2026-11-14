@@ -7,10 +7,10 @@ import { users } from '@/db/schema';
 import { getVerificationState } from '@/lib/verification';
 import { latestPassedCheck } from '@/lib/services/liveness';
 
-/** Every vendor and delivery agent with their verification progress (pending first). */
+/** Every vendor, delivery agent and service provider with their verification progress (pending first). */
 export async function GET() {
   if (!(await requireAdminSession())) return NextResponse.json({ error: 'Admin sign-in required.' }, { status: 401 });
-  const rows = db.select().from(users).all().filter((u) => { const r = getUserRoles(u.id); return r.includes('vendor') || r.includes('delivery_agent'); });
+  const rows = db.select().from(users).all().filter((u) => { const r = getUserRoles(u.id); return r.includes('vendor') || r.includes('delivery_agent') || r.includes('provider'); });
   const order = { pending: 0, rejected: 1, approved: 2 } as const;
   // One entry per role to review: a vendor who also became an agent shows up twice, each with its own status.
   const list = rows
@@ -30,7 +30,7 @@ export async function GET() {
         documentsComplete: r.documentsComplete,
         readyForReview: r.readyForReview,
         otherRoles: state.tradingRoles.filter((o) => o.role !== r.role).map((o) => ({ role: o.role, label: o.label, approvalStatus: o.approvalStatus })),
-        liveCheck: r.role === 'delivery_agent' ? liveCheck : null,
+        liveCheck: r.role === 'delivery_agent' || r.role === 'provider' ? liveCheck : null,
       }));
     })
     .sort((a, b) => order[a.approvalStatus] - order[b.approvalStatus] || b.createdAt.getTime() - a.createdAt.getTime());

@@ -2,7 +2,7 @@ import { getUserRoles } from '@/lib/roles';
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { deliveryAgents, users, vendors, verificationCodes, verificationDocuments } from '@/db/schema';
+import { deliveryAgents, serviceProviders, users, vendors, verificationCodes, verificationDocuments } from '@/db/schema';
 import { sendEmail, sendSms } from '@/lib/notify';
 import { renderEmail } from '@/lib/email-template';
 
@@ -11,12 +11,16 @@ export type DocumentKind = 'business_proof' | 'store_photo' | 'government_id' | 
 export const REQUIRED_DOCUMENTS: Record<string, DocumentKind[]> = {
   vendor: ['business_proof', 'store_photo'],
   delivery_agent: ['government_id', 'selfie'],
+  // Service providers often work in customers' homes, so they prove who they are like delivery agents do.
+  provider: ['government_id', 'selfie'],
 };
 
-export type TradingRole = 'vendor' | 'delivery_agent';
+export type TradingRole = 'vendor' | 'delivery_agent' | 'provider';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
-export const TRADING_ROLES: TradingRole[] = ['vendor', 'delivery_agent'];
-export const ROLE_LABELS: Record<TradingRole, string> = { vendor: 'Vendor', delivery_agent: 'Delivery agent' };
+export const TRADING_ROLES: TradingRole[] = ['vendor', 'delivery_agent', 'provider'];
+export const ROLE_LABELS: Record<TradingRole, string> = { vendor: 'Vendor', delivery_agent: 'Delivery agent', provider: 'Service provider' };
+
+const roleTable = (role: TradingRole) => (role === 'vendor' ? vendors : role === 'provider' ? serviceProviders : deliveryAgents);
 
 export function tradingRolesOf(userId: string): TradingRole[] {
   const roles = getUserRoles(userId);
@@ -29,7 +33,7 @@ export function tradingRolesOf(userId: string): TradingRole[] {
  * Old accounts with a role but no profile row fall back to the account's status.
  */
 export function roleApproval(userId: string, role: TradingRole): { status: ApprovalStatus; note: string | null } {
-  const table = role === 'vendor' ? vendors : deliveryAgents;
+  const table = roleTable(role);
   const row = db.select({ status: table.approvalStatus, note: table.approvalNote }).from(table).where(eq(table.id, userId)).get();
   if (row) return { status: row.status, note: row.note };
   const user = db.select({ status: users.approvalStatus, note: users.approvalNote }).from(users).where(eq(users.id, userId)).get();
@@ -38,7 +42,7 @@ export function roleApproval(userId: string, role: TradingRole): { status: Appro
 
 /** Sets one role's approval and refreshes the account summary. */
 export function setRoleApproval(userId: string, role: TradingRole, status: ApprovalStatus, note: string | null) {
-  const table = role === 'vendor' ? vendors : deliveryAgents;
+  const table = roleTable(role);
   const res = db.update(table).set({ approvalStatus: status, approvalNote: note }).where(eq(table.id, userId)).run();
   if (res.changes === 0) db.update(users).set({ approvalStatus: status, approvalNote: note }).where(eq(users.id, userId)).run();
   syncAccountApproval(userId);
@@ -236,7 +240,7 @@ export function getVerificationState(userId: string) {
   const roles = getUserRoles(userId);
   const required = requiredDocumentsFor(userId);
   const submitted = new Set(documents.map((d) => d.kind));
-  const needsReview = roles.includes('vendor') || roles.includes('delivery_agent');
+  const needsReview = roles.includes('vendor') || roles.includes('delivery_agent') || roles.includes('provider');
   const documentsComplete = required.every((k) => submitted.has(k));
   const phoneRequired = phoneVerificationRequired();
   const phoneOk = !phoneRequired || !!user.phoneVerifiedAt;
@@ -262,7 +266,7 @@ export function getVerificationState(userId: string) {
   const rejected = tradingRoles.find((r) => r.approvalStatus === 'rejected');
 
   return {
-    role: roles.includes('vendor') ? 'vendor' : roles.includes('delivery_agent') ? 'delivery_agent' : user.role,
+    role: roles.includes('vendor') ? 'vendor' : roles.includes('delivery_agent') ? 'delivery_agent' : roles.includes('provider') ? 'provider' : user.role,
     roles,
     email: user.email,
     emailVerified,

@@ -9,12 +9,12 @@ import type { VerificationState } from '@/components/account/AccountVerification
  * Vendors / agents may only use their tools once an admin has approved them. Each role is approved
  * on its own: pass the role to ask about it (without one: may the account trade in any role).
  */
-export function useTradingStatus(role?: 'vendor' | 'delivery_agent') {
-  const { user, isVendor, isAgent, loading } = useAuth();
+export function useTradingStatus(role?: 'vendor' | 'delivery_agent' | 'provider') {
+  const { user, isVendor, isAgent, isProvider, loading } = useAuth();
   const [state, setState] = useState<VerificationState | null>(null);
   // Which account the state above belongs to; until it matches, the answer isn't known yet.
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
-  const applies = !!user && (isVendor || isAgent);
+  const applies = !!user && (isVendor || isAgent || isProvider);
   const userId = user?.id ?? null;
   useEffect(() => {
     if (!applies || !userId) return;
@@ -43,7 +43,7 @@ export function useTradingStatus(role?: 'vendor' | 'delivery_agent') {
 
 /** Sends not-yet-approved vendors / agents back to their dashboard (which shows the approval status). */
 export function useRequireTrading(home = '/vendor/dashboard') {
-  const t = useTradingStatus(home.startsWith('/delivery-agent') ? 'delivery_agent' : 'vendor');
+  const t = useTradingStatus(home.startsWith('/delivery-agent') ? 'delivery_agent' : home.startsWith('/provider') ? 'provider' : 'vendor');
   const router = useRouter();
   useEffect(() => {
     if (t.loaded && !t.mayTrade) router.replace(home);

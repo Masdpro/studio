@@ -5,7 +5,7 @@ export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 export const approvalMachine = defineMachine<ApprovalStatus, 'user' | 'admin'>({
   name: 'Role approval',
   description: 'Whether a vendor or delivery-agent role has been checked by an admin and may trade. Each role is approved on its own: an approved vendor who becomes an agent keeps selling while the agent role waits. users.approval_status is the summary (approved only when every role is). Customers are approved from the start.',
-  storedIn: 'vendors.approval_status and delivery_agents.approval_status (summary: users.approval_status)',
+  storedIn: 'vendors.approval_status, service_providers.approval_status and delivery_agents.approval_status (summary: users.approval_status)',
   initial: ['approved', 'pending'],
   states: {
     pending: { meaning: 'Waiting for an admin to review documents.' },

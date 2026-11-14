@@ -18,10 +18,11 @@ type Account = VerificationState & {
   id: string;
   name: string;
   createdAt: string;
-  reviewRole: 'vendor' | 'delivery_agent';
+  reviewRole: 'vendor' | 'delivery_agent' | 'provider';
   otherRoles?: { role: string; label: string; approvalStatus: string }[];
   liveCheck?: LiveCheck | null;
 };
+const ROLE_NAME = { vendor: 'Vendor', delivery_agent: 'Delivery agent', provider: 'Service provider' } as const;
 const keyOf = (a: Account) => `${a.id}:${a.reviewRole}`;
 
 /** The photos from an agent's live selfie check: straight on, then one per move they were asked to make. */
@@ -85,7 +86,7 @@ export default function AdminVerificationsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) toast({ variant: 'destructive', title: 'Not saved', description: data.error ?? 'Something went wrong.' });
       else {
-        toast({ title: action === 'approve' ? `${a.reviewRole === 'vendor' ? 'Vendor' : 'Delivery agent'} approved` : 'Sent back for changes' });
+        toast({ title: action === 'approve' ? `${ROLE_NAME[a.reviewRole]} approved` : 'Sent back for changes' });
         setRejecting(null);
         setNote('');
         await load();
@@ -105,7 +106,7 @@ export default function AdminVerificationsPage() {
           <div>
             <CardTitle className="text-lg">{a.name}</CardTitle>
             <CardDescription>
-              <span className="font-medium text-foreground">{a.reviewRole === 'vendor' ? 'Vendor' : 'Delivery agent'}</span> · {a.email}
+              <span className="font-medium text-foreground">{ROLE_NAME[a.reviewRole]}</span> · {a.email}
               {a.phone ? ` · ${a.phone}` : ''}
             </CardDescription>
           </div>

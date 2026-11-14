@@ -1,17 +1,19 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { providerBySlug } from '@/lib/services-preview';
+import { publicProvider } from '@/lib/services/providers';
 import { ProviderProfile } from '@/components/services-ui/ProviderProfile';
+
+export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = providerBySlug((await params).slug);
-  return { title: p ? `${p.name} · Closebuy Services` : 'Closebuy Services' };
+  const p = publicProvider((await params).slug);
+  return { title: p ? `${p.businessName} · Book on Closebuy` : 'Closebuy' };
 }
 
 export default async function ProviderPage({ params }: Props) {
-  const p = providerBySlug((await params).slug);
+  const p = publicProvider((await params).slug);
   if (!p) notFound();
-  return <ProviderProfile slug={p.slug} />;
+  return <ProviderProfile p={p} />;
 }

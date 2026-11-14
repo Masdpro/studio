@@ -14,7 +14,7 @@ export function VerificationBanner() {
   const [state, setState] = useState<VerificationState | null>(null);
 
   useEffect(() => {
-    if (!user || (!roles.includes('vendor') && !roles.includes('delivery_agent'))) {
+    if (!user || (!roles.includes('vendor') && !roles.includes('delivery_agent') && !roles.includes('provider'))) {
       setState(null);
       return;
     }

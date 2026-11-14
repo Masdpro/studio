@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { deleteService, updateService } from '@/lib/services/bookings';
-import { bookingErrorResponse, readJson, vendorOr401 } from '@/lib/booking-api';
+import { bookingErrorResponse, readJson, providerOr401 } from '@/lib/booking-api';
 
 type Ctx = { params: Promise<{ serviceId: string }> };
 
 /** Edits a service (including pausing it). */
 export async function PATCH(request: Request, ctx: Ctx) {
-  const v = await vendorOr401({ trading: true });
+  const v = await providerOr401({ trading: true });
   if ('res' in v) return v.res;
   const { serviceId } = await ctx.params;
   try {
@@ -18,7 +18,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
 /** Removes a service (paused instead if it still has upcoming bookings). */
 export async function DELETE(_request: Request, ctx: Ctx) {
-  const v = await vendorOr401();
+  const v = await providerOr401();
   if ('res' in v) return v.res;
   const { serviceId } = await ctx.params;
   try {

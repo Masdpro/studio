@@ -6,12 +6,12 @@ import type { NextRequest } from 'next/server';
  * Role required for each protected path prefix. Checked in order;
  * `true` means "any signed-in role is fine".
  */
-const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch' | true }[] = [
+const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_agent' | 'provider' | 'admin' | 'branch' | true }[] = [
   { prefix: '/admin', role: 'admin' },
   { prefix: '/branch', role: 'branch' },
   { prefix: '/vendor/dashboard', role: 'vendor' },
   { prefix: '/vendor/orders', role: 'vendor' },
-  { prefix: '/vendor/bookings', role: 'vendor' },
+  { prefix: '/provider', role: 'provider' },
   { prefix: '/delivery-agent', role: 'delivery_agent' },
   { prefix: '/errands', role: 'customer' },
   { prefix: '/orders', role: true },
@@ -23,7 +23,7 @@ const ROUTE_RULES: { prefix: string; role: 'customer' | 'vendor' | 'delivery_age
 ];
 
 /** The pages that need a sign-in: a trailing /* covers everything under that path, otherwise the exact path only. */
-const PROTECTED = ['/admin/*', '/branch/*', '/vendor/dashboard/*', '/vendor/orders', '/vendor/bookings', '/delivery-agent/*', '/errands/*', '/orders', '/bookings', '/profile', '/account/*', '/notifications', '/wallet'];
+const PROTECTED = ['/admin/*', '/branch/*', '/vendor/dashboard/*', '/vendor/orders', '/provider/*', '/delivery-agent/*', '/errands/*', '/orders', '/bookings', '/profile', '/account/*', '/notifications', '/wallet'];
 function isProtected(pathname: string) {
   return PROTECTED.some((p) => (p.endsWith('/*') ? pathname === p.slice(0, -2) || pathname.startsWith(p.slice(0, -1)) : pathname === p));
 }

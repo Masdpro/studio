@@ -3,7 +3,7 @@
 import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 import { useMemo, type ReactNode } from 'react';
 
-export type UserRole = 'customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch';
+export type UserRole = 'customer' | 'vendor' | 'delivery_agent' | 'provider' | 'admin' | 'branch';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
@@ -65,6 +65,7 @@ export function useAuth() {
     roles,
     isVendor: roles.includes('vendor'),
     isAgent: roles.includes('delivery_agent'),
+    isProvider: roles.includes('provider'),
     refresh: () => update(),
     loading: status === 'loading',
     signIn,

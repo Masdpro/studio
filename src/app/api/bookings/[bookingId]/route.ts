@@ -22,8 +22,8 @@ export async function POST(request: Request, ctx: Ctx) {
   const body = await readJson(request);
   try {
     if (body.action === 'cancel') {
-      const { booking, refund, vendorKeeps } = await cancelBooking('customer', id, bookingId);
-      return NextResponse.json({ booking: { ...booking, completionCode: '' }, refund, vendorKeeps });
+      const { booking, refund, providerKeeps } = await cancelBooking('customer', id, bookingId);
+      return NextResponse.json({ booking: { ...booking, completionCode: '' }, refund, providerKeeps });
     }
     if (body.action === 'reschedule') return NextResponse.json({ booking: await rescheduleBooking('customer', id, bookingId, Number(body.startsAt)) });
     throw new BookingError('Unknown action.');

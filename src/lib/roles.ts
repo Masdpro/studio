@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { users, vendors, deliveryAgents, vendorBranches } from '@/db/schema';
+import { users, vendors, deliveryAgents, vendorBranches, serviceProviders } from '@/db/schema';
 
-export type AppRole = 'customer' | 'vendor' | 'delivery_agent' | 'admin' | 'branch';
+export type AppRole = 'customer' | 'vendor' | 'delivery_agent' | 'provider' | 'admin' | 'branch';
 
 /** The branch this login belongs to, if it is a branch account. */
 export function getBranchForUser(userId: string): { id: string; vendorId: string; name: string } | null {
@@ -22,8 +22,9 @@ export function branchAccountEmails(vendorId: string): Record<string, string> {
 }
 
 /**
- * Everything an account can do. Every non-admin account is a customer; vendor, delivery-agent
- * and branch profiles hang off that same account (same id), so one login covers all.
+ * Everything an account can do. Every non-admin account is a customer; vendor (product store),
+ * provider (service business), delivery-agent and branch profiles hang off that same account
+ * (same id), so one login covers all.
  * Accounts created with the old vendor / delivery_agent role keep working.
  */
 export function getUserRoles(userId: string): AppRole[] {
@@ -33,6 +34,7 @@ export function getUserRoles(userId: string): AppRole[] {
   const roles: AppRole[] = ['customer'];
   if (u.role === 'vendor' || db.select({ id: vendors.id }).from(vendors).where(eq(vendors.id, userId)).get()) roles.push('vendor');
   if (u.role === 'delivery_agent' || db.select({ id: deliveryAgents.id }).from(deliveryAgents).where(eq(deliveryAgents.id, userId)).get()) roles.push('delivery_agent');
+  if (u.role === 'provider' || db.select({ id: serviceProviders.id }).from(serviceProviders).where(eq(serviceProviders.id, userId)).get()) roles.push('provider');
   if (getBranchForUser(userId)) roles.push('branch');
   return roles;
 }

@@ -30,6 +30,7 @@ import { DEFAULT_HOURS } from '@/lib/opening-hours';
 import { DEFAULT_COUNTRY } from '@/lib/places';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
+import { BusinessKindPicker } from '@/components/auth/BusinessKindPicker';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -157,6 +158,7 @@ export function VendorRegistrationForm() {
         <CardDescription>Join Closebuy as a vendor and start selling your products.</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-6"><BusinessKindPicker active="products" /></div>
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />

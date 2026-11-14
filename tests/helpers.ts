@@ -1,7 +1,7 @@
 /** Small builders for test data, plus a way to call route handlers as a given user. */
 import { randomUUID } from 'node:crypto';
 import { db } from '@/db';
-import { deliveryAgents, orders, users, vendors } from '@/db/schema';
+import { deliveryAgents, orders, serviceProviders, users, vendors } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export function signInAs(userId: string | null) {
@@ -9,7 +9,7 @@ export function signInAs(userId: string | null) {
   (globalThis as any).__testSession.current = userId ? { user: { id: userId, role } } : null;
 }
 
-export function makeUser(opts: { role?: 'customer' | 'vendor' | 'delivery_agent' | 'admin'; approval?: 'pending' | 'approved' | 'rejected' } = {}) {
+export function makeUser(opts: { role?: 'customer' | 'vendor' | 'delivery_agent' | 'provider' | 'admin'; approval?: 'pending' | 'approved' | 'rejected' } = {}) {
   const id = randomUUID();
   db.insert(users)
     .values({
@@ -32,6 +32,15 @@ export function makeVendor(approval: 'pending' | 'approved' | 'rejected' = 'appr
   const id = makeUser({ role: 'vendor', approval });
   db.insert(vendors)
     .values({ id, businessName: 'Test Shop', contactEmail: `${id}@test.local`, phone: '+2348000000000', streetAddress: '1 Test St', city: 'Lagos', country: 'Nigeria', status: 'Open', approvalStatus: approval })
+    .run();
+  return id;
+}
+
+/** A service business (booked, not bought), on its own login unless `userId` is given. */
+export function makeProvider(approval: 'pending' | 'approved' | 'rejected' = 'approved', userId?: string) {
+  const id = userId ?? makeUser({ role: 'provider', approval });
+  db.insert(serviceProviders)
+    .values({ id, businessName: 'Test Studio', slug: `test-${id.slice(0, 8)}`, category: 'beauty', contactEmail: `${id}@test.local`, phone: '+2348000000000', streetAddress: '1 Test St', area: 'Yaba', city: 'Lagos', approvalStatus: approval, createdAt: new Date() })
     .run();
   return id;
 }

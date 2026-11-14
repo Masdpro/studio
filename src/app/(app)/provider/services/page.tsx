@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarCheck, Clock, Home, Loader2, Pencil, Plus, Store, Trash2, X } from 'lucide-react';
+import { CalendarCheck, Clock, Home, Images, Loader2, Pencil, Plus, Store, Trash2, X } from 'lucide-react';
+import { PortfolioDialog, type PortfolioItem } from '@/components/services/PortfolioDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,11 +20,11 @@ import { dayLabel, durationLabel, naira } from '@/lib/booking-time';
 
 type Interval = [string, string];
 type Settings = { weeklyHours: Record<string, Interval[]>; capacity: number; instantBooking: boolean; daysOff: string[] };
-type Service = { id: string; name: string; description: string | null; imageUrl: string | null; price: number; priceFrom: boolean; durationMin: number; location: 'shop' | 'home' | 'either'; callOutFee: number | null; paused: boolean };
+type Service = { id: string; name: string; description: string | null; imageUrl: string | null; price: number; priceFrom: boolean; durationMin: number; location: 'shop' | 'home' | 'either'; callOutFee: number | null; paused: boolean; portfolio: PortfolioItem[] };
 
 const DAYS = [['1', 'Monday'], ['2', 'Tuesday'], ['3', 'Wednesday'], ['4', 'Thursday'], ['5', 'Friday'], ['6', 'Saturday'], ['0', 'Sunday']] as const;
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 480];
-const PLACES = { shop: 'At my shop', home: 'At the customer\'s place', either: 'Either (customer chooses)' };
+const PLACES = { shop: 'At my place of work', home: 'At the customer\'s place', either: 'Either (customer chooses)' };
 
 /** Splits the last period around a 13:00–14:00 lunch break, or adds an afternoon period. */
 function addBreak(list: Interval[]): Interval[] {
@@ -40,16 +41,17 @@ async function send(url: string, method: string, body?: unknown) {
   return data;
 }
 
-/** Where a vendor sets up booked services: the services, opening hours, days off and how bookings are confirmed. */
-export default function VendorServicesPage() {
-  useRequireTrading();
+/** Where a provider sets up booked services: the services, opening hours, days off and how bookings are confirmed. */
+export default function ProviderServicesPage() {
+  useRequireTrading('/provider/dashboard');
   const { toast } = useToast();
   const [services, setServices] = useState<Service[] | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [editing, setEditing] = useState<Service | 'new' | null>(null);
+  const [portfolioOf, setPortfolioOf] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [s, st] = await Promise.all([fetch('/api/vendor/services', { cache: 'no-store' }), fetch('/api/vendor/service-settings', { cache: 'no-store' })]);
+    const [s, st] = await Promise.all([fetch('/api/provider/services', { cache: 'no-store' }), fetch('/api/provider/settings', { cache: 'no-store' })]);
     if (s.ok) setServices((await s.json()).services);
     if (st.ok) setSettings((await st.json()).settings);
   }, []);
@@ -57,7 +59,7 @@ export default function VendorServicesPage() {
 
   const remove = async (s: Service) => {
     try {
-      const r = await send(`/api/vendor/services/${s.id}`, 'DELETE');
+      const r = await send(`/api/provider/services/${s.id}`, 'DELETE');
       toast({ title: r.paused ? 'Service paused' : 'Service removed', description: r.paused ? 'It has bookings still to come, so it\'s paused: customers can\'t book it, and existing bookings go ahead.' : undefined });
       load();
     } catch (err) {
@@ -66,7 +68,7 @@ export default function VendorServicesPage() {
   };
   const togglePause = async (s: Service) => {
     try {
-      await send(`/api/vendor/services/${s.id}`, 'PATCH', { paused: !s.paused });
+      await send(`/api/provider/services/${s.id}`, 'PATCH', { paused: !s.paused });
       load();
     } catch (err) {
       toast({ title: 'Could not update it', description: (err as Error).message, variant: 'destructive' });
@@ -77,8 +79,8 @@ export default function VendorServicesPage() {
   return (
     <div className="container mx-auto max-w-3xl space-y-6 py-2">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Services &amp; hours</h1>
-        <Button variant="outline" size="sm" asChild><Link href="/vendor/bookings"><CalendarCheck className="mr-1.5 h-4 w-4" />Bookings</Link></Button>
+        <h1 className="text-2xl font-bold">Services, portfolio &amp; hours</h1>
+        <Button variant="outline" size="sm" asChild><Link href="/provider/bookings"><CalendarCheck className="mr-1.5 h-4 w-4" />Bookings</Link></Button>
       </div>
       <p className="text-sm text-muted-foreground">Services are booked for a time, not bought. Customers pay when they book; you&apos;re paid when they give you their code at the end of the job.</p>
 
@@ -86,14 +88,14 @@ export default function VendorServicesPage() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="text-lg">Your services</CardTitle>
-            <CardDescription>Shown on your store page with a Book button.</CardDescription>
+            <CardDescription>Shown on your business page with a Book button. Add photos of past work to each one.</CardDescription>
           </div>
           <Button size="sm" onClick={() => setEditing('new')}><Plus className="mr-1 h-4 w-4" />Add a service</Button>
         </CardHeader>
         <CardContent className="space-y-2">
           {services.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No services yet. Add one, like &ldquo;Haircut&rdquo; or &ldquo;Phone screen repair&rdquo;.</p>}
           {services.map((s) => (
-            <div key={s.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
+            <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">{s.name} {s.paused && <Badge variant="outline" className="ml-1">Paused</Badge>}</p>
                 <p className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
@@ -103,6 +105,9 @@ export default function VendorServicesPage() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                <Button size="sm" variant="outline" className="h-8" onClick={() => setPortfolioOf(s.id)} aria-label={`Portfolio for ${s.name}`}>
+                  <Images className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Portfolio</span><span className="ml-1 text-xs text-muted-foreground">{s.portfolio.length}</span>
+                </Button>
                 <Switch checked={!s.paused} onCheckedChange={() => togglePause(s)} aria-label={s.paused ? `Resume ${s.name}` : `Pause ${s.name}`} />
                 <Button size="icon" variant="ghost" onClick={() => setEditing(s)} aria-label={`Edit ${s.name}`}><Pencil className="h-4 w-4" /></Button>
                 <Button size="icon" variant="ghost" onClick={() => remove(s)} aria-label={`Remove ${s.name}`}><Trash2 className="h-4 w-4" /></Button>
@@ -113,6 +118,10 @@ export default function VendorServicesPage() {
       </Card>
 
       <HoursCard settings={settings} onSaved={setSettings} />
+      {portfolioOf && (() => {
+        const svc = services.find((x) => x.id === portfolioOf);
+        return svc ? <PortfolioDialog serviceId={svc.id} serviceName={svc.name} items={svc.portfolio} onClose={() => setPortfolioOf(null)} onChanged={load} /> : null;
+      })()}
       {editing && <ServiceDialog service={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </div>
   );
@@ -127,7 +136,7 @@ function HoursCard({ settings, onSaved }: { settings: Settings; onSaved: (s: Set
   const save = async () => {
     setBusy(true);
     try {
-      const { settings: saved } = await send('/api/vendor/service-settings', 'PUT', draft);
+      const { settings: saved } = await send('/api/provider/settings', 'PUT', draft);
       setDraft(saved);
       onSaved(saved);
       toast({ title: 'Booking settings saved' });
@@ -220,8 +229,8 @@ function ServiceDialog({ service, onClose, onSaved }: { service: Service | null;
     setBusy(true);
     try {
       const body = { ...f, price: Number(f.price), durationMin: Number(f.durationMin), callOutFee: f.location === 'shop' ? null : Number(f.callOutFee || 0) };
-      await send(service ? `/api/vendor/services/${service.id}` : '/api/vendor/services', service ? 'PATCH' : 'POST', body);
-      toast({ title: service ? 'Service updated' : 'Service added', description: service ? undefined : 'Customers can now book it from your store page.' });
+      await send(service ? `/api/provider/services/${service.id}` : '/api/provider/services', service ? 'PATCH' : 'POST', body);
+      toast({ title: service ? 'Service updated' : 'Service added', description: service ? undefined : 'Customers can now book it. Add photos of your past work so they can see what to expect.' });
       onSaved();
     } catch (err) {
       toast({ title: 'Not saved', description: (err as Error).message, variant: 'destructive' });

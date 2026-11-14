@@ -19,7 +19,7 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
   const userId = session.user.id;
   const roles = getUserRoles(userId);
-  const earner = roles.includes('vendor') || roles.includes('delivery_agent');
+  const earner = roles.includes('vendor') || roles.includes('delivery_agent') || roles.includes('provider');
   if (!earner) return NextResponse.json({ earner: false });
 
   await refreshPendingWithdrawals(userId);

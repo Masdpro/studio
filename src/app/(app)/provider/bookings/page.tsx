@@ -16,13 +16,13 @@ import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
 import { MoveDialog } from '@/components/services/MoveDialog';
 
 type Booking = {
-  id: string; serviceId: string; vendorId: string; serviceName: string; startsAt: string; endsAt: string; location: 'shop' | 'home'; address: string | null;
+  id: string; serviceId: string; providerId: string; serviceName: string; startsAt: string; endsAt: string; location: 'shop' | 'home'; address: string | null;
   note: string | null; total: number; status: string; respondBy: string | null; customerName: string; customerPhone: string | null; cancelReason: string | null;
 };
 
-/** A vendor's bookings: requests to answer, today's and upcoming appointments by day, and past ones. */
-export default function VendorBookingsPage() {
-  useRequireTrading();
+/** A service provider's bookings: requests to answer, today's and upcoming appointments by day, and past ones. */
+export default function ProviderBookingsPage() {
+  useRequireTrading('/provider/dashboard');
   const { user } = useAuth();
   const { toast } = useToast();
   const [list, setList] = useState<Booking[] | null>(null);
@@ -33,7 +33,7 @@ export default function VendorBookingsPage() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/vendor/bookings', { cache: 'no-store' });
+    const res = await fetch('/api/provider/bookings', { cache: 'no-store' });
     if (res.ok) {
       const d = await res.json();
       setList(d.bookings);
@@ -45,7 +45,7 @@ export default function VendorBookingsPage() {
 
   const act = async (b: Booking, action: string, extra: object = {}) => {
     setBusy(b.id + action);
-    const res = await fetch(`/api/vendor/bookings/${b.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...extra }) });
+    const res = await fetch(`/api/provider/bookings/${b.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...extra }) });
     const data = await res.json().catch(() => ({}));
     setBusy(null);
     if (!res.ok) { toast({ title: 'That didn\'t work', description: data.error, variant: 'destructive' }); return false; }
@@ -85,7 +85,7 @@ export default function VendorBookingsPage() {
             </div>
             <BookingStatusBadge status={b.status} />
           </div>
-          <p className="flex items-center gap-1 text-muted-foreground">{b.location === 'home' ? <Home className="h-3.5 w-3.5" /> : <Store className="h-3.5 w-3.5" />}{b.location === 'home' ? `Home visit: ${b.address}` : 'At your shop'} · {naira(b.total)}</p>
+          <p className="flex items-center gap-1 text-muted-foreground">{b.location === 'home' ? <Home className="h-3.5 w-3.5" /> : <Store className="h-3.5 w-3.5" />}{b.location === 'home' ? `Home visit: ${b.address}` : 'At your place of work'} · {naira(b.total)}</p>
           {b.note && <p className="rounded bg-muted px-2 py-1">&ldquo;{b.note}&rdquo;</p>}
           {b.status === 'Requested' && (
             <>
@@ -115,7 +115,7 @@ export default function VendorBookingsPage() {
     <div className="container mx-auto max-w-3xl space-y-4 py-2">
       <div className="flex items-center justify-between gap-2">
         <h1 className="flex items-center gap-2 text-2xl font-bold"><CalendarCheck className="h-6 w-6 text-primary" />Bookings</h1>
-        <Button variant="outline" size="sm" asChild><Link href="/vendor/dashboard/services"><Settings className="mr-1.5 h-4 w-4" />Services &amp; hours</Link></Button>
+        <Button variant="outline" size="sm" asChild><Link href="/provider/services"><Settings className="mr-1.5 h-4 w-4" />Services &amp; portfolio</Link></Button>
       </div>
       <Tabs defaultValue={groups.requests.length ? 'requests' : 'upcoming'}>
         <TabsList className="grid w-full grid-cols-3">
@@ -140,7 +140,7 @@ export default function VendorBookingsPage() {
       </Tabs>
 
       {completing && <CodeDialog b={completing} onClose={() => setCompleting(null)} onSubmit={async (code) => { if (await act(completing, 'complete', { code })) setCompleting(null); }} busy={!!busy} />}
-      {moving && <MoveDialog as="vendor" b={moving} onDone={() => { setMoving(null); load(); }} />}
+      {moving && <MoveDialog as="provider" b={moving} onDone={() => { setMoving(null); load(); }} />}
       {confirm && (
         <Dialog open onOpenChange={(o) => !o && setConfirm(null)}>
           <DialogContent className="max-w-sm">
@@ -151,7 +151,7 @@ export default function VendorBookingsPage() {
             <p className="text-sm">
               {confirm.action === 'noshow'
                 ? `You keep ${naira(confirm.b.total / 2)} and the customer gets the rest back. Only do this if they really didn't come.`
-                : `The customer gets the full ${naira(confirm.b.total)} back.${confirm.action === 'cancel' ? ' Cancellations are noted on your store\'s record.' : ''}`}
+                : `The customer gets the full ${naira(confirm.b.total)} back.${confirm.action === 'cancel' ? ' Cancellations are noted on your business\'s record.' : ''}`}
             </p>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setConfirm(null)}>Go back</Button>
