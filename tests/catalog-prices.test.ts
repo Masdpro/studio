@@ -9,7 +9,7 @@ import { catalogPrices, jobRuns } from '@/db/schema';
 import { createProduct } from '@/lib/services/products';
 import { ALL_CATALOG_ITEMS } from '@/lib/product-catalog';
 import { BASELINE_PRICES } from '@/lib/catalog-price-baseline';
-import { catalogPriceMap, ensureBaselinePrices, WHERE_TO_LOOK, closebuyPriceFor, nameTokens, parsePriceReply, pricesDue, priceStatus, PRICE_JOB, refreshCatalogPrices, REFRESH_EVERY_MS, type OnlineLookup } from '@/lib/services/catalog-prices';
+import { onlineLookupAvailable, catalogPriceMap, ensureBaselinePrices, WHERE_TO_LOOK, closebuyPriceFor, nameTokens, parsePriceReply, pricesDue, priceStatus, PRICE_JOB, refreshCatalogPrices, REFRESH_EVERY_MS, type OnlineLookup } from '@/lib/services/catalog-prices';
 import { GET as vendorPrices } from '@/app/api/vendor/catalog-prices/route';
 import { GET as adminStatus, POST as adminRefresh } from '@/app/api/admin/catalog-prices/route';
 import { makeUser, makeVendor, signInAs } from './helpers';
@@ -149,5 +149,24 @@ describe('API', () => {
     const s = await (await adminStatus()).json();
     expect(s).toMatchObject({ total: priceStatus().total, priced: expect.any(Number) });
     expect(s.priced).toBeGreaterThan(0);
+  });
+});
+
+describe('online price search switched off', () => {
+  it('never uses Gemini, even when a Google key is set, and still updates from Closebuy shops', async () => {
+    const before = process.env.GOOGLE_GENAI_API_KEY;
+    process.env.GOOGLE_GENAI_API_KEY = 'test-key-not-real';
+    try {
+      expect(onlineLookupAvailable()).toBe(false);
+      expect(priceStatus().onlineLookup).toBe(false);
+      const res = await refreshCatalogPrices(undefined, new Date('2026-09-01T00:00:00Z'));
+      expect(res.started).toBe(true);
+      // A run without the online search still counts as the quarter's update, with no problem shown.
+      expect(priceStatus().problem).toBeNull();
+      expect(db.select().from(jobRuns).where(eq(jobRuns.name, PRICE_JOB)).get()!.note).toMatch(/Closebuy prices only/);
+    } finally {
+      if (before === undefined) delete process.env.GOOGLE_GENAI_API_KEY;
+      else process.env.GOOGLE_GENAI_API_KEY = before;
+    }
   });
 });

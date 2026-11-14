@@ -42,7 +42,7 @@ export function CatalogPricesCard() {
         <p className="text-muted-foreground">
           {status.priced} of {status.total} products have a suggested price.{' '}
           {status.lastRunAt ? `Last updated ${day(status.lastRunAt)}; next update around ${day(status.nextRunAt!)}.` : 'Not updated yet.'}
-          {!status.onlineLookup && ' Online prices need the Gemini key, so only Closebuy shop prices are used for now.'}
+          {!status.onlineLookup && ' The online price search is off, so suggestions come from Closebuy shop prices and the starting prices.'}
         </p>
         {status.priced > 0 && (
           <p className="text-muted-foreground">
@@ -50,7 +50,7 @@ export function CatalogPricesCard() {
               status.bySource.online && `${status.bySource.online} from online stores`,
               status.bySource.closebuy && `${status.bySource.closebuy} from Closebuy shops`,
               status.bySource.checked && `${status.bySource.checked} checked on Chowdeck, Glovo and Shoprite`,
-              status.bySource.estimate && `${status.bySource.estimate} starting estimates (replaced by the online search)`,
+              status.bySource.estimate && `${status.bySource.estimate} starting estimates (replaced by Closebuy shop prices as shops sell them)`,
             ]
               .filter(Boolean)
               .join(' · ')}

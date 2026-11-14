@@ -6,7 +6,8 @@
  * quarter from two sources:
  *  - what other Closebuy shops charge for the same item, and
  *  - current Nigerian online prices found with Google Search through Gemini (we never scrape
- *    those sites ourselves).
+ *    those sites ourselves). This one is switched OFF for now (ONLINE_PRICE_SEARCH below), so
+ *    suggestions come only from Closebuy shops and the starting prices.
  * When an item can't be priced, its last suggestion is kept.
  */
 import { and, eq, sql } from 'drizzle-orm';
@@ -131,7 +132,14 @@ Reply with only a JSON array, one object per item you found, like:
   return parsePriceReply(res.text ?? '', names.length);
 };
 
-export const onlineLookupAvailable = () => !!(process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+/**
+ * The online price search (Google Search through Gemini) is switched off for now: it needs billing on the
+ * Google key. Set to true to bring it back; nothing else needs changing.
+ */
+export const ONLINE_PRICE_SEARCH = false;
+
+export const onlineLookupAvailable = () =>
+  ONLINE_PRICE_SEARCH && !!(process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 
 /** Every suggested price, keyed by lower-cased product name, for Quick add. */
 export function catalogPriceMap(): Record<string, number> {
@@ -276,8 +284,8 @@ export function startPriceSchedule() {
   } catch (err) {
     log.error('Could not add starting prices', { area: 'jobs', err });
   }
+  // Runs whether or not the online search is on: Closebuy shop prices change too.
   const check = () => {
-    if (!onlineLookupAvailable()) return; // without the search key there is nothing new to learn
     if (pricesDue()) refreshCatalogPrices().catch((err) => log.error('Suggested price update failed', { area: 'jobs', err }));
   };
   setTimeout(check, 5 * 60 * 1000).unref?.();
