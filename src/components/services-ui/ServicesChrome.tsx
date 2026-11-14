@@ -56,7 +56,7 @@ export function SideToggle({ active, className }: { active: 'products' | 'servic
         Shop
       </span>
       <span className={cn('relative z-10 flex items-center justify-center px-3 transition-colors duration-200', on ? 'text-[hsl(228_30%_8%)]' : 'text-muted-foreground')}>
-        Services
+        Book
       </span>
     </button>
   );
