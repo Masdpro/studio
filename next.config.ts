@@ -3,6 +3,8 @@ import { ALLOWED_IMAGE_HOSTS } from './src/lib/image-hosts';
 
 const nextConfig: NextConfig = {
   experimental: {
+    // Dev only: cap Turbopack memory so the 8 GB Codespace does not run out and kill the dev server.
+    turbopackMemoryLimit: 3 * 1024 ** 3,
     serverActions: {
       allowedOrigins: ['localhost:3000', '*.app.github.dev'],
     },
