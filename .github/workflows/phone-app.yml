@@ -100,4 +100,6 @@ jobs:
           set -o pipefail
           xcodebuild -workspace ios/Closebuy.xcworkspace -scheme Closebuy -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build | tail -25
+            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xcode.log" 2>&1 \
+            || { grep -nE 'error|Error|failed' "$RUNNER_TEMP/xcode.log" | grep -v 'warning' | head -60; tail -80 "$RUNNER_TEMP/xcode.log"; exit 1; }
+          tail -5 "$RUNNER_TEMP/xcode.log"

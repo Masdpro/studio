@@ -19,8 +19,8 @@ module.exports = function withReleaseSigning(config) {
     if (g.includes('closebuyUpload')) return cfg;
     g = g.replace(/signingConfigs\s*\{/, (m) => `${m}${SIGNING}`);
     // In the release build type, use the upload key when present.
-    g = g.replace(/(release\s*\{[\s\S]*?)signingConfig signingConfigs\.debug/, `$1signingConfig System.getenv('CLOSEBUY_KEYSTORE') ? signingConfigs.closebuyUpload : signingConfigs.debug`);
-    g = g.replace(/versionCode\s+\d+/, (m) => `versionCode (System.getenv('CLOSEBUY_VERSION_CODE') ?: '${m.split(/\s+/)[1]}').toInteger()`);
+    g = g.replace(/(release\s*\{[\s\S]*?)signingConfig signingConfigs\.debug/, `$1signingConfig(System.getenv('CLOSEBUY_KEYSTORE') ? signingConfigs.closebuyUpload : signingConfigs.debug)`);
+    g = g.replace(/versionCode\s+\d+/, (m) => `versionCode((System.getenv('CLOSEBUY_VERSION_CODE') ?: '${m.split(/\s+/)[1]}').toInteger())`);
     cfg.modResults.contents = g;
     return cfg;
   });
