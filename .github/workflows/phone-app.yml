@@ -104,7 +104,7 @@ jobs:
       - run: npx expo prebuild --platform ios
       - name: Build for the iPhone simulator (no signing needed)
         run: |
-          xcodebuild -workspace ios/Closebuy.xcworkspace -scheme Closebuy -configuration Release \
+          xcodebuild -workspace ios/Closebuy.xcworkspace -scheme Closebuy -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xcode.log" 2>&1 || { tail -150 "$RUNNER_TEMP/xcode.log"; exit 1; }
           tail -5 "$RUNNER_TEMP/xcode.log"
