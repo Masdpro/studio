@@ -93,10 +93,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: native/package-lock.json
-      - name: Use Xcode 26 (Expo SDK 58 needs Swift 6.2)
+      - name: Use Xcode 26.2 (Expo SDK 58 needs Swift 6.2; Xcode 26.3 rejects some Expo code)
         run: |
-          ls -d /Applications/Xcode*.app
-          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          XC=/Applications/Xcode_26.2.app
+          [ -d "$XC" ] || XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$XC" ]; then echo "No Xcode 26 on this runner"; exit 1; fi
           sudo xcode-select -s "$XC"
           xcodebuild -version
