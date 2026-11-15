@@ -1,0 +1,103 @@
+# Builds the Closebuy phone app (native/, React Native with Expo) on every push that changes it, or on demand
+# from the Actions tab. No Expo or Apple account is needed for these builds.
+# - Android: an APK you can install on any Android phone (download "closebuy-android-apk" from the run's
+#   Artifacts). With the upload-key secrets set, it also builds the signed .aab for Google Play.
+# - iPhone: builds the app for the iPhone simulator, to check it compiles. App Store builds need an Apple
+#   developer account (see native/README.md).
+name: Phone app
+
+on:
+  push:
+    paths: ['native/**', '.github/workflows/phone-app.yml']
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - name: Bundle the app code for Android and iPhone
+        run: npx expo export --platform android --platform ios --output-dir /tmp/export
+
+  android:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    defaults:
+      run:
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npx expo prebuild --platform android --no-install
+      - name: Use the upload key when it is set
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "CLOSEBUY_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Build the APK
+        env:
+          CLOSEBUY_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CLOSEBUY_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CLOSEBUY_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          CLOSEBUY_VERSION_CODE: ${{ github.run_number }}
+        run: cd android && ./gradlew assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closebuy-android-apk
+          path: native/android/app/build/outputs/apk/release/app-release.apk
+      - name: Build the signed Google Play bundle
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        env:
+          CLOSEBUY_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CLOSEBUY_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CLOSEBUY_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          CLOSEBUY_VERSION_CODE: ${{ github.run_number }}
+        run: cd android && ./gradlew bundleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        with:
+          name: closebuy-android-play-bundle
+          path: native/android/app/build/outputs/bundle/release/app-release.aab
+
+  ios:
+    needs: check
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+      - run: npm ci
+      - run: npx expo prebuild --platform ios
+      - name: Build for the iPhone simulator (no signing needed)
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/Closebuy.xcworkspace -scheme Closebuy -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -25

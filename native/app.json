@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Closebuy",
+    "slug": "closebuy",
+    "scheme": "closebuy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.cbuyapp.closebuy",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.cbuyapp.closebuy",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/android-icon-foreground.png",
+          "imageWidth": 220,
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Closebuy uses the camera to take photos of your products, your ID documents and your verification selfie.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Closebuy lets you choose photos for your products, store and portfolio.",
+          "cameraPermission": "Closebuy uses the camera to take photos of your products, your ID documents and your work."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "While you are delivering an order, Closebuy shares your position with that customer so they can see you coming."
+        }
+      ],
+      "./plugins/with-release-signing"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "apiUrl": "https://cbuyapp.com"
+    }
+  }
+}

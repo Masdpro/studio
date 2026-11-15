@@ -39,8 +39,25 @@ function withRequestId(request: NextRequest) {
   return { id, headers };
 }
 
+/**
+ * The mobile app signs in with a token (POST /api/mobile/session) and sends it as `Authorization: Bearer …`.
+ * For API calls it is passed on as the normal sign-in cookie, so every API route treats the app exactly like
+ * the website. Only for /api/, and never when the request already carries a sign-in cookie.
+ */
+function withAppToken(request: NextRequest, headers: Headers) {
+  const auth = request.headers.get('authorization');
+  if (!auth?.startsWith('Bearer ') || !request.nextUrl.pathname.startsWith('/api/')) return;
+  const token = auth.slice(7).trim();
+  if (!token || /[;\s,]/.test(token)) return;
+  const cookie = request.headers.get('cookie') ?? '';
+  if (/(^|;\s*)(__Secure-)?next-auth\.session-token=/.test(cookie)) return;
+  const add = `next-auth.session-token=${token}; __Secure-next-auth.session-token=${token}`;
+  headers.set('cookie', cookie ? `${cookie}; ${add}` : add);
+}
+
 export async function middleware(request: NextRequest) {
   const { id, headers } = withRequestId(request);
+  withAppToken(request, headers);
   const tag = (res: NextResponse) => {
     res.headers.set('x-request-id', id);
     return res;

@@ -15,5 +15,5 @@ uploads
 .modified
 public/mediapipe
 
-# The mobile app shell is built separately (see mobile/README.md)
-mobile
+# The phone app is built separately (see native/README.md)
+native
