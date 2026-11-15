@@ -97,9 +97,12 @@ jobs:
       - run: npx expo prebuild --platform ios
       - name: Build for the iPhone simulator (no signing needed)
         run: |
-          set -o pipefail
           xcodebuild -workspace ios/Closebuy.xcworkspace -scheme Closebuy -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xcode.log" 2>&1 \
-            || { grep -nE 'error|Error|failed' "$RUNNER_TEMP/xcode.log" | grep -v 'warning' | head -60; tail -80 "$RUNNER_TEMP/xcode.log"; exit 1; }
+            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xcode.log" 2>&1 || { tail -150 "$RUNNER_TEMP/xcode.log"; exit 1; }
           tail -5 "$RUNNER_TEMP/xcode.log"
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: ios-build-log
+          path: ${{ runner.temp }}/xcode.log
