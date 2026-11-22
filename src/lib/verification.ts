@@ -8,12 +8,46 @@ import { renderEmail } from '@/lib/email-template';
 
 export type DocumentKind = 'business_proof' | 'store_photo' | 'government_id' | 'selfie';
 
-export const REQUIRED_DOCUMENTS: Record<string, DocumentKind[]> = {
-  vendor: ['business_proof', 'store_photo'],
-  delivery_agent: ['government_id', 'selfie'],
+/**
+ * Ways a role can be verified. Most roles have one. Shops have two, because many small sellers have
+ * no CAC registration (and many sell from home with no shop): a registered business shows its CAC
+ * papers and shop, anyone else proves who they are with an ID and the live selfie, like riders do.
+ */
+export type VerificationRouteId = 'registered' | 'individual' | 'standard';
+export type VerificationRoute = { id: VerificationRouteId; label: string; hint: string; documents: DocumentKind[] };
+
+export const VERIFICATION_ROUTES: Record<string, VerificationRoute[]> = {
+  vendor: [
+    { id: 'individual', label: 'No CAC registration', hint: 'For anyone selling as a person: from home, a stall or online. Show your ID and take the live selfie.', documents: ['government_id', 'selfie'] },
+    { id: 'registered', label: 'Registered business (CAC)', hint: 'Shops registered with CAC get a "Registered business" badge customers can see.', documents: ['business_proof', 'store_photo'] },
+  ],
+  delivery_agent: [{ id: 'standard', label: 'ID check', hint: '', documents: ['government_id', 'selfie'] }],
   // Service providers often work in customers' homes, so they prove who they are like delivery agents do.
-  provider: ['government_id', 'selfie'],
+  provider: [{ id: 'standard', label: 'ID check', hint: '', documents: ['government_id', 'selfie'] }],
 };
+
+/** Every document a role may upload (any route). */
+export const REQUIRED_DOCUMENTS: Record<string, DocumentKind[]> = Object.fromEntries(
+  Object.entries(VERIFICATION_ROUTES).map(([role, routes]) => [role, Array.from(new Set(routes.flatMap((r) => r.documents)))]),
+);
+
+/**
+ * The route a role is on, from what has been uploaded: a finished route wins (registered first, since
+ * it earns the badge), then the route with the most uploads, then the first route.
+ */
+export function routeFor(role: string, submitted: Set<string>): VerificationRoute {
+  const routes = VERIFICATION_ROUTES[role] ?? [];
+  const done = (r: VerificationRoute) => r.documents.every((k) => submitted.has(k));
+  const count = (r: VerificationRoute) => r.documents.filter((k) => submitted.has(k)).length;
+  return routes.find((r) => r.id === 'registered' && done(r)) ?? routes.find(done) ?? [...routes].sort((a, b) => count(b) - count(a))[0] ?? routes[0];
+}
+
+/** Shop owners whose approved shop was verified with CAC papers (shown as "Registered business"). */
+export function registeredVendorIds(): Set<string> {
+  const proofs = new Set(db.select({ userId: verificationDocuments.userId }).from(verificationDocuments).where(eq(verificationDocuments.kind, 'business_proof')).all().map((d) => d.userId));
+  const approved = db.select({ id: vendors.id }).from(vendors).where(eq(vendors.approvalStatus, 'approved')).all();
+  return new Set(approved.map((v) => v.id).filter((id) => proofs.has(id)));
+}
 
 export type TradingRole = 'vendor' | 'delivery_agent' | 'provider';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
@@ -64,7 +98,7 @@ export function syncAccountApproval(userId: string) {
 /** After new documents arrive, roles that were sent back and need that document go back to the queue. */
 export function resubmitRolesNeeding(userId: string, kind: DocumentKind) {
   for (const role of tradingRolesOf(userId)) {
-    if (REQUIRED_DOCUMENTS[role].includes(kind) && roleApproval(userId, role).status === 'rejected') setRoleApproval(userId, role, 'pending', null);
+    if ((REQUIRED_DOCUMENTS[role] ?? []).includes(kind) && roleApproval(userId, role).status === 'rejected') setRoleApproval(userId, role, 'pending', null);
   }
 }
 
@@ -89,8 +123,8 @@ export function startTradingRole(userId: string, phone: unknown, _alreadyTrading
 }
 
 export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
-  business_proof: 'Business registration (CAC certificate, business permit or similar)',
-  store_photo: 'Photo of your store or stall',
+  business_proof: 'CAC registration certificate (business name or company)',
+  store_photo: 'Photo of your shop or stall',
   government_id: 'Government ID (NIN slip, driver\'s licence, voter\'s card or passport)',
   selfie: 'Live selfie check (camera)',
 };
@@ -251,13 +285,19 @@ export function getVerificationState(userId: string) {
   // Each trading role has its own documents, review and approval.
   const tradingRoles = tradingRolesOf(userId).map((role) => {
     const approval = roleApproval(userId, role);
-    const roleDocsComplete = REQUIRED_DOCUMENTS[role].every((k) => submitted.has(k));
+    const route = routeFor(role, submitted);
+    const roleDocsComplete = route.documents.every((k) => submitted.has(k));
     return {
       role,
       label: ROLE_LABELS[role],
       approvalStatus: approval.status,
       approvalNote: approval.note,
-      requiredDocuments: REQUIRED_DOCUMENTS[role].map(docInfo),
+      // The documents of the route in use; `routes` lists every way this role can be verified.
+      route: route.id,
+      routeLabel: route.label,
+      routes: VERIFICATION_ROUTES[role].map((x) => ({ id: x.id, label: x.label, hint: x.hint, documents: x.documents.map(docInfo), complete: x.documents.every((k) => submitted.has(k)) })),
+      registered: role === 'vendor' && route.id === 'registered' && roleDocsComplete,
+      requiredDocuments: route.documents.map(docInfo),
       documentsComplete: roleDocsComplete,
       readyForReview: emailVerified && phoneOk && roleDocsComplete,
       mayTrade: approval.status === 'approved' && phoneOk,
@@ -279,7 +319,8 @@ export function getVerificationState(userId: string) {
     approvalStatus: !needsReview ? user.approvalStatus : rejected ? 'rejected' : tradingRoles.every((r) => r.approvalStatus === 'approved') ? 'approved' : 'pending',
     approvalNote: rejected?.approvalNote ?? null,
     requiredDocuments: required.map(docInfo),
-    documentsComplete,
+    // Every role has finished one of its routes.
+    documentsComplete: tradingRoles.every((r) => r.documentsComplete) && (tradingRoles.length > 0 || documentsComplete),
     // Everything an admin needs before they can approve every role:
     readyForReview: !needsReview ? true : tradingRoles.every((r) => r.readyForReview),
     // True when the account may trade in at least one role (each role is also checked on its own).

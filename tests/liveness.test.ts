@@ -21,7 +21,7 @@ import { completeLivenessCheck, latestPassedCheck, liveCheckFrame, startLiveness
 import { POST as startRoute } from '@/app/api/account/liveness/route';
 import { POST as completeRoute } from '@/app/api/account/liveness/[id]/route';
 import { POST as uploadDocument } from '@/app/api/account/documents/route';
-import { makeAgent, makeVendor, signInAs } from './helpers';
+import { makeAgent, makeUser, makeVendor, signInAs } from './helpers';
 
 // ---------- move rules ----------
 
@@ -201,8 +201,13 @@ describe('live check on the server', () => {
 });
 
 describe('live check routes', () => {
-  it('vendors are not asked for a live selfie', async () => {
+  it('vendors may take the live selfie (shops without CAC verify with an ID and selfie)', async () => {
     signInAs(makeVendor());
+    expect((await startRoute()).status).toBe(201);
+  });
+
+  it('customers are not asked for a live selfie', async () => {
+    signInAs(makeUser());
     expect((await startRoute()).status).toBe(403);
   });
 

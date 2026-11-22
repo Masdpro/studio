@@ -19,14 +19,14 @@ export default function Cart() {
 
   if (!cart.items.length) {
     return (
-      <Screen>
+      <Screen tabs>
         <H1>Cart</H1>
         <Empty icon={<ShoppingBag color={c.muted} size={42} />} title="Your cart is empty" body="Add products from shops near you." action={<Button title="Start shopping" onPress={() => router.navigate('/')} />} />
       </Screen>
     );
   }
   return (
-    <Screen
+    <Screen tabs
       footer={
         <Row style={{ justifyContent: 'space-between' }}>
           <View>

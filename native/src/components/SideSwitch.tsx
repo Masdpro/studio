@@ -1,33 +1,18 @@
-import { Pressable, Text, View } from 'react-native';
+import { CalendarDays, ShoppingCart } from 'lucide-react-native';
 import { useSide } from '@/lib/side';
-import { CORAL } from '@/lib/theme';
-import { tap } from './ui';
+import { Segmented } from './ui';
 
 /** Shop / Book switch: flips the whole app between products and services instantly. */
 export function SideSwitch() {
-  const { side, setSide, c } = useSide();
-  const opt = (s: 'shop' | 'book', label: string) => {
-    const on = side === s;
-    return (
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityState={{ selected: on }}
-        onPress={() => {
-          if (!on) {
-            tap();
-            setSide(s);
-          }
-        }}
-        style={{ paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999, backgroundColor: on ? (s === 'shop' ? CORAL : c.primary) : 'transparent' }}
-      >
-        <Text style={{ fontWeight: '800', color: on ? (s === 'shop' ? '#fff' : c.onPrimary) : c.muted }}>{label}</Text>
-      </Pressable>
-    );
-  };
+  const { side, setSide } = useSide();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: c.soft, borderRadius: 999, padding: 4, alignSelf: 'flex-start' }}>
-      {opt('shop', 'Shop')}
-      {opt('book', 'Book')}
-    </View>
+    <Segmented
+      value={side}
+      onChange={setSide}
+      options={[
+        { value: 'shop', label: 'Shop', icon: (color) => <ShoppingCart size={16} color={color} /> },
+        { value: 'book', label: 'Book', icon: (color) => <CalendarDays size={16} color={color} /> },
+      ]}
+    />
   );
 }

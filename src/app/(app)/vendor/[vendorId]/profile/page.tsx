@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getVendorById } from '@/lib/services/vendors';
+import { registeredVendorIds } from '@/lib/verification';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Store, Mail, Phone, MapPin, Globe, ArrowLeft, Clock, Power, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { BadgeCheck, Store, Mail, Phone, MapPin, Globe, ArrowLeft, Clock, Power, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import type { Vendor } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
@@ -35,6 +36,7 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
   const vendor = await getVendorById(vendorId);
   if (!vendor) notFound();
 
+  const registered = registeredVendorIds().has(vendor.id);
   const vendorInitials = vendor.businessName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   const fullAddress = `${vendor.streetAddress}, ${vendor.city}, ${vendor.country}`;
 
@@ -61,6 +63,13 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
           <CardDescription className="mb-2">
             {vendor.locationTag ? `Located in ${vendor.locationTag}` : 'Vendor Profile'}
           </CardDescription>
+          {registered && (
+            <div className="flex justify-center mb-2">
+              <Badge variant="outline" className="gap-1 text-sm" title="This shop showed its CAC registration to Closebuy">
+                <BadgeCheck className="h-4 w-4 text-primary" /> Registered business
+              </Badge>
+            </div>
+          )}
           {vendor.status && (
             <div className="flex items-center justify-center gap-2">
               {getStatusIcon(vendor.status)}

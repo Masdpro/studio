@@ -1,13 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { Button, Card, Chip, Divider, Field, Row, Screen, Txt } from '@/components/ui';
+import { MapPin, ShieldCheck, Store, Truck, Wallet as WalletIcon } from 'lucide-react-native';
+import { ScrollView, TextInput, View } from 'react-native';
+import { Button, Card, Chip, Img, Row, Screen, Segmented, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useCart } from '@/lib/cart';
 import { useCatalog, useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
-import { naira } from '@/lib/theme';
+import { font, naira } from '@/lib/theme';
 
 const DELIVERY_FEE = 1500; // per shop, same as the server
 
@@ -53,69 +54,123 @@ export default function Checkout() {
     }
   };
 
+  const placeFrom = (vid: string) => {
+    const v = vendor(vid);
+    return v ? `${v.businessName}, ${v.streetAddress}, ${v.city}` : 'The shop';
+  };
+
   return (
     <Screen
       side="shop"
       edges={[]}
       footer={
-        short ? (
-          <Button side="shop" title={`Top up ${naira(total - (balance ?? 0))} to pay`} onPress={() => router.navigate('/wallet')} />
-        ) : (
-          <Button side="shop" title={`Pay ${naira(total)} from wallet`} onPress={place} loading={busy} disabled={!cart.items.length || (mode === 'delivery' && address.trim().length < 5)} />
-        )
+        <View style={{ gap: 8 }}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Txt side="shop" size={13} muted>Subtotal</Txt>
+            <Txt side="shop" size={13} muted>{naira(cart.subtotal)}</Txt>
+          </Row>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Txt side="shop" size={13} muted>{mode === 'delivery' ? `Delivery${shops > 1 ? ` (${shops} shops)` : ''}` : 'Pickup'}</Txt>
+            <Txt side="shop" size={13} muted>{fee ? naira(fee) : 'Free'}</Txt>
+          </Row>
+          <Row style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+            <Txt side="shop" size={17} weight="800">Total</Txt>
+            <Txt side="shop" size={17} weight="800">{naira(total)}</Txt>
+          </Row>
+          {short ? (
+            <Button side="shop" kind="primary" title={`Top up ${naira(total - (balance ?? 0))} to pay`} onPress={() => router.navigate('/wallet')} />
+          ) : (
+            <Button side="shop" title={`Place order · ${naira(total)}`} icon={<ShieldCheck size={18} color={c.onPrimary} />} onPress={place} loading={busy} disabled={!cart.items.length || (mode === 'delivery' && address.trim().length < 5)} />
+          )}
+        </View>
       }
     >
       <Stack.Screen options={{ title: 'Checkout' }} />
-      <Txt side="shop" weight="700" style={{ marginBottom: 8 }}>How do you want it?</Txt>
-      <Row style={{ marginBottom: 14 }}>
-        <Chip side="shop" label="Deliver to me" active={mode === 'delivery'} onPress={() => setMode('delivery')} />
-        <Chip side="shop" label="I’ll pick it up" active={mode === 'pickup'} onPress={() => setMode('pickup')} />
-      </Row>
+      <Segmented
+        side="shop"
+        value={mode}
+        onChange={setMode}
+        options={[
+          { value: 'delivery', label: 'Delivery', icon: (col) => <Truck size={16} color={col} /> },
+          { value: 'pickup', label: 'Pickup', icon: (col) => <Store size={16} color={col} /> },
+        ]}
+      />
+
+      <Txt side="shop" size={13} weight="800" style={{ marginTop: 20, marginBottom: 8 }}>{mode === 'delivery' ? 'Deliver to' : 'Collect from'}</Txt>
       {mode === 'delivery' ? (
         <View>
-          <Field side="shop" label="Delivery address" value={address} onChangeText={setAddress} placeholder="House number, street, area, city" multiline />
+          <Card side="shop" style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 10 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.soft, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+              <MapPin size={18} color={c.text} />
+            </View>
+            <TextInput
+              accessibilityLabel="Delivery address"
+              value={address}
+              onChangeText={setAddress}
+              placeholder="House number, street, area, city"
+              placeholderTextColor={c.muted}
+              multiline
+              style={{ flex: 1, minHeight: 44, fontSize: 15, ...font('600'), color: c.text, paddingTop: 10, textAlignVertical: 'top' }}
+            />
+          </Card>
           {saved.data?.addresses.length ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: -6, marginBottom: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
               {saved.data.addresses.map((a) => <Chip side="shop" key={a} label={a.length > 32 ? `${a.slice(0, 32)}…` : a} active={address === a} onPress={() => setAddress(a)} />)}
             </ScrollView>
           ) : null}
         </View>
       ) : (
-        vendorIds.map((vid) =>
-          openBranches(vid).length ? (
-            <View key={vid} style={{ marginBottom: 12 }}>
-              <Txt side="shop" size={13} weight="600" style={{ marginBottom: 6 }}>Collect from {vendor(vid)?.businessName}</Txt>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Chip side="shop" label="Main shop" active={(branchFor[vid] ?? 'main') === 'main'} onPress={() => setBranchFor((s) => ({ ...s, [vid]: 'main' }))} />
-                {openBranches(vid).map((b) => <Chip side="shop" key={b.id} label={b.name} active={branchFor[vid] === b.id} onPress={() => setBranchFor((s) => ({ ...s, [vid]: b.id }))} />)}
-              </ScrollView>
-            </View>
-          ) : (
-            <Txt key={vid} side="shop" size={14} style={{ marginBottom: 12 }}>
-              Collect from {vendor(vid)?.businessName ?? 'the shop'}{vendor(vid) ? `, ${vendor(vid)!.streetAddress}, ${vendor(vid)!.city}` : ''}
-            </Txt>
-          ),
-        )
+        <View style={{ gap: 10 }}>
+          {vendorIds.map((vid) => (
+            <Card key={vid} side="shop" style={{ gap: 10 }}>
+              <Row gap={12}>
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.soft, alignItems: 'center', justifyContent: 'center' }}>
+                  <Store size={18} color={c.text} />
+                </View>
+                <Txt side="shop" size={14} weight="700" style={{ flex: 1 }}>{placeFrom(vid)}</Txt>
+              </Row>
+              {openBranches(vid).length ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <Chip side="shop" label="Main shop" active={(branchFor[vid] ?? 'main') === 'main'} onPress={() => setBranchFor((s) => ({ ...s, [vid]: 'main' }))} />
+                  {openBranches(vid).map((b) => <Chip side="shop" key={b.id} label={b.name} active={branchFor[vid] === b.id} onPress={() => setBranchFor((s) => ({ ...s, [vid]: b.id }))} />)}
+                </ScrollView>
+              ) : null}
+            </Card>
+          ))}
+        </View>
       )}
-      <Card side="shop">
-        {cart.items.map((i) => (
-          <Row key={`${i.productId}${i.color}${i.size}`} style={{ justifyContent: 'space-between', paddingVertical: 4 }}>
-            <Txt side="shop" size={14} style={{ flex: 1 }} numberOfLines={1}>{i.quantity}× {i.name}{i.size ? ` (${i.size})` : ''}</Txt>
-            <Txt side="shop" size={14}>{naira(i.price * i.quantity)}</Txt>
-          </Row>
+
+      <Txt side="shop" size={13} weight="800" style={{ marginTop: 20, marginBottom: 8 }}>Your order · {cart.count} {cart.count === 1 ? 'item' : 'items'}</Txt>
+      <Card side="shop" style={{ gap: 12 }}>
+        {cart.items.map((i, n) => (
+          <View key={`${i.productId}${i.color}${i.size}`} style={{ gap: 12 }}>
+            {n ? <View style={{ height: 1, backgroundColor: c.soft }} /> : null}
+            <Row gap={12}>
+              <Img uri={i.imageUrl} style={{ width: 52, height: 52 }} radius={14} />
+              <View style={{ flex: 1 }}>
+                <Txt side="shop" size={14} weight="700" numberOfLines={1}>{i.name}</Txt>
+                <Txt side="shop" size={12} muted numberOfLines={1}>{[vendor(i.vendorId ?? '')?.businessName, i.color, i.size, `×${i.quantity}`].filter(Boolean).join(' · ')}</Txt>
+              </View>
+              <Txt side="shop" size={14} weight="800">{naira(i.price * i.quantity)}</Txt>
+            </Row>
+          </View>
         ))}
-        <Divider />
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Txt side="shop" muted>Delivery{shops > 1 && mode === 'delivery' ? ` (${shops} shops)` : ''}</Txt>
-          <Txt side="shop">{fee ? naira(fee) : 'Free'}</Txt>
-        </Row>
-        <Row style={{ justifyContent: 'space-between', marginTop: 6 }}>
-          <Txt side="shop" weight="800" size={17}>Total</Txt>
-          <Txt side="shop" weight="800" size={17}>{naira(total)}</Txt>
-        </Row>
-        <Txt side="shop" size={13} muted style={{ marginTop: 8 }}>Wallet balance: {balance != null ? naira(balance) : '…'}</Txt>
       </Card>
-      {mode === 'delivery' ? <Txt side="shop" size={12} muted style={{ marginTop: 10 }}>When the rider arrives you’ll get a delivery code. Give it only after checking your items.</Txt> : null}
+
+      <Txt side="shop" size={13} weight="800" style={{ marginTop: 20, marginBottom: 8 }}>Pay with</Txt>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: c.primary }}>
+        <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+          <WalletIcon size={18} color={c.onPrimary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Txt side="shop" size={14} weight="700">Closebuy wallet</Txt>
+          <Txt side="shop" size={12} muted>Balance {balance != null ? naira(balance) : '…'}</Txt>
+        </View>
+        <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 6, borderColor: c.primary }} />
+      </View>
+      {short ? <Txt side="shop" size={12} color={c.danger} style={{ marginTop: 8 }}>Your wallet is {naira(total - (balance ?? 0))} short. Top up by card or bank transfer, then come back.</Txt> : null}
+
+      {mode === 'delivery' ? <Txt side="shop" size={12} muted style={{ marginTop: 14 }}>When the rider arrives you’ll get a delivery code. Give it only after checking your items.</Txt> : null}
       {error ? <Txt side="shop" color={c.danger} style={{ marginTop: 12 }}>{error}</Txt> : null}
     </Screen>
   );

@@ -10,7 +10,7 @@ import { confirmAsk } from '@/lib/confirm';
 import { orderStatus, when } from '@/lib/format';
 import { useCatalog, useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
-import { naira, radius } from '@/lib/theme';
+import { naira, radius, glassShadow } from '@/lib/theme';
 import type { Order } from '@/lib/types';
 
 const STEPS_DELIVERY = [
@@ -71,10 +71,10 @@ export default function OrderScreen() {
       <Txt side="shop" size={20} weight="800" style={{ marginTop: 10 }}>{vendor?.businessName ?? 'Your order'}</Txt>
 
       {onTheWay ? (
-        <View style={{ backgroundColor: c.primary, borderRadius: radius.lg, padding: 18, marginTop: 14 }}>
-          <Row gap={8}><KeyRound color="#fff" size={18} /><Txt color="#fff" weight="700">Your delivery code</Txt></Row>
-          <Txt color="#fff" size={40} weight="800" style={{ letterSpacing: 8, marginVertical: 6 }} selectable>{code.data?.code ?? '····'}</Txt>
-          <Txt color="#fff" size={13}>Check your items first. Give this code to the rider only when you’re happy: it confirms delivery and pays the shop.</Txt>
+        <View style={{ backgroundColor: c.ink, borderRadius: radius.xl, padding: 20, marginTop: 14, borderWidth: 1, borderColor: c.inkBorder, ...glassShadow }}>
+          <Row gap={8}><KeyRound color={c.primary} size={18} /><Txt color={c.onInk} weight="700">Your delivery code</Txt></Row>
+          <Txt color={c.text} size={40} weight="800" style={{ letterSpacing: 8, marginVertical: 6 }} selectable>{code.data?.code ?? '····'}</Txt>
+          <Txt color={c.onInk} size={13}>Check your items first. Give this code to the rider only when you’re happy: it confirms delivery and pays the shop.</Txt>
         </View>
       ) : null}
 
@@ -97,7 +97,7 @@ export default function OrderScreen() {
             return (
               <Row key={key} gap={12} style={{ paddingVertical: 6 }}>
                 <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: done ? c.primary : c.soft, alignItems: 'center', justifyContent: 'center' }}>
-                  {done ? <Check size={14} color="#fff" /> : null}
+                  {done ? <Check size={14} color={c.onPrimary} /> : null}
                 </View>
                 <Txt side="shop" weight={i === current ? '700' : '400'} muted={!done}>{label}</Txt>
               </Row>

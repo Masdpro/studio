@@ -38,7 +38,7 @@ export default function SignIn() {
       {error ? <Txt color={c.danger} style={{ marginBottom: 12 }}>{error}</Txt> : null}
       <Button title="Sign in" onPress={submit} loading={busy} disabled={!email || !password} />
       <Pressable onPress={() => WebBrowser.openBrowserAsync(`${API_URL}/auth/forgot-password`)} style={{ marginTop: 18 }}>
-        <Txt center weight="600" color={c.primary === '#ff8f66' ? '#d9623a' : c.text}>Forgot your password?</Txt>
+        <Txt center weight="600" color={c.text}>Forgot your password?</Txt>
       </Pressable>
       <View style={{ marginTop: 28 }}>
         <Txt center muted>New to Closebuy?</Txt>

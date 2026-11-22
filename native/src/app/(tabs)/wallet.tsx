@@ -55,7 +55,7 @@ export default function WalletTab() {
   };
 
   return (
-    <Screen refreshing={wallet.isRefetching} onRefresh={refresh}>
+    <Screen tabs refreshing={wallet.isRefetching} onRefresh={refresh}>
       <H1>Wallet</H1>
       <View style={{ backgroundColor: c.primary, borderRadius: radius.lg, padding: 20, marginTop: 14 }}>
         <Txt color={c.onPrimary} size={14} weight="600">Balance</Txt>

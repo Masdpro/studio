@@ -21,6 +21,8 @@ type Account = VerificationState & {
   reviewRole: 'vendor' | 'delivery_agent' | 'provider';
   otherRoles?: { role: string; label: string; approvalStatus: string }[];
   liveCheck?: LiveCheck | null;
+  verificationRoute?: string;
+  verificationRouteLabel?: string;
 };
 const ROLE_NAME = { vendor: 'Vendor', delivery_agent: 'Delivery agent', provider: 'Service provider' } as const;
 const keyOf = (a: Account) => `${a.id}:${a.reviewRole}`;
@@ -121,6 +123,12 @@ export default function AdminVerificationsPage() {
           <Check ok={a.phoneVerified || !a.phoneRequired} label={a.phoneVerified || a.phoneRequired ? 'Phone' : 'Phone (not required yet)'} />
           <Check ok={a.documentsComplete} label="Documents" />
         </div>
+        {a.reviewRole === 'vendor' && a.verificationRouteLabel ? (
+          <p className="text-sm text-muted-foreground">
+            Verifying as: <span className="font-medium text-foreground">{a.verificationRouteLabel}</span>
+            {a.verificationRoute === 'registered' ? ' · check the CAC certificate is real and matches the shop name' : ' · check the ID matches the live selfie'}
+          </p>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {a.requiredDocuments.map((d) =>
             d.uploaded && d.id ? (

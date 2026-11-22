@@ -3,7 +3,7 @@ import * as Linking from 'expo-linking';
 import { Clock, MapPin, Phone } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { ProductCard, useGridWidth } from '@/components/cards';
+import { ProductCard, RegisteredBadge, useGridWidth } from '@/components/cards';
 import { Chip, Empty, ErrorNote, H1, Img, Loading, Pill, Row, Screen, Txt } from '@/components/ui';
 import { useShop } from '@/lib/shop';
 import { useColors } from '@/lib/side';
@@ -31,6 +31,7 @@ export default function StoreScreen() {
               <H1 side="shop" style={{ flex: 1, fontSize: 22 }}>{v.businessName}</H1>
               {v.status ? <Pill label={v.status} tone={v.status === 'Open' ? 'good' : 'warn'} /> : null}
             </Row>
+            {v.registered ? <RegisteredBadge /> : null}
             <Row gap={6}><MapPin size={14} color={c.muted} /><Txt side="shop" size={14} muted style={{ flex: 1 }}>{v.streetAddress}, {v.city}</Txt></Row>
             {v.operatingHours ? <Row gap={6}><Clock size={14} color={c.muted} /><Txt side="shop" size={14} muted>{v.operatingHours}</Txt></Row> : null}
             {v.phone ? (

@@ -6,7 +6,7 @@ import { priceOf } from '@/components/cards';
 import { Button, Card, Chip, Empty, ErrorNote, Img, Loading, Pill, Row, Screen, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useGet } from '@/lib/query';
-import { naira } from '@/lib/theme';
+import { naira, palettes } from '@/lib/theme';
 import type { Product } from '@/lib/types';
 
 export default function VendorProducts() {
@@ -27,7 +27,7 @@ export default function VendorProducts() {
   return (
     <Screen side="shop" edges={[]} refreshing={q.isRefetching} onRefresh={q.refetch}>
       <Stack.Screen options={{ title: 'Products' }} />
-      <Button side="shop" title="Add a product" icon={<Plus color="#fff" size={18} />} onPress={() => router.push('/vendor/product/new')} />
+      <Button side="shop" title="Add a product" icon={<Plus color={palettes.shop.onPrimary} size={18} />} onPress={() => router.push('/vendor/product/new')} />
       <Row style={{ marginVertical: 12 }}>
         {(['all', 'live', 'paused', 'out'] as const).map((f) => <Chip side="shop" key={f} label={{ all: 'All', live: 'Live', paused: 'Paused', out: 'Sold out' }[f]} active={filter === f} onPress={() => setFilter(f)} />)}
       </Row>

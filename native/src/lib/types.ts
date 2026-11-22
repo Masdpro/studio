@@ -20,6 +20,8 @@ export type Vendor = {
   longitude?: number;
   operatingHours?: string;
   status?: 'Open' | 'Closed' | 'Opening Soon' | 'Temporarily Unavailable';
+  /** Verified with CAC registration papers. */
+  registered?: boolean;
 };
 
 export type Branch = {

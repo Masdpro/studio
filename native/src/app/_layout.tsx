@@ -1,3 +1,11 @@
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,6 +16,7 @@ import { CartProvider } from '@/lib/cart';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
 import { SideProvider, useSide } from '@/lib/side';
+import { font } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -36,8 +45,10 @@ const TITLES: Record<string, string> = {
 export const unstable_settings = { anchor: '(tabs)' };
 
 function Navigator() {
-  const { ready } = useSession();
+  const { ready: signedInChecked } = useSession();
   const { c } = useSide();
+  const [fontsLoaded, fontError] = useFonts({ PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold });
+  const ready = signedInChecked && (fontsLoaded || !!fontError);
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
@@ -49,7 +60,7 @@ function Navigator() {
         screenOptions={{
           headerStyle: { backgroundColor: c.bg },
           headerTintColor: c.text,
-          headerTitleStyle: { fontWeight: '700' },
+          headerTitleStyle: { ...font('800'), fontSize: 18 },
           headerShadowVisible: false,
           headerBackButtonDisplayMode: 'minimal',
           contentStyle: { backgroundColor: c.bg },

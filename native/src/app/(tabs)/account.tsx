@@ -25,7 +25,7 @@ export default function Account() {
   };
 
   return (
-    <Screen>
+    <Screen tabs>
       <H1>{user.name || 'Account'}</H1>
       <Txt muted>{user.email}</Txt>
 

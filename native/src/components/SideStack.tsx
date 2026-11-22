@@ -1,17 +1,19 @@
 import { router, Stack } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Pressable } from 'react-native';
-import { palettes, type Side } from '@/lib/theme';
+import { FixedSide } from '@/lib/side';
+import { font, palettes, type Side } from '@/lib/theme';
 
 /** A screen stack that always uses one side's look (business areas keep their colours whichever side is showing). */
 export function SideStack({ side }: { side: Side }) {
   const c = palettes[side];
   return (
+    <FixedSide side={side}>
     <Stack
       screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: c.bg },
         headerTintColor: c.text,
-        headerTitleStyle: { fontWeight: '700' },
+        headerTitleStyle: { ...font('800'), fontSize: 18 },
         headerShadowVisible: false,
         headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: c.bg },
@@ -26,5 +28,6 @@ export function SideStack({ side }: { side: Side }) {
             : undefined,
       })}
     />
+    </FixedSide>
   );
 }

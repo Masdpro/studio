@@ -15,7 +15,7 @@ function Orders() {
   const { c } = useSide();
   const orders = [...(q.data?.orders ?? [])].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
   return (
-    <Screen refreshing={q.isRefetching} onRefresh={q.refetch}>
+    <Screen tabs refreshing={q.isRefetching} onRefresh={q.refetch}>
       <H1>Your orders</H1>
       <Button small kind="ghost" title="Errands: ask a rider to buy for you" style={{ alignSelf: 'flex-start', marginTop: 10 }} onPress={() => router.push('/errands')} />
       <ErrorNote error={q.error} onRetry={q.refetch} />
@@ -71,7 +71,7 @@ function Bookings() {
     );
   };
   return (
-    <Screen refreshing={q.isRefetching} onRefresh={q.refetch}>
+    <Screen tabs refreshing={q.isRefetching} onRefresh={q.refetch}>
       <H1>Your bookings</H1>
       <ErrorNote error={q.error} onRetry={q.refetch} />
       {q.isLoading ? <Loading /> : null}

@@ -27,10 +27,12 @@ export async function GET() {
         approvalStatus: r.approvalStatus,
         approvalNote: r.approvalNote,
         requiredDocuments: r.requiredDocuments,
+        verificationRoute: r.route,
+        verificationRouteLabel: r.routeLabel,
         documentsComplete: r.documentsComplete,
         readyForReview: r.readyForReview,
         otherRoles: state.tradingRoles.filter((o) => o.role !== r.role).map((o) => ({ role: o.role, label: o.label, approvalStatus: o.approvalStatus })),
-        liveCheck: r.role === 'delivery_agent' || r.role === 'provider' ? liveCheck : null,
+        liveCheck: r.requiredDocuments.some((d) => d.kind === 'selfie') ? liveCheck : null,
       }));
     })
     .sort((a, b) => order[a.approvalStatus] - order[b.approvalStatus] || b.createdAt.getTime() - a.createdAt.getTime());

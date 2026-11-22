@@ -20,6 +20,9 @@ export type RoleVerification = {
   documentsComplete: boolean;
   readyForReview: boolean;
   mayTrade: boolean;
+  /** Ways this role can be verified (shops: with or without CAC). */
+  route?: string;
+  routes?: { id: string; label: string; hint: string; documents: Doc[]; complete: boolean }[];
 };
 
 export type VerificationState = {
@@ -61,6 +64,8 @@ export function AccountVerification({ focus }: { focus?: 'vendor' | 'delivery_ag
   const [devCode, setDevCode] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
+  // Which verification route each role is showing (shops pick "with CAC" or "without CAC").
+  const [routeChoice, setRouteChoice] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const res = await fetch('/api/account/verification');
@@ -199,7 +204,31 @@ export function AccountVerification({ focus }: { focus?: 'vendor' | 'delivery_ag
               return (
                 <div key={r.role} className="space-y-6">
                   <Step done={r.documentsComplete} title={many ? `${r.label} documents` : 'Documents'}>
-                    {r.requiredDocuments.map((d) => (
+                    {(() => {
+                      if (!r.routes || r.routes.length < 2) return null;
+                      const current = routeChoice[r.role] ?? r.route;
+                      const chosen = r.routes.find((x) => x.id === current) ?? r.routes[0];
+                      return (
+                        <div className="space-y-2">
+                          <div role="radiogroup" aria-label="How do you want to verify?" className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                            {r.routes.map((x) => (
+                              <button
+                                key={x.id}
+                                type="button"
+                                role="radio"
+                                aria-checked={x.id === chosen.id}
+                                onClick={() => setRouteChoice((c) => ({ ...c, [r.role]: x.id }))}
+                                className={`rounded-md px-3 py-2 text-sm font-medium ${x.id === chosen.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                              >
+                                {x.label}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{chosen.hint}</p>
+                        </div>
+                      );
+                    })()}
+                    {(r.routes && r.routes.length > 1 ? (r.routes.find((x) => x.id === (routeChoice[r.role] ?? r.route)) ?? r.routes[0]).documents : r.requiredDocuments).map((d) => (
                       <div key={d.kind} className="flex flex-wrap items-center gap-2 rounded-md border p-3">
                         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                         <span className="text-sm flex-1 min-w-[12rem]">{d.label}</span>

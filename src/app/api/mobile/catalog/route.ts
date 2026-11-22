@@ -4,6 +4,7 @@ import { getVendorById, getVendors } from '@/lib/services/vendors';
 import { getMarkets } from '@/lib/services/markets';
 import { getAllBranches, getBranchesByVendor } from '@/lib/services/branches';
 import { listedProviders } from '@/lib/services/providers';
+import { registeredVendorIds } from '@/lib/verification';
 
 // Always the latest shops, products and service businesses (never a copy made at build time).
 export const dynamic = 'force-dynamic';
@@ -25,17 +26,19 @@ export async function GET(request: Request) {
     if (!vendor || suspendedVendorIds().has(vendorId)) return NextResponse.json({ error: 'This shop is not available.' }, { status: 404 });
     const [products, branches] = await Promise.all([getProductsByVendor(vendorId), getBranchesByVendor(vendorId)]);
     const { contactEmail: _e, ...shop } = vendor;
-    return NextResponse.json({ vendor: shop, products, branches: branches.map(({ accountEmail: _a, ...b }) => b) }, noStore);
+    return NextResponse.json({ vendor: { ...shop, registered: registeredVendorIds().has(vendorId) }, products, branches: branches.map(({ accountEmail: _a, ...b }) => b) }, noStore);
   }
 
   const side = params.get('side');
   const body: Record<string, unknown> = {};
   if (side !== 'book') {
     const [products, vendors, markets, branches] = await Promise.all([getProducts(), getVendors(), getMarkets(), getAllBranches()]);
+    // Shops verified with CAC papers show a "Registered business" badge.
+    const registered = registeredVendorIds();
     // Contact emails aren't needed to browse; keep them off the wire.
     Object.assign(body, {
       products,
-      vendors: vendors.map(({ contactEmail: _e, ...v }) => v),
+      vendors: vendors.map(({ contactEmail: _e, ...v }) => ({ ...v, registered: registered.has(v.id) })),
       markets,
       branches: branches.map(({ accountEmail: _a, ...b }) => b),
     });
