@@ -32,7 +32,8 @@ import { VendorProfileDisplay } from '@/components/vendor/VendorProfileDisplay';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useRouter, useSearchParams } from 'next/navigation';
-import { parseHomeView } from '@/components/layout/HomeViewTabs';
+import { parseHomeView, type HomeView } from '@/components/layout/HomeViewTabs';
+import { SearchWithFilters, FilterField, ChipChoice } from '@/components/home/SearchWithFilters';
 import { FitChips } from '@/components/home/FitChips';
 import { MarketCard } from '@/components/market/MarketCard';
 // Data now comes from the database (via src/lib/services) and is fetched
@@ -64,7 +65,7 @@ export default function HomePageClient({
   initialMarkets: sampleMarkets,
   initialBranches = [],
 }: HomePageClientProps) {
-  // Products / Markets is switched from the header (see HomeViewTabs) via ?view=
+  // Products / Markets is chosen in the filter pop-up and kept in the URL (?view=markets).
   const searchParams = useSearchParams();
   const activeView = parseHomeView(searchParams.get('view'));
   const router = useRouter();
@@ -494,6 +495,20 @@ export default function HomePageClient({
     }
   };
 
+  // How many filters in the pop-up are switched on (shown on the filter button).
+  const setView = (v: HomeView) => router.replace(v === 'markets' ? '/shop?view=markets' : '/shop', { scroll: false });
+  const activeFilterCount =
+    (activeView === 'markets' ? 1 : 0) +
+    (selectedLocation !== ALL_LOCATIONS_VALUE ? 1 : 0) +
+    (selectedVendorId !== 'All' && activeView !== 'markets' ? 1 : 0) +
+    (selectedCategory !== 'All' ? 1 : 0);
+  const clearFilters = () => {
+    if (activeView === 'markets') setView('products');
+    handleLocationChange(ALL_LOCATIONS_VALUE);
+    setSelectedVendorId('All');
+    setSelectedCategory('All');
+  };
+
   const renderMarketContent = () => {
     return (
       <div className="space-y-10">
@@ -542,8 +557,8 @@ export default function HomePageClient({
     <div className="flex flex-col h-full">
       <Tabs value={activeView} className="w-full flex flex-col h-full">
         <div className="flex-1 container mx-auto px-4 md:px-6 pt-2 pb-8 md:pt-3">
-          {/* Shared Filter Block */}
-          <div className="mb-8 p-4 md:p-5 bg-card rounded-xl shadow-md border space-y-4">
+          {/* Computers: the full filter card. Phones and small tablets use the search box with a filter pop-up below. */}
+          <div className="mb-8 hidden p-4 md:block md:p-5 bg-card rounded-xl shadow-md border space-y-4">
             <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] items-start">
                 <div>
                 <h3 className="text-sm font-semibold mb-2 flex items-center text-foreground">
@@ -638,21 +653,89 @@ export default function HomePageClient({
             </div>
           </div>
 
+          {/* Phones and small tablets: one search box; the filter button inside it opens the other filters in a pop-up. */}
+          <SearchWithFilters
+            className="md:hidden"
+            value={searchTerm}
+            onChange={setSearchTerm}
+            label="Search products, markets and vendors"
+            placeholder="Search items or shops…"
+            activeCount={activeFilterCount}
+            onClear={clearFilters}
+            resultLabel={activeView === 'markets' ? `Show ${filteredMarkets.length} market${filteredMarkets.length === 1 ? '' : 's'}` : `Show ${filteredProducts.length} item${filteredProducts.length === 1 ? '' : 's'}`}
+          >
+            <FilterField icon={<ShoppingBag className="h-4 w-4 text-primary" />} title="Show">
+              <ChipChoice items={['Products', 'Markets']} selected={activeView === 'markets' ? 'Markets' : 'Products'} onSelect={(v) => setView(v === 'Markets' ? 'markets' : 'products')} />
+            </FilterField>
+            <FilterField icon={<MapPin className="h-4 w-4 text-primary" />} title="City or area">
+              <LocationCombobox
+                areas={locationsForFilter}
+                allValue={ALL_LOCATIONS_VALUE}
+                currentValue={USER_CURRENT_LOCATION_VALUE}
+                selected={selectedLocation === CUSTOM_ADDRESS_VALUE ? CUSTOM_ADDRESS_VALUE : selectedLocation}
+                activeAddress={selectedLocation === CUSTOM_ADDRESS_VALUE ? activeAddress : null}
+                history={addressHistory}
+                resolving={isResolvingAddress || isLocating}
+                note={selectedLocation === CUSTOM_ADDRESS_VALUE ? addressNote : null}
+                detected={detected}
+                detecting={detecting}
+                detectError={detectError}
+                onDetect={detectLocation}
+                onUseDetected={() => { if (detected) { applyAddress(detected); setDetected(null); } }}
+                onSelectArea={handleLocationChange}
+                onSelectAddress={applyAddress}
+                onSubmitAddress={submitAddress}
+                onForgetAddress={(addr) => { setAddressHistory(forgetAddress(addr)); if (activeAddress === addr) { setActiveAddress(null); if (selectedLocation === CUSTOM_ADDRESS_VALUE) setSelectedLocation(ALL_LOCATIONS_VALUE); } }}
+              />
+              {isLocating && <p className="text-xs text-muted-foreground mt-2">Fetching your location...</p>}
+              {!isLocating && selectedLocation === USER_CURRENT_LOCATION_VALUE && !locationError && (
+                <p className="text-xs text-muted-foreground mt-2">Resolving address…</p>
+              )}
+              {locationError && (
+                <Alert variant="destructive" className="mt-2 py-2 px-3">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle className="text-xs">Location Error</AlertTitle>
+                  <AlertDescription className="text-xs">{locationError}</AlertDescription>
+                </Alert>
+              )}
+            </FilterField>
+            <FilterField icon={<Store className="h-4 w-4 text-primary" />} title="Vendor">
+              <Select onValueChange={handleVendorChange} value={activeView === 'markets' ? 'All' : selectedVendorId}>
+                <SelectTrigger className="w-full h-10 rounded-lg border-border focus:ring-primary">
+                  <SelectValue placeholder="Select a vendor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vendorOptions.map(vendor => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                      {vendor.businessName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
+            {categories.length > 1 && (
+              <FilterField icon={<ShoppingBag className="h-4 w-4 text-primary" />} title="Category">
+                <ChipChoice items={categories} selected={selectedCategory} onSelect={setSelectedCategory} />
+              </FilterField>
+            )}
+          </SearchWithFilters>
+
           <TabsContent value="products" className="mt-0 outline-none space-y-12">
             {/* Awoof Deals Horizontal Scroll */}
             {flashDeals.length > 0 && searchTerm === '' && (
               <section className="relative">
-                <div className={cn('flex items-center justify-between', dealsOpen && 'mb-4')}>
-                  <h2 className="text-2xl font-bold">
+                <div className={cn('flex items-center justify-between gap-2', dealsOpen && 'mb-4')}>
+                  <h2 className="whitespace-nowrap text-xl font-bold sm:text-2xl">
                     <button type="button" onClick={toggleDeals} aria-expanded={dealsOpen} aria-controls="awoof-deals" className="flex items-center gap-2 text-left">
                       <Zap className="h-6 w-6 text-red-600 fill-current" />
-                      Awoof Deals of the Day
+                      <span className="md:hidden">Awoof Deals</span>
+                      <span className="hidden md:inline">Awoof Deals of the Day</span>
                       <ChevronDown className={cn('h-5 w-5 text-muted-foreground transition-transform', !dealsOpen && '-rotate-90')} aria-hidden />
                     </button>
                   </h2>
                   <div className="flex items-center gap-2">
                     {!dealsOpen && <span className="text-xs text-muted-foreground">{flashDeals.length} deals</span>}
-                    <Badge variant="outline" className="border-red-600 text-red-600">Limited Time</Badge>
+                    <Badge variant="outline" className="whitespace-nowrap border-red-600 text-red-600">Limited Time</Badge>
                   </div>
                 </div>
                 {dealsOpen && (
@@ -675,7 +758,7 @@ export default function HomePageClient({
                   <ShoppingBag className="h-6 w-6 text-primary" />
                   Explore Local Items
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                   {filteredProducts.slice(0, shownProducts.count).map((product) => {
                     const vendor = vendorById.get(product.vendorId);
                     const vendorName = vendor ? vendor.businessName : 'Unknown Vendor';

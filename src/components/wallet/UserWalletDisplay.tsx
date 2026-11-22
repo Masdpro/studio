@@ -3,17 +3,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Wallet, CreditCard, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { payInPopup } from '@/lib/paystack-popup';
 
 // Same limits as the server (₦100 to ₦1,000,000 per top-up).
 const TOPUP_RULES = { amount: rules.naira('the amount', 100, 1_000_000) };
@@ -35,8 +36,14 @@ const parseFormattedNumber = (value: string): string => {
   return value.replace(/,/g, '');
 };
 
+/**
+ * The wallet pop-up (balance and "Add funds"). It has no button of its own: it stays mounted in the
+ * header and opens on the `wallet:open` event, fired from the account menu, the profile page, or
+ * checkout when the balance is short. It also confirms a top-up when Paystack sends the person back.
+ */
 export function UserWalletDisplay() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [balance, setBalance] = useState(0);
   const [addAmount, setAddAmount] = useState('');
@@ -108,7 +115,13 @@ export function UserWalletDisplay() {
   // this tab does the verify-and-toast itself instead.
   useEffect(() => {
     const reference = searchParams.get('reference') ?? searchParams.get('trxref');
-    if (!reference) return;
+    // Paying for an order online lands on /checkout/paid, which confirms the payment itself.
+    if (!reference || pathname.startsWith('/checkout/')) return;
+    if (searchParams.get('cancelled')) {
+      toast({ title: 'Top-up cancelled', description: 'You have not been charged.' });
+      router.replace('/shop', { scroll: false });
+      return;
+    }
 
     window.close();
 
@@ -214,18 +227,20 @@ export function UserWalletDisplay() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to start payment.');
 
-      // Open Paystack in its own tab rather than navigating Closebuy away —
-      // this tab stays put and polls for the result instead.
-      const popup = window.open(data.authorizationUrl, '_blank');
-      if (!popup) {
-        toast({
-          title: 'Pop-up blocked',
-          description: "Your browser blocked the payment tab — opening it here instead. Allow pop-ups for a smoother experience next time.",
-        });
+      // Paystack opens as a pop-up over this page (no new tab). When it reports success we still
+      // confirm with the server, which is what actually credits the wallet.
+      setIsOpen(false);
+      const result = await payInPopup(data.accessCode);
+      if (result === 'cancelled') {
+        setIsFundingWallet(false);
+        toast({ title: 'Top-up cancelled', description: 'You have not been charged.' });
+        return;
+      }
+      if (result === 'unavailable') {
+        // The pop-up couldn't load (e.g. blocked): use Paystack's own page in this tab instead.
         window.location.href = data.authorizationUrl;
         return;
       }
-
       setAddAmount('');
       pollForPaymentResult(data.reference);
     } catch (err) {
@@ -238,36 +253,21 @@ export function UserWalletDisplay() {
     }
   };
 
-  if (!isClient) {
-    return (
-      <div className="flex items-center gap-2 text-sm">
-        <Wallet className="h-5 w-5" />
-        <span>Loading...</span>
-      </div>
-    );
-  }
+  if (!isClient) return null;
 
   return (
-    <Popover open={isOpen} onOpenChange={(open) => {
+    <Dialog open={isOpen} onOpenChange={(open) => {
       setIsOpen(open);
       if (open) fetchBalance();
     }}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-primary" />
-          <span className="font-semibold">₦{balance.toLocaleString()}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Wallet className="h-5 w-5 text-primary" />My wallet</DialogTitle>
+          <DialogDescription>Pay for orders and bookings from your balance.</DialogDescription>
+        </DialogHeader>
         <div className="grid gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium leading-none">My Wallet (Naira)</h4>
-              <Link href="/wallet" className="text-xs font-medium text-primary underline" onClick={() => setIsOpen(false)}>History &amp; withdrawals</Link>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Your current account balance.
-            </p>
+          <div className="flex justify-end">
+            <Link href="/wallet" className="text-xs font-medium text-primary underline" onClick={() => setIsOpen(false)}>History &amp; withdrawals</Link>
           </div>
           <Card>
             <CardHeader className="pb-2">
@@ -301,7 +301,7 @@ export function UserWalletDisplay() {
           </div>
 
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }

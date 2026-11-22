@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { MapPin, ShieldCheck, Store, Truck, Wallet as WalletIcon } from 'lucide-react-native';
-import { ScrollView, TextInput, View } from 'react-native';
+import { CreditCard, MapPin, ShieldCheck, Store, Truck, Wallet as WalletIcon } from 'lucide-react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Button, Card, Chip, Img, Row, Screen, Segmented, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
+import { PaystackSheet, confirmPayment, type SheetResult } from '@/components/PaystackSheet';
 import { useCart } from '@/lib/cart';
 import { useCatalog, useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
@@ -24,16 +25,52 @@ export default function Checkout() {
   const [branchFor, setBranchFor] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // How to pay: the wallet balance, or online with Paystack inside the app (card, transfer, USSD...).
+  const [method, setMethod] = useState<'wallet' | 'online'>('wallet');
+  const [payUrl, setPayUrl] = useState<string | null>(null);
+  const [payRef, setPayRef] = useState<string | null>(null);
 
   const vendorIds = useMemo(() => [...new Set(cart.items.map((i) => i.vendorId ?? ''))], [cart.items]);
   const shops = vendorIds.length;
   const fee = mode === 'delivery' ? DELIVERY_FEE * shops : 0;
   const total = cart.subtotal + fee;
   const balance = wallet.data?.wallet.balance;
-  const short = balance != null && balance < total;
+  const short = method === 'wallet' && balance != null && balance < total;
   const vendor = (id: string) => data?.vendors.find((v) => v.id === id);
   const openBranches = (id: string) => (data?.branches ?? []).filter((b) => b.vendorId === id && b.status !== 'Closed' && b.status !== 'Temporarily Unavailable');
   const addr = mode === 'delivery' ? address.trim() : 'Pickup from shop';
+
+  /** Pay online: start a Paystack payment for the total and open it in the in-app sheet. */
+  const payOnline = async () => {
+    setError(null);
+    if (total > 1_000_000) { setError('Online payments go up to ₦1,000,000. Please pay from your wallet.'); return; }
+    setBusy(true);
+    try {
+      const { authorizationUrl, reference } = await api<{ authorizationUrl: string; reference: string }>('/api/payments/wallet/initialize', { body: { amount: total, purpose: 'order' } });
+      setPayRef(reference);
+      setPayUrl(authorizationUrl);
+    } catch (e: any) {
+      setError(e.message);
+      setBusy(false);
+    }
+  };
+
+  /** The payment sheet closed: confirm the payment (it lands in the wallet), then place the order from it. */
+  const onPaid = async (r: SheetResult) => {
+    setPayUrl(null);
+    const ref = r.status === 'done' && r.reference ? r.reference : payRef;
+    setPayRef(null);
+    if (!ref) { setBusy(false); return; }
+    const res = await confirmPayment((x) => api(`/api/payments/wallet/verify?reference=${encodeURIComponent(x)}`), ref, r.status === 'done' ? 10 : 1);
+    qc.invalidateQueries({ queryKey: ['wallet'] });
+    if (res.success) return place();
+    setBusy(false);
+    setError(
+      r.status === 'cancelled' ? 'Payment cancelled. You have not been charged.'
+        : res.pending ? 'Your bank has not confirmed the payment yet. If you paid, the money will appear in your wallet shortly and you can pay from there.'
+          : res.error ?? 'The payment was not completed.',
+    );
+  };
 
   const place = async () => {
     setError(null);
@@ -48,7 +85,8 @@ export default function Checkout() {
       router.dismissTo('/activity');
       if (orderIds.length === 1) router.push(`/order/${orderIds[0]}`);
     } catch (e: any) {
-      setError(e.message);
+      // After paying online the money is already in the wallet, so say where it is.
+      setError(method === 'online' ? `${e.message} Your payment is safe in your Closebuy wallet.` : e.message);
     } finally {
       setBusy(false);
     }
@@ -80,7 +118,14 @@ export default function Checkout() {
           {short ? (
             <Button side="shop" kind="primary" title={`Top up ${naira(total - (balance ?? 0))} to pay`} onPress={() => router.navigate('/wallet')} />
           ) : (
-            <Button side="shop" title={`Place order · ${naira(total)}`} icon={<ShieldCheck size={18} color={c.onPrimary} />} onPress={place} loading={busy} disabled={!cart.items.length || (mode === 'delivery' && address.trim().length < 5)} />
+            <Button
+              side="shop"
+              title={method === 'online' ? `Pay ${naira(total)} online` : `Place order · ${naira(total)}`}
+              icon={method === 'online' ? <CreditCard size={18} color={c.onPrimary} /> : <ShieldCheck size={18} color={c.onPrimary} />}
+              onPress={method === 'online' ? payOnline : place}
+              loading={busy}
+              disabled={!cart.items.length || (mode === 'delivery' && address.trim().length < 5)}
+            />
           )}
         </View>
       }
@@ -158,17 +203,40 @@ export default function Checkout() {
       </Card>
 
       <Txt side="shop" size={13} weight="800" style={{ marginTop: 20, marginBottom: 8 }}>Pay with</Txt>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: c.primary }}>
-        <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-          <WalletIcon size={18} color={c.onPrimary} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Txt side="shop" size={14} weight="700">Closebuy wallet</Txt>
-          <Txt side="shop" size={12} muted>Balance {balance != null ? naira(balance) : '…'}</Txt>
-        </View>
-        <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 6, borderColor: c.primary }} />
-      </View>
-      {short ? <Txt side="shop" size={12} color={c.danger} style={{ marginTop: 8 }}>Your wallet is {naira(total - (balance ?? 0))} short. Top up by card or bank transfer, then come back.</Txt> : null}
+      {([
+        { id: 'wallet', icon: WalletIcon, title: 'Closebuy wallet', note: `Balance ${balance != null ? naira(balance) : '…'}` },
+        { id: 'online', icon: CreditCard, title: 'Pay online', note: 'Card, bank transfer, USSD' },
+      ] as const).map((m) => {
+        const on = method === m.id;
+        const Icon = m.icon;
+        return (
+          <Pressable
+            key={m.id}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            onPress={() => { setMethod(m.id); setError(null); }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: c.card, borderWidth: 2, borderColor: on ? c.primary : c.border, marginBottom: 10 }}
+          >
+            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: on ? c.primary : c.soft, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon size={18} color={on ? c.onPrimary : c.text} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt side="shop" size={14} weight="700">{m.title}</Txt>
+              <Txt side="shop" size={12} muted>{m.note}</Txt>
+            </View>
+            <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: on ? 6 : 2, borderColor: on ? c.primary : c.border }} />
+          </Pressable>
+        );
+      })}
+      {short ? (
+        <Row gap={6} style={{ marginTop: 2, flexWrap: 'wrap' }}>
+          <Txt side="shop" size={12} color={c.danger}>Your wallet is {naira(total - (balance ?? 0))} short.</Txt>
+          <Pressable accessibilityRole="button" onPress={() => setMethod('online')} hitSlop={8}>
+            <Txt side="shop" size={12} weight="700" color={c.primary}>Pay online instead</Txt>
+          </Pressable>
+        </Row>
+      ) : null}
+      <PaystackSheet url={payUrl} onClose={onPaid} />
 
       {mode === 'delivery' ? <Txt side="shop" size={12} muted style={{ marginTop: 14 }}>When the rider arrives you’ll get a delivery code. Give it only after checking your items.</Txt> : null}
       {error ? <Txt side="shop" color={c.danger} style={{ marginTop: 12 }}>{error}</Txt> : null}

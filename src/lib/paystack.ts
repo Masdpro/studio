@@ -15,7 +15,9 @@ export async function initializePaystackTransaction(params: {
   amountNaira: number;
   reference: string;
   callbackUrl: string;
-}): Promise<{ authorizationUrl: string; reference: string }> {
+  /** Where Paystack's own "Cancel payment" link goes (lets the phone app close its payment sheet). */
+  cancelUrl?: string;
+}): Promise<{ authorizationUrl: string; reference: string; accessCode: string }> {
   const res = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: 'POST',
     headers: {
@@ -27,13 +29,15 @@ export async function initializePaystackTransaction(params: {
       amount: Math.round(params.amountNaira * 100), // Paystack expects kobo
       reference: params.reference,
       callback_url: params.callbackUrl,
+      ...(params.cancelUrl ? { metadata: { cancel_action: params.cancelUrl } } : {}),
     }),
   });
   const data = await res.json();
   if (!res.ok || !data.status) {
     throw new Error(data.message ?? 'Failed to initialize payment.');
   }
-  return { authorizationUrl: data.data.authorization_url, reference: data.data.reference };
+  // access_code lets the website open Paystack's checkout as a pop-up on the same page.
+  return { authorizationUrl: data.data.authorization_url, reference: data.data.reference, accessCode: data.data.access_code };
 }
 
 // Paystack's own docs conflate these: "abandoned" is what a totally

@@ -8,7 +8,7 @@ import { CartItem } from './CartItem';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Loader2, MapPin, Wallet } from 'lucide-react';
+import { ShoppingBag, Loader2, MapPin, Wallet, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,6 +21,9 @@ import { getSavedAddress, getAddressHistory, rememberAddress } from '@/lib/deliv
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { useWalletBalance } from '@/hooks/use-wallet-balance';
+import { savePendingOrder, clearPendingOrder, ONLINE_PAYMENT_MAX } from '@/lib/pending-order';
+import { payInPopup } from '@/lib/paystack-popup';
 
 
 type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
@@ -40,6 +43,9 @@ export function ShoppingCartView() {
   // Set when checkout fails for lack of funds; shown inline (the cart sheet is modal, so a toast button can't be clicked).
   const [fundsShort, setFundsShort] = useState<{ balance: number; needed: number; shortfall: number } | null>(null);
   const { toast } = useToast();
+  // How to pay: from the wallet balance, or online with Paystack (card, bank transfer, USSD and more).
+  const [payMethod, setPayMethod] = useState<'wallet' | 'online'>('wallet');
+  const walletBalance = useWalletBalance(!!user);
 
   // Vendors in the cart that have several branches: let the customer choose where to collect from.
   const [branchInfo, setBranchInfo] = useState<Record<string, BranchInfo>>({});
@@ -110,7 +116,9 @@ export function ShoppingCartView() {
     });
   };
 
-  const deliveryFee = isDeliverySelected ? 1500 : 0;
+  // ₦1,500 delivery per shop in the cart, exactly as the server charges (each shop is its own order).
+  const shopCount = new Set(cartItems.map((i) => i.vendorId ?? 'unknown-vendor')).size;
+  const deliveryFee = isDeliverySelected ? 1500 * shopCount : 0;
   const total = subtotal + deliveryFee;
   // A changed cart or delivery choice means a different total — drop the stale warning.
   useEffect(() => { setFundsShort(null); }, [total]);
@@ -148,19 +156,65 @@ export function ShoppingCartView() {
     }
 
     track('checkout_start');
+    const orderBody = {
+      items: cartItems,
+      deliveryPreference: isDeliverySelected ? 'delivery' : 'pickup',
+      deliveryAddress,
+      sessionId: getSessionId(),
+      branchSelections: effectiveChoice,
+    };
+
+    // Pay online: go to Paystack for the order total. The payment is recorded in the wallet first,
+    // then /checkout/paid places this order from it, so the money is never lost if the order fails.
+    if (payMethod === 'online') {
+      if (total > ONLINE_PAYMENT_MAX) {
+        toast({ title: 'Order too large to pay online', description: `Online payments go up to ₦${ONLINE_PAYMENT_MAX.toLocaleString()}. Please pay from your wallet.`, variant: 'destructive' });
+        return;
+      }
+      setIsPlacingOrder(true);
+      try {
+        const res = await fetch('/api/payments/wallet/initialize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: total, purpose: 'order' }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.authorizationUrl) throw new Error(data.error ?? 'Could not start the payment.');
+        savePendingOrder({
+          reference: data.reference,
+          total,
+          body: orderBody,
+          deliveryAddress: isDeliverySelected ? deliveryAddress.trim() : undefined,
+          createdAt: Date.now(),
+        });
+        // Paystack opens as a pop-up over this page; once paid, /checkout/paid confirms it and places the order.
+        const result = await payInPopup(data.accessCode);
+        if (result === 'paid') {
+          router.push(`/checkout/paid?reference=${encodeURIComponent(data.reference)}`);
+          return;
+        }
+        if (result === 'cancelled') {
+          clearPendingOrder();
+          toast({ title: 'Payment cancelled', description: 'You have not been charged. Your cart is still here.' });
+          setIsPlacingOrder(false);
+          return;
+        }
+        // The pop-up couldn't load (e.g. blocked): use Paystack's own page in this tab instead.
+        window.location.href = data.authorizationUrl;
+      } catch (err) {
+        toast({ title: 'Could not start the payment', description: err instanceof Error ? err.message : 'Please try again.', variant: 'destructive' });
+        setIsPlacingOrder(false);
+      }
+      return;
+    }
+
     setIsPlacingOrder(true);
     setFundsShort(null);
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: cartItems,
-          deliveryPreference: isDeliverySelected ? 'delivery' : 'pickup',
-          deliveryAddress,
-          sessionId: getSessionId(),
-          branchSelections: effectiveChoice,
-        }),
+        body: JSON.stringify(orderBody),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Failed to place order.' }));
@@ -291,7 +345,7 @@ export function ShoppingCartView() {
           </div>
           {isDeliverySelected && (
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Delivery Fee</span>
+              <span className="text-muted-foreground">Delivery Fee{shopCount > 1 ? ` (${shopCount} shops)` : ''}</span>
               <span>₦{deliveryFee.toLocaleString()}</span>
             </div>
           )}
@@ -300,6 +354,39 @@ export function ShoppingCartView() {
             <span>Total</span>
             <span>₦{total.toLocaleString()}</span>
           </div>
+          <fieldset className="mt-1.5">
+            <legend className="mb-1 text-xs text-muted-foreground">How would you like to pay?</legend>
+            <div role="radiogroup" className="grid grid-cols-2 gap-2">
+              {([
+                { id: 'wallet', icon: Wallet, title: 'Wallet', note: walletBalance === null ? 'Your balance' : `Balance ₦${walletBalance.toLocaleString()}` },
+                { id: 'online', icon: CreditCard, title: 'Pay online', note: 'Card, transfer, USSD' },
+              ] as const).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={payMethod === m.id}
+                  onClick={() => { setPayMethod(m.id); setFundsShort(null); }}
+                  className={cn(
+                    'flex items-start gap-2 rounded-lg border p-2.5 text-left transition-colors',
+                    payMethod === m.id ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-border bg-background hover:border-primary/50',
+                  )}
+                >
+                  <m.icon className={cn('mt-0.5 h-4 w-4 shrink-0', payMethod === m.id ? 'text-primary' : 'text-muted-foreground')} />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold leading-tight">{m.title}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">{m.note}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+            {payMethod === 'wallet' && walletBalance !== null && walletBalance < total && !fundsShort && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Your wallet is ₦{(total - walletBalance).toLocaleString()} short.{' '}
+                <button type="button" className="font-medium text-primary underline" onClick={() => setPayMethod('online')}>Pay online instead</button>
+              </p>
+            )}
+          </fieldset>
           {fundsShort && (
             <div role="alert" className="mt-1.5 rounded-md border border-destructive/40 bg-destructive/10 p-2.5 text-xs">
               <p className="font-semibold text-destructive">Not enough in your wallet</p>
@@ -316,6 +403,9 @@ export function ShoppingCartView() {
               >
                 <Wallet className="mr-2 h-4 w-4" />Top up ₦{fundsShort.shortfall.toLocaleString()}
               </Button>
+              <Button type="button" size="sm" variant="ghost" className="mt-1 w-full" onClick={() => { setPayMethod('online'); setFundsShort(null); }}>
+                <CreditCard className="mr-2 h-4 w-4" />Pay online instead
+              </Button>
             </div>
           )}
           <Button
@@ -325,7 +415,7 @@ export function ShoppingCartView() {
             disabled={isPlacingOrder || ownItems.length > 0}
           >
             {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Proceed to Checkout
+            {payMethod === 'online' ? `Pay ₦${total.toLocaleString()} online` : `Pay ₦${total.toLocaleString()} from wallet`}
           </Button>
         </CardFooter>
       )}

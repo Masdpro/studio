@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { DeleteAccountCard } from '@/components/account/DeleteAccountCard';
+import { WalletCard } from '@/components/wallet/WalletCard';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
@@ -30,7 +31,7 @@ async function call(url: string, method: string, body: unknown) {
 }
 
 export default function CustomerProfilePage() {
-  const { user, loading, refresh, signOut } = useAuth();
+  const { user, role, loading, refresh, signOut } = useAuth();
   const router = useRouter();
   // Opened as its own page (not inside the header's profile drawer, which has a close button).
   const standalone = usePathname() === '/profile';
@@ -134,6 +135,8 @@ export default function CustomerProfilePage() {
           <CardDescription>Your personal account details.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* The wallet lives here now (it used to sit in the header). */}
+          {role !== 'admin' && <WalletCard />}
           {mode === 'details' ? (
             <div className="space-y-4 rounded-md border p-4">
               <div className="space-y-2"><Label htmlFor="pf-name">Full name</Label><Input id="pf-name" value={name} onChange={(e) => { setName(e.target.value); details.changed('name', e.target.value); }} {...details.bind('name', name)} /><FieldError message={details.error('name')} /></div>

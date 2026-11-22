@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -13,6 +12,7 @@ import { useSession } from '@/lib/session';
 import { useSide } from '@/lib/side';
 import { naira, radius } from '@/lib/theme';
 import { rules } from '@/lib/field-rules';
+import { PaystackSheet, confirmPayment, type SheetResult } from '@/components/PaystackSheet';
 import { useFieldChecks } from '@/lib/use-field-checks';
 
 // Same limits as the server.
@@ -31,6 +31,8 @@ export default function WalletTab() {
   const checks = useFieldChecks<'amount'>(// Same limits as the server.
  TOPUP_RULES);
   const [busy, setBusy] = useState(false);
+  const [payUrl, setPayUrl] = useState<string | null>(null);
+  const [payRef, setPayRef] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const earner = has('vendor') || has('provider') || has('delivery_agent');
@@ -45,25 +47,37 @@ export default function WalletTab() {
   const startTopUp = async () => {
     if (!checks.validateAll({ amount })) return;
     setErr(null);
+    setMsg(null);
     setBusy(true);
     try {
       const { authorizationUrl, reference } = await api<{ authorizationUrl: string; reference: string }>('/api/payments/wallet/initialize', { body: { amount: Number(amount) } });
       setTopUp(false);
-      await WebBrowser.openBrowserAsync(authorizationUrl, { presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET });
-      // The payment page closed: check whether it went through.
-      const r = await api<{ success: boolean; pending?: boolean; amount?: number; error?: string }>(`/api/payments/wallet/verify?reference=${encodeURIComponent(reference)}`);
-      setMsg(r.success ? `${naira(r.amount)} added to your wallet.` : r.pending ? 'Payment not finished yet. If you paid, it will show here shortly.' : r.error ?? 'Payment was not completed.');
-      qc.invalidateQueries({ queryKey: ['wallet'] });
-      tx.refetch();
+      setPayRef(reference);
+      setPayUrl(authorizationUrl); // Paystack opens in a sheet inside the app
     } catch (e: any) {
       setErr(e.message);
+      setBusy(false);
+    }
+  };
+
+  const onPaid = async (r: SheetResult) => {
+    setPayUrl(null);
+    try {
+      if (r.status === 'cancelled' && !payRef) return;
+      // Even after "cancel", check once: the payment may have gone through just before.
+      const res = await confirmPayment((ref) => api(`/api/payments/wallet/verify?reference=${encodeURIComponent(ref)}`), r.status === 'done' && r.reference ? r.reference : payRef!, r.status === 'done' ? 10 : 1);
+      setMsg(res.success ? `${naira(res.amount)} added to your wallet.` : r.status === 'cancelled' ? 'Top-up cancelled. You have not been charged.' : res.pending ? 'Payment not finished yet. If you paid, it will show here shortly.' : res.error ?? 'Payment was not completed.');
+      qc.invalidateQueries({ queryKey: ['wallet'] });
+      tx.refetch();
     } finally {
       setBusy(false);
+      setPayRef(null);
     }
   };
 
   return (
     <Screen tabs refreshing={wallet.isRefetching} onRefresh={refresh}>
+      <PaystackSheet url={payUrl} onClose={onPaid} />
       <H1>Wallet</H1>
       <View style={{ backgroundColor: c.primary, borderRadius: radius.lg, padding: 20, marginTop: 14 }}>
         <Txt color={c.onPrimary} size={14} weight="600">Balance</Txt>

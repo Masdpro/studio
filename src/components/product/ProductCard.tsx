@@ -120,7 +120,7 @@ export function ProductCard({
   return (
     <>
     <Card ref={cardRef} role="button" tabIndex={0} aria-label={`View details for ${product.name}`} onClick={() => setDetailsOpen(true)} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setDetailsOpen(true); } }} className="cursor-pointer w-full max-w-sm rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <div className="relative w-full h-48 overflow-hidden bg-muted">
+      <div className="relative w-full h-36 sm:h-48 overflow-hidden bg-muted">
         <SafeImage
           src={product.imageUrl || "https://placehold.co/300x200.png"}
           alt={product.name}
@@ -135,33 +135,33 @@ export function ProductCard({
             {soldOut ? 'Sold out' : `Only ${product.stock} left`}
           </span>
         )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-10 text-white">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2.5 pb-2 pt-10 text-white sm:px-3 sm:pb-2.5">
           {onViewVendorProfile ? (
-            <button type="button" onClick={handleVendorNameClick} className="flex max-w-full items-center gap-1.5 text-left text-sm font-semibold drop-shadow hover:underline">
+            <button type="button" onClick={handleVendorNameClick} className="flex max-w-full items-center gap-1.5 text-left text-xs font-semibold drop-shadow hover:underline sm:text-sm">
               <Store className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{vendorName}</span>
             </button>
           ) : (
-            <Link href={`/vendor/${product.vendorId}/profile`} onClick={(e) => e.stopPropagation()} className="flex max-w-full items-center gap-1.5 text-sm font-semibold drop-shadow hover:underline">
+            <Link href={`/vendor/${product.vendorId}/profile`} onClick={(e) => e.stopPropagation()} className="flex max-w-full items-center gap-1.5 text-xs font-semibold drop-shadow hover:underline sm:text-sm">
               <Store className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{vendorName}</span>
             </Link>
           )}
           {vendorLocation && (
-            <p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/90 drop-shadow" title={fullAddress}>
+            <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/90 drop-shadow sm:text-xs" title={fullAddress}>
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate">{vendorLocation}</span>
             </p>
           )}
         </div>
       </div>
-      <CardContent className="p-4 pb-2 flex-grow">
-        <CardTitle title={product.name} className="text-xl font-semibold mb-2 truncate">{product.name}</CardTitle>
-        <p className="text-lg font-bold text-primary mt-auto">₦{product.price.toLocaleString()}</p>
+      <CardContent className="p-3 pb-2 sm:p-4 sm:pb-2 flex-grow">
+        <CardTitle title={product.name} className="text-sm sm:text-xl font-semibold mb-1 sm:mb-2 truncate">{product.name}</CardTitle>
+        <p className="text-base sm:text-lg font-bold text-primary mt-auto">₦{product.price.toLocaleString()}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddToCart} disabled={orderBranch?.unavailable || soldOut || ownStore} title={ownStore ? "You can't order from your own store" : undefined}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> {ownStore ? 'Your store' : soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : needsChoice ? 'Choose options' : 'Add to Cart'}
+      <CardFooter className="p-3 pt-0 sm:p-4 sm:pt-0">
+        <Button className="h-9 w-full bg-accent px-2 text-xs hover:bg-accent/90 text-accent-foreground sm:h-10 sm:px-4 sm:text-sm" onClick={handleAddToCart} disabled={orderBranch?.unavailable || soldOut || ownStore} title={ownStore ? "You can't order from your own store" : undefined}>
+          <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0 sm:mr-2" /> <span className="truncate">{ownStore ? 'Your store' : soldOut ? 'Sold out' : orderBranch?.unavailable ? 'Branch unavailable' : needsChoice ? 'Choose options' : 'Add to Cart'}</span>
         </Button>
       </CardFooter>
     </Card>

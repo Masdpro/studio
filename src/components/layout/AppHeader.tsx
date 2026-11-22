@@ -7,12 +7,12 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, UserCircle, Wallet } from 'lucide-react';
+import { ShoppingCart, UserCircle } from 'lucide-react';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { UserWalletDisplay } from '@/components/wallet/UserWalletDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { HomeViewTabs } from '@/components/layout/HomeViewTabs';
 import { SideToggle, ServicesThemeOn } from '@/components/services-ui/ServicesChrome';
+import { HomeViewTabs } from '@/components/layout/HomeViewTabs';
 import { ServicesViewTabs } from '@/components/services-ui/ServicesViewTabs';
 import { sideForPath } from '@/lib/side';
 import {
@@ -63,24 +63,15 @@ export function AppHeader() {
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
         {services && <ServicesThemeOn />}
+        {/* Computers: the Products / Markets (or Services / Professionals) tabs in the header. On phones and small tablets they live in the filter pop-up. */}
         {!isAdmin && (
           <Suspense fallback={null}>
             {services
-              ? <ServicesViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />
-              : <HomeViewTabs className="mx-2 hidden min-w-0 flex-1 sm:block md:mx-4" />}
+              ? <ServicesViewTabs className="mx-4 hidden min-w-0 flex-1 md:block" />
+              : <HomeViewTabs className="mx-4 hidden min-w-0 flex-1 md:block" />}
           </Suspense>
         )}
         <div className="ml-auto flex min-w-0 items-center md:gap-2">
-          {!isAdmin && <Suspense
-            fallback={
-              <div className="flex items-center gap-1 text-sm px-1 sm:gap-2 sm:px-2">
-                <Wallet className="h-5 w-5" />
-                <span>Loading...</span>
-              </div>
-            }
-          >
-            <UserWalletDisplay />
-          </Suspense>}
           <NotificationBell />
           {!isAdmin && !services && <Button variant="ghost" size="icon" className="relative hidden md:inline-flex" onClick={() => setIsCartSheetOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
@@ -97,18 +88,11 @@ export function AppHeader() {
           <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />
         </div>
       </header>
-      {/* Phones: the home tabs get their own row under the header (wider screens show them in the header). */}
-      {!isAdmin && (pathname === '/shop' || pathname === '/services') && (
-        <div className="sticky top-16 z-40 flex items-center border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:hidden">
-          <Suspense fallback={null}>
-            {services
-              ? <ServicesViewTabs className="min-w-0 flex-1 [&>div]:w-full [&_button]:flex-1" />
-              : <HomeViewTabs className="min-w-0 flex-1 [&>div]:w-full [&_button]:flex-1" />}
-          </Suspense>
-        </div>
-      )}
-
       <Suspense fallback={null}><MobileBottomNav /></Suspense>
+
+      {/* The wallet is no longer in the header: this is its pop-up (balance and Add funds), opened from
+          the account menu, the profile page or checkout, and it confirms top-ups when Paystack returns. */}
+      {!isAdmin && <Suspense fallback={null}><UserWalletDisplay /></Suspense>}
 
       {/* Cart Sheet */}
       <Sheet open={isCartSheetOpen} onOpenChange={setIsCartSheetOpen}>
