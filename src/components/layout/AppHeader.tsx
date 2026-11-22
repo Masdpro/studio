@@ -53,11 +53,12 @@ export function AppHeader() {
     <>
       <header className="sticky top-0 z-50 flex h-16 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur sm:px-4 md:px-6">
         {/* The full logo lives at the top of the sidebar on desktop; keep a compact one where the sidebar is hidden. */}
-        <Link href={isAdmin ? '/admin' : services ? '/services' : '/shop'} className="flex items-center gap-1 md:hidden">
+        {/* On phones and tablets the Shop / Book switch sits right beside the logo. */}
+        <Link href={isAdmin ? '/admin' : services ? '/services' : '/shop'} className="flex shrink-0 items-center md:hidden">
           <Image src="/logo-mark-orange.png" alt="" width={30} height={39} unoptimized className="block" />
           <span className="sr-only">Closebuy</span>
-          <h1 className="hidden text-lg font-bold text-primary min-[360px]:block sm:text-xl">Closebuy</h1>
         </Link>
+        {!isAdmin && <SideToggle active={side} className="ml-1.5 md:hidden" />}
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {/* Desktop Nav items can be added here if needed, or rely on sidebar */}
         </nav>
@@ -96,14 +97,13 @@ export function AppHeader() {
           <AccountMenu onOpenProfile={() => setIsProfileSheetOpen(true)} />
         </div>
       </header>
-      {/* Phones and tablets (no sidebar): the Shop / Services toggle sits directly under the logo, with the home tabs beside it on phones. */}
-      {!isAdmin && (
-        <div className="sticky top-16 z-40 flex items-center gap-2 border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:px-4 md:hidden">
-          <SideToggle active={side} />
+      {/* Phones: the home tabs get their own row under the header (wider screens show them in the header). */}
+      {!isAdmin && (pathname === '/shop' || pathname === '/services') && (
+        <div className="sticky top-16 z-40 flex items-center border-b bg-background/80 px-2 py-1.5 backdrop-blur sm:hidden">
           <Suspense fallback={null}>
             {services
-              ? <ServicesViewTabs className="min-w-0 flex-1 sm:hidden [&>div]:w-full [&_button]:flex-1" />
-              : <HomeViewTabs className="min-w-0 flex-1 sm:hidden [&>div]:w-full [&_button]:flex-1" />}
+              ? <ServicesViewTabs className="min-w-0 flex-1 [&>div]:w-full [&_button]:flex-1" />
+              : <HomeViewTabs className="min-w-0 flex-1 [&>div]:w-full [&_button]:flex-1" />}
           </Suspense>
         </div>
       )}
