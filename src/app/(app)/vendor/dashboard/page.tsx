@@ -15,8 +15,7 @@ import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2, MapPin, BarChart3 } from 'lucide-react';
-import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget';
+import { Settings, ClipboardList, Star, Loader2, MapPin, BarChart3 } from 'lucide-react';
 import { OrderTrackingView } from '@/components/orders/OrderTrackingView';
 import type { Order, Vendor } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -158,14 +157,13 @@ export default function VendorDashboardPage() {
         <TabsList
           className={cn(
             hideWhileScrolling(scrolling),
-            'fixed inset-x-3 z-40 grid h-auto grid-cols-5 rounded-[1.75rem] border border-white/40 bg-background/50 p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl backdrop-saturate-150 sm:hidden',
+            'fixed inset-x-3 z-40 grid h-auto grid-cols-4 rounded-[1.75rem] border border-white/40 bg-background/50 p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl backdrop-saturate-150 sm:hidden',
           )}
           style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
         >
           {[
             { value: 'profile', label: 'Profile', icon: Settings },
             { value: 'branches', label: 'Branches', icon: MapPin },
-            { value: 'wallet', label: 'Wallet', icon: WalletIcon },
             { value: 'analytics', label: 'Analytics', icon: BarChart3 },
             { value: 'reviews', label: 'Reviews', icon: Star },
           ].map(({ value, label, icon: Icon }) => (
@@ -180,15 +178,12 @@ export default function VendorDashboardPage() {
           ))}
         </TabsList>
         {/* Tablets and computers: tabs along the top. */}
-        <TabsList className="mb-6 hidden w-full grid-cols-5 sm:grid">
+        <TabsList className="mb-6 hidden w-full grid-cols-4 sm:grid">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <Settings className="h-5 w-5" /> Profile
           </TabsTrigger>
           <TabsTrigger value="branches" className="flex items-center gap-2">
             <MapPin className="h-5 w-5" /> Branches
-          </TabsTrigger>
-          <TabsTrigger value="wallet" className="flex items-center gap-2">
-            <WalletIcon className="h-5 w-5" /> Wallet
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" /> Analytics
@@ -223,9 +218,7 @@ export default function VendorDashboardPage() {
           <BranchesManager vendorName={vendor?.businessName} mainAddress={vendor ? `${vendor.streetAddress}, ${vendor.city}, ${vendor.country}` : undefined} />
         </TabsContent>
 
-        <TabsContent value="wallet">
-          <VendorWalletWidget />
-        </TabsContent>
+        
 
         <TabsContent value="analytics">
           <div className="space-y-6">

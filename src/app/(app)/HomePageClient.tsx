@@ -33,7 +33,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { parseHomeView, type HomeView } from '@/components/layout/HomeViewTabs';
-import { SearchWithFilters, FilterField, ChipChoice } from '@/components/home/SearchWithFilters';
+import { SearchWithFilters, FilterField, ChipChoice, SegmentedChoice } from '@/components/home/SearchWithFilters';
 import { FitChips } from '@/components/home/FitChips';
 import { MarketCard } from '@/components/market/MarketCard';
 // Data now comes from the database (via src/lib/services) and is fetched
@@ -665,7 +665,7 @@ export default function HomePageClient({
             resultLabel={activeView === 'markets' ? `Show ${filteredMarkets.length} market${filteredMarkets.length === 1 ? '' : 's'}` : `Show ${filteredProducts.length} item${filteredProducts.length === 1 ? '' : 's'}`}
           >
             <FilterField icon={<ShoppingBag className="h-4 w-4 text-primary" />} title="Show">
-              <ChipChoice items={['Products', 'Markets']} selected={activeView === 'markets' ? 'Markets' : 'Products'} onSelect={(v) => setView(v === 'Markets' ? 'markets' : 'products')} />
+              <SegmentedChoice items={['Products', 'Markets']} selected={activeView === 'markets' ? 'Markets' : 'Products'} onSelect={(v) => setView(v === 'Markets' ? 'markets' : 'products')} />
             </FilterField>
             <FilterField icon={<MapPin className="h-4 w-4 text-primary" />} title="City or area">
               <LocationCombobox

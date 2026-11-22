@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 /**
@@ -74,30 +74,68 @@ export function SearchWithFilters({
         </div>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={setOpen}>
         {/* Don't jump into the first filter: that would pop its list open before the person picks anything. */}
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><SlidersHorizontal className="h-5 w-5 text-primary" />Filters</DialogTitle>
-            <DialogDescription>Narrow down what you see.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5">{children}</div>
-          <DialogFooter className="flex-row gap-2 sm:justify-between">
-            <Button type="button" variant="ghost" onClick={onClear} disabled={!activeCount} className="flex-1 sm:flex-none">Clear all</Button>
-            <Button type="button" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">{resultLabel}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <SheetContent
+          side="bottom"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="mx-auto flex max-h-[88dvh] w-full max-w-lg flex-col gap-0 rounded-t-[1.75rem] p-0 pb-[env(safe-area-inset-bottom)]"
+        >
+          <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
+          <div className="flex shrink-0 items-center gap-3 px-5 pb-3 pr-14 pt-3">
+            <SheetTitle className="text-lg font-bold">Filters</SheetTitle>
+            <SheetDescription className="sr-only">Narrow down what you see.</SheetDescription>
+            {activeCount > 0 && (
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">{activeCount} on</span>
+            )}
+            <button
+              type="button"
+              onClick={onClear}
+              disabled={!activeCount}
+              className="ml-auto text-sm font-semibold text-primary disabled:text-muted-foreground/50"
+            >
+              Clear all
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 divide-y divide-border/70 overflow-y-auto border-y border-border/70 px-5">{children}</div>
+          <div className="shrink-0 px-5 py-3">
+            <Button type="button" onClick={() => setOpen(false)} className="h-12 w-full rounded-xl text-base font-semibold">{resultLabel}</Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-/** One labelled group inside the filter pop-up. */
-export function FilterField({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+/** One labelled section inside the filter sheet. */
+export function FilterField({ icon, title, children }: { icon?: ReactNode; title: string; children: ReactNode }) {
   return (
-    <div>
-      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">{icon}{title}</h3>
+    <section className="py-4">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground [&_svg]:h-4 [&_svg]:w-4 [&_svg]:text-muted-foreground">{icon}{title}</h3>
       {children}
+    </section>
+  );
+}
+
+/** Two or three exclusive options as a full-width segmented control (e.g. Products | Markets). */
+export function SegmentedChoice({ items, selected, onSelect }: { items: string[]; selected: string; onSelect: (v: string) => void }) {
+  return (
+    <div role="radiogroup" className="grid gap-1 rounded-xl bg-muted p-1" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+      {items.map((item) => (
+        <button
+          key={item}
+          type="button"
+          role="radio"
+          aria-checked={selected === item}
+          onClick={() => onSelect(item)}
+          className={cn(
+            'h-10 rounded-lg text-sm font-semibold transition-colors',
+            selected === item ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {item}
+        </button>
+      ))}
     </div>
   );
 }
@@ -113,8 +151,8 @@ export function ChipChoice({ items, selected, onSelect }: { items: string[]; sel
           aria-pressed={selected === item}
           onClick={() => onSelect(item)}
           className={cn(
-            'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-            selected === item ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-primary/60',
+            'h-9 rounded-full border px-3.5 text-sm font-medium transition-colors',
+            selected === item ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background hover:border-primary/60',
           )}
         >
           {item}
