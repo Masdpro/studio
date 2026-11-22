@@ -7,6 +7,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
+import { KEEP_SECONDS } from '@/lib/keep-signed-in';
 import { clearFailedPasswords, isLockedOut, recordFailedPassword, isIpLockedOut, recordFailedIp } from '@/lib/login-throttle';
 
 /**
@@ -40,7 +41,8 @@ export function currentSessionVersion(userId: string): number | null {
 }
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: 'jwt' },
+  // No session outlives 30 days from sign-in (see the jwt callback); "Keep me signed in" decides the rest.
+  session: { strategy: 'jwt', maxAge: KEEP_SECONDS },
   pages: {
     signIn: '/login',
   },
@@ -63,11 +65,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.loginAt = Math.floor(Date.now() / 1000);
         token.id = user.id;
         token.role = (user as any).role;
         token.sv = currentSessionVersion(user.id) ?? 0;
       }
       if (token.id) {
+        // Sessions reset every 30 days: after that the person signs in again, even when it was kept.
+        if (typeof token.loginAt === 'number' && Date.now() / 1000 - token.loginAt > KEEP_SECONDS) throw new Error('SESSION_REVOKED');
         // A password change/reset bumps the account's version: older sessions on any device end here.
         const sv = currentSessionVersion(token.id as string);
         // Throwing makes next-auth clear the session cookie and treat the visitor as signed out.

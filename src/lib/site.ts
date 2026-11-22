@@ -14,3 +14,6 @@ export const SITE = {
 
 /** Where the marketplace lives now that "/" is the public landing page. */
 export const SHOP_PATH = '/shop';
+
+/** "Start shopping" buttons: the shop when signed in, otherwise the sign-in page first (see middleware). */
+export const START_PATH = '/start';

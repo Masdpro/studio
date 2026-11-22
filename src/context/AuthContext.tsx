@@ -2,6 +2,7 @@
 
 import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 import { useMemo, type ReactNode } from 'react';
+import { rememberChoice } from '@/lib/keep-signed-in';
 
 export type UserRole = 'customer' | 'vendor' | 'delivery_agent' | 'provider' | 'admin' | 'branch';
 
@@ -20,7 +21,10 @@ export function useAuth() {
   const accountRole = session?.user?.role;
   const roles = useMemo<UserRole[]>(() => (rolesKey ? (rolesKey.split(',') as UserRole[]) : accountRole ? [accountRole] : []), [rolesKey, accountRole]);
 
-  const signIn = async (email: string, password: string) => {
+  /** `remember`: the person ticked "Keep me signed in" (30 days); otherwise until the browser closes. */
+  const signIn = async (email: string, password: string, remember = false) => {
+    // Set before signing in, so the very next page already sees the choice.
+    rememberChoice(remember);
     const result = await nextAuthSignIn('credentials', { email, password, redirect: false });
     if (result?.error) {
       if (result.error.includes('EMAIL_NOT_VERIFIED')) throw new Error('EMAIL_NOT_VERIFIED');

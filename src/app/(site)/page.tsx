@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Reveal } from '@/components/site/Reveal';
-import { SITE, SHOP_PATH } from '@/lib/site';
+import { SITE, SHOP_PATH, START_PATH } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Closebuy | Shop from trusted vendors close to you',
@@ -88,15 +88,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 md:pb-24 md:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--ink)/0.1)] bg-white/70 py-1.5 pl-2 pr-4 text-sm font-semibold shadow-sm backdrop-blur">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-soft-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              </span>
-              Now serving Lagos
-            </span>
-
-            <h1 className="font-display mt-6 text-[2.75rem] font-extrabold leading-[1.02] sm:text-6xl lg:text-[4.6rem]">
+            <h1 className="font-display text-[2.75rem] font-extrabold leading-[1.02] sm:text-6xl lg:text-[4.6rem]">
               Shop trusted vendors{' '}
               <span className="relative inline-block whitespace-nowrap">
                 <span className="text-coral-gradient">close to you.</span>
@@ -452,7 +444,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             <h2 className="font-display mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] md:text-6xl">Ready to shop close to home?</h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/90">Sign up in minutes and support the shops in your neighbourhood.</p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <Link href={SHOP_PATH} className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-[hsl(var(--ink))] shadow-xl transition-transform hover:-translate-y-0.5">
+              <Link href={START_PATH} className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-[hsl(var(--ink))] shadow-xl transition-transform hover:-translate-y-0.5">
                 Start shopping <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link href="/auth/register/customer" className="inline-flex items-center rounded-full border-2 border-white/70 px-7 py-4 font-bold transition-colors hover:bg-white/10">

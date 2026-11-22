@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LogIn, Loader2, AlertCircle } from 'lucide-react';
@@ -28,6 +29,7 @@ import { postLoginDestination } from '@/lib/post-login';
 const loginSchema = z.object({
   email: zRule(rules.email),
   password: z.string().min(1, { message: 'Enter your password.' }),
+  remember: z.boolean(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -47,7 +49,8 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
     // Check each entry as soon as the person leaves it.
     mode: 'onTouched',
-    defaultValues: { email: '', password: '' },
+    // Unticked until the person chooses to stay signed in.
+    defaultValues: { email: '', password: '', remember: false },
   });
 
   async function onSubmit(data: LoginFormValues) {
@@ -55,7 +58,7 @@ export function LoginForm() {
     setUnverifiedEmail(null);
     setIsLoading(true);
     try {
-      await signIn(data.email, data.password);
+      await signIn(data.email, data.password, data.remember);
       const callbackUrl = searchParams.get('callbackUrl');
       const isSafeCallback = callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//');
       router.push(isSafeCallback ? callbackUrl : await postLoginDestination());
@@ -150,6 +153,23 @@ export function LoginForm() {
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="remember"
+              render={({ field }) => (
+                <FormItem className="flex items-start gap-3 space-y-0 rounded-md border p-3">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="font-medium">Keep me signed in for 30 days</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      You won&apos;t need to enter your email and password on this device for 30 days. Don&apos;t tick this on a shared or public device.
+                    </p>
+                  </div>
                 </FormItem>
               )}
             />

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPage } from '@/components/site/LegalPage';
-import { SITE, SHOP_PATH } from '@/lib/site';
+import { SITE, START_PATH } from '@/lib/site';
 
 export const metadata: Metadata = { title: 'About Closebuy', description: 'Closebuy is an online marketplace that connects shoppers with verified vendors, markets and delivery agents close to them.' };
 
@@ -27,7 +27,7 @@ export default function AboutPage() {
       <h2>Get in touch</h2>
       <p>
         We&apos;re based at {SITE.address.join(', ')}. Reach us at <a href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a> or{' '}
-        <a href={SITE.phoneHref}>{SITE.phone}</a>, or <Link href={SHOP_PATH}>start shopping</Link> now.
+        <a href={SITE.phoneHref}>{SITE.phone}</a>, or <Link href={START_PATH}>start shopping</Link> now.
       </p>
     </LegalPage>
   );

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { ArrowRight, Menu } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { SHOP_PATH } from '@/lib/site';
+import { START_PATH } from '@/lib/site';
 
 const NAV = [
   { href: '/#how-it-works', label: 'How it works' },
@@ -54,13 +54,7 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <Link
-            href="/auth/login"
-            className="hidden rounded-full px-4 py-2 text-sm font-semibold text-[hsl(var(--ink))] transition-colors hover:bg-[hsl(var(--ink)/0.06)] sm:inline-flex"
-          >
-            Sign in
-          </Link>
-          <Link
-            href={SHOP_PATH}
+            href={START_PATH}
             className="group hidden items-center gap-1.5 rounded-full bg-[hsl(var(--ink))] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[hsl(var(--ink)/0.2)] transition-transform hover:-translate-y-0.5 sm:inline-flex"
           >
             Start shopping
@@ -90,13 +84,8 @@ export function SiteHeader() {
               </nav>
               <div className="mt-auto grid gap-3 pt-8">
                 <SheetClose asChild>
-                  <Link href={SHOP_PATH} className="bg-coral-gradient flex items-center justify-center gap-2 rounded-full py-3.5 font-semibold text-white">
+                  <Link href={START_PATH} className="bg-coral-gradient flex items-center justify-center gap-2 rounded-full py-3.5 font-semibold text-white">
                     Start shopping <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link href="/auth/login" className="flex items-center justify-center rounded-full border border-[hsl(var(--ink)/0.15)] py-3.5 font-semibold">
-                    Sign in
                   </Link>
                 </SheetClose>
               </div>
