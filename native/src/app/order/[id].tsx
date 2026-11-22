@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import * as Linking from 'expo-linking';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Check, KeyRound, MapPin } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -85,13 +84,13 @@ export default function OrderScreen() {
         </View>
       ) : null}
 
-      {onTheWay && o.agentLatitude != null && o.agentLongitude != null ? (
-        <Card side="shop" style={{ marginTop: 12 }} onPress={() => Linking.openURL(`https://maps.google.com/?q=${o.agentLatitude},${o.agentLongitude}`)}>
+      {o.deliveryPreference === 'delivery' && !['Delivered', 'Cancelled'].includes(o.status) ? (
+        <Card side="shop" style={{ marginTop: 12 }} onPress={() => router.push(`/order/track/${o.id}`)}>
           <Row gap={10}>
-            <MapPin color={c.text} size={20} />
+            <MapPin color={c.primary} size={20} />
             <View style={{ flex: 1 }}>
-              <Txt side="shop" weight="700">See where your rider is</Txt>
-              <Txt side="shop" size={12} muted>Opens in Maps</Txt>
+              <Txt side="shop" weight="700">Track order</Txt>
+              <Txt side="shop" size={12} muted>{onTheWay ? 'See your rider live on the map' : 'Progress, arrival time and map'}</Txt>
             </View>
           </Row>
         </Card>

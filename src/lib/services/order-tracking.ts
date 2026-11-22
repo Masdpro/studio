@@ -1,0 +1,132 @@
+import type { Order } from '@/lib/types';
+import { getVendorById } from '@/lib/services/vendors';
+import { getBranchById } from '@/lib/services/branches';
+import { getDeliveryAgentById } from '@/lib/services/deliveryAgents';
+import { getDisplayName } from '@/lib/roles';
+
+export type LatLng = { lat: number; lng: number };
+
+/** Everything the live tracking screen shows, in one response. */
+export type OrderTracking = {
+  orderId: string;
+  status: Order['status'];
+  /** Progress bar: how many of `total` steps are done (0 when cancelled). */
+  step: number;
+  total: number;
+  headline: string;
+  firstName: string | null;
+  shop: { name: string; position: LatLng | null } | null;
+  destination: LatLng | null;
+  rider: { name: string; whatsapp: string | null; position: LatLng | null; updatedAt: string | null } | null;
+  /** Estimated minutes until the rider reaches the customer, when it can be worked out. */
+  etaMinutes: number | null;
+  live: boolean;
+};
+
+/** Delivery steps, in order. The bar fills one segment per step reached. */
+const STEPS: { statuses: Order['status'][]; headline: string }[] = [
+  { statuses: ['Pending'], headline: 'Your order has been placed' },
+  { statuses: ['Processing'], headline: 'Your order is now processing' },
+  { statuses: ['ReadyForPickup'], headline: 'Your order is ready, finding a rider' },
+  { statuses: ['AcceptedByAgent'], headline: 'Your rider is heading to the shop' },
+  { statuses: ['PickedUpByAgent', 'Out for Delivery'], headline: 'Your order is on the way' },
+  { statuses: ['Delivered'], headline: 'Your order has been delivered' },
+];
+
+/** Nigerian numbers in any common format → the international digits WhatsApp links need (e.g. 2348012345678). */
+export function whatsappNumber(phone: string | null | undefined): string | null {
+  const digits = (phone ?? '').replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.startsWith('234') && digits.length === 13) return digits;
+  if (digits.startsWith('0') && digits.length === 11) return `234${digits.slice(1)}`;
+  if (digits.length === 10) return `234${digits}`;
+  return digits.length >= 10 ? digits : null;
+}
+
+/** Straight-line distance in km. */
+export function distanceKm(a: LatLng, b: LatLng): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Rough riding time: roads are ~1.4× the straight line, an average Lagos okada/bike speed of ~18 km/h,
+ * plus a couple of minutes to park and hand over.
+ */
+export function rideMinutes(from: LatLng, to: LatLng): number {
+  return Math.max(2, Math.round((distanceKm(from, to) * 1.4 * 60) / 18 + 2));
+}
+
+// Addresses rarely change, so remember each lookup for the life of the server.
+const geocodeCache = new Map<string, LatLng | null>();
+
+async function geocode(address: string): Promise<LatLng | null> {
+  const key = address.trim().toLowerCase();
+  if (!key) return null;
+  if (geocodeCache.has(key)) return geocodeCache.get(key)!;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ng&q=${encodeURIComponent(address)}`,
+      { headers: { 'User-Agent': 'Closebuy-Demo-App (contact: no-reply@closebuy.ng)' }, signal: AbortSignal.timeout(6000) },
+    );
+    const match = res.ok ? ((await res.json()) as { lat: string; lon: string }[])[0] : undefined;
+    const pos = match ? { lat: parseFloat(match.lat), lng: parseFloat(match.lon) } : null;
+    geocodeCache.set(key, pos);
+    return pos;
+  } catch {
+    return null; // try again next time
+  }
+}
+
+const at = (lat?: number | null, lng?: number | null): LatLng | null => (lat != null && lng != null ? { lat, lng } : null);
+
+export async function getOrderTracking(order: Order): Promise<OrderTracking> {
+  const stepIndex = STEPS.findIndex((s) => s.statuses.includes(order.status));
+  const cancelled = order.status === 'Cancelled';
+
+  const vendor = await getVendorById(order.vendorId);
+  const branch = order.branchId ? await getBranchById(order.branchId) : undefined;
+  const shopPos = at(branch?.latitude, branch?.longitude) ?? at(vendor?.latitude, vendor?.longitude);
+  const shop = vendor ? { name: vendor.businessName, position: shopPos } : null;
+
+  const agent = order.deliveryAgentId ? await getDeliveryAgentById(order.deliveryAgentId) : undefined;
+  const riderPos = at(order.agentLatitude, order.agentLongitude);
+  const rider = agent
+    ? {
+        name: agent.name,
+        whatsapp: whatsappNumber(agent.phone),
+        position: riderPos,
+        updatedAt: order.agentLocationUpdatedAt ? new Date(order.agentLocationUpdatedAt).toISOString() : null,
+      }
+    : null;
+
+  const destination = order.deliveryPreference === 'delivery' ? await geocode(order.deliveryAddress) : null;
+
+  // ETA: from the rider's live position once they have the order; before that, shop → door.
+  let etaMinutes: number | null = null;
+  const onTheWay = order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery';
+  if (destination && onTheWay && riderPos) etaMinutes = rideMinutes(riderPos, destination);
+  else if (destination && shopPos && stepIndex >= 0 && stepIndex < 4) {
+    const toShop = riderPos && order.status === 'AcceptedByAgent' ? rideMinutes(riderPos, shopPos) : 10;
+    const prep = order.status === 'Pending' || order.status === 'Processing' ? 15 : 0;
+    etaMinutes = prep + toShop + rideMinutes(shopPos, destination);
+  }
+
+  return {
+    orderId: order.id,
+    status: order.status,
+    step: cancelled ? 0 : stepIndex + 1,
+    total: STEPS.length,
+    headline: cancelled ? 'This order was cancelled' : STEPS[stepIndex]?.headline ?? 'Tracking your order',
+    firstName: getDisplayName(order.customerId)?.split(/[\s@]/)[0] ?? null,
+    shop,
+    destination,
+    rider,
+    etaMinutes: order.status === 'Delivered' || cancelled ? null : etaMinutes,
+    live: onTheWay && !!riderPos,
+  };
+}

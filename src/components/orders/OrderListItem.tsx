@@ -7,7 +7,8 @@ import { orderMachine, ORDER_COMPLETED, type OrderActor } from '@/lib/state-mach
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Ban, PlayCircle, Send, UserCheck } from 'lucide-react';
+import { Package, User, ShoppingBag, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Ban, PlayCircle, Send, UserCheck, MapPinned } from 'lucide-react';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { CustomerDeliveryCode, DeliveryCodeDialog } from './DeliveryCode';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
@@ -170,6 +171,7 @@ export function OrderListItem({
 
 
   const canLeaveReview = userRole === 'customer' && ORDER_COMPLETED.includes(order.status);
+  const canTrack = userRole === 'customer' && order.deliveryPreference === 'delivery' && !['Delivered', 'Cancelled'].includes(order.status);
   const canCustomerCancel = userRole === 'customer' && can('Cancelled', 'customer') && onCancelOrder;
   const canVendorDecline = userRole === 'vendor' && can('Cancelled', 'vendor') && onDeclineOrder;
 
@@ -232,6 +234,11 @@ export function OrderListItem({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:justify-end [&>button]:flex-1 sm:[&>button]:flex-none">
+            {canTrack && (
+              <Button asChild size="sm" className="flex-1 sm:flex-none">
+                <Link href={`/orders/${order.id}/track`}><MapPinned className="mr-2 h-4 w-4" /> Track order</Link>
+              </Button>
+            )}
             {canVendorAttend && (
               <Button
                 variant="default"

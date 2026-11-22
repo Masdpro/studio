@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SearchWithFilters, FilterField, ChipChoice, SegmentedChoice } from '@/components/home/SearchWithFilters';
+import { SearchWithFilters, FilterField, ChipChoice } from '@/components/home/SearchWithFilters';
 import { FitChips } from '@/components/home/FitChips';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -129,13 +129,10 @@ export function ServicesHome({ providers: all }: { providers: PublicProvider[] }
           onChange={setSearch}
           label="Search services and professionals"
           placeholder="Search services…"
-          activeCount={(view === 'pros' ? 1 : 0) + (area !== ALL ? 1 : 0) + (provider !== ALL ? 1 : 0) + (category !== ALL ? 1 : 0)}
-          onClear={() => { setArea(ALL); setProvider(ALL); setCategory(ALL); if (view === 'pros') setView('services'); }}
+          activeCount={(area !== ALL ? 1 : 0) + (provider !== ALL ? 1 : 0) + (category !== ALL ? 1 : 0)}
+          onClear={() => { setArea(ALL); setProvider(ALL); setCategory(ALL); }}
           resultLabel={view === 'services' ? `Show ${listings.length} service${listings.length === 1 ? '' : 's'}` : `Show ${providers.length} professional${providers.length === 1 ? '' : 's'}`}
         >
-          <FilterField icon={<Users className="h-4 w-4 text-primary" />} title="Show">
-            <SegmentedChoice items={['Services', 'Professionals']} selected={view === 'pros' ? 'Professionals' : 'Services'} onSelect={(v) => setView(v === 'Professionals' ? 'pros' : 'services')} />
-          </FilterField>
           <FilterField icon={<MapPin className="h-4 w-4 text-primary" />} title="City or area">
             <Select value={area} onValueChange={(v) => { setArea(v); setProvider(ALL); }}>
               <SelectTrigger className="h-10 w-full rounded-lg"><SelectValue /></SelectTrigger>
