@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -23,8 +26,8 @@ import { useAuth } from '@/context/AuthContext';
 import { postLoginDestination } from '@/lib/post-login';
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Enter a valid email address.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  email: zRule(rules.email),
+  password: z.string().min(1, { message: 'Enter your password.' }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -42,6 +45,8 @@ export function LoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: { email: '', password: '' },
   });
 

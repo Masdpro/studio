@@ -8,6 +8,10 @@ import { pickPhoto } from '@/lib/pick';
 import { useGet } from '@/lib/query';
 import { useSession } from '@/lib/session';
 import { useColors } from '@/lib/side';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const PHONE_RULES = { phone: rules.phone, code: rules.digits(6, 'the code from the text') };
 
 type Doc = { kind: string; label: string; uploaded: boolean; live: boolean };
 /** One way to get verified (shops: with or without CAC). */
@@ -34,6 +38,7 @@ export default function Verification() {
   const [phone, setPhone] = useState('');
   const [codeSent, setCodeSent] = useState<string | null>(null);
   const [code, setCode] = useState('');
+  const phoneChecks = useFieldChecks<'phone' | 'code'>(PHONE_RULES);
   const [routeChoice, setRouteChoice] = useState<Record<string, string>>({});
   const st = q.data?.state;
 
@@ -53,6 +58,7 @@ export default function Verification() {
   };
 
   const sendCode = async () => {
+    if (!phoneChecks.validateAll({ phone: phone || st?.phone || '', code: '000000' })) return;
     setErr(null);
     setBusy('phone');
     try {
@@ -65,6 +71,7 @@ export default function Verification() {
     }
   };
   const confirmCode = async () => {
+    if (!phoneChecks.validateAll({ phone: '08000000000', code })) return;
     setErr(null);
     setBusy('phone');
     try {
@@ -93,12 +100,12 @@ export default function Verification() {
               {codeSent ? (
                 <View style={{ marginTop: 10 }}>
                   <Txt side="shop" size={13} muted>{codeSent}</Txt>
-                  <Field side="shop" label="6-digit code" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={6} />
+                  <Field side="shop" label="6-digit code" {...phoneChecks.input('code', code, (t) => setCode(t.replace(/\D/g, '').slice(0, 6)))} keyboardType="number-pad" maxLength={6} />
                   <Button side="shop" small title="Confirm" onPress={confirmCode} loading={busy === 'phone'} disabled={code.length !== 6} />
                 </View>
               ) : (
                 <View style={{ marginTop: 10 }}>
-                  <Field side="shop" label="Mobile number" value={phone || st.phone || ''} onChangeText={setPhone} keyboardType="phone-pad" />
+                  <Field side="shop" label="Mobile number" {...phoneChecks.input('phone', phone || st.phone || '', setPhone)} keyboardType="phone-pad" placeholder="08012345678" />
                   <Button side="shop" small title="Text me a code" onPress={sendCode} loading={busy === 'phone'} />
                 </View>
               )}

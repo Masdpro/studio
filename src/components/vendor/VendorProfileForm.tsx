@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -28,15 +31,15 @@ import { DEFAULT_COUNTRY } from '@/lib/places';
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
 const vendorProfileSchema = z.object({
-  businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
-  contactEmail: z.string().email({ message: 'Invalid email address.' }),
-  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
-  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
-  country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
-  bio: z.string().optional(),
+  businessName: zRule(rules.businessName),
+  contactEmail: zRule(rules.email),
+  phone: zRule(rules.phone),
+  streetAddress: zRule(rules.streetAddress),
+  city: zRule(rules.place),
+  country: zRule(rules.place),
+  bio: zRule(rules.maxLength(500, 'the description')).optional(),
   imageUrl: z.string().optional(),
-  externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  externalStoreUrl: zRule(rules.optionalUrl).optional(),
   operatingHours: z.string().min(5, { message: "Choose the days and times you are open." }).optional(),
   status: z.enum(vendorStatusOptions).optional(),
 });
@@ -69,6 +72,7 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const form = useForm<VendorProfileFormValues>({
     resolver: zodResolver(vendorProfileSchema),
+    mode: 'onTouched',
     defaultValues: vendorToFormValues(vendor),
   });
 

@@ -4,6 +4,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -25,8 +28,8 @@ import { cn } from '@/lib/utils';
 
 const errandRequestSchema = z.object({
   itemsDescription: z.string().min(10, { message: 'Please describe the items you need (at least 10 characters).' }).max(1000, { message: 'Description is too long (max 1000 characters).' }),
-  preferredStore: z.string().optional(),
-  deliveryAddress: z.string().min(10, { message: 'Delivery address must be at least 10 characters.' }),
+  preferredStore: zRule(rules.maxLength(120, 'the store name')).optional(),
+  deliveryAddress: zRule(rules.streetAddress),
 });
 
 type ErrandRequestFormValues = z.infer<typeof errandRequestSchema>;
@@ -45,6 +48,8 @@ export function CreateErrandRequestForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<ErrandRequestFormValues>({
     resolver: zodResolver(errandRequestSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: {
       itemsDescription: '',
       preferredStore: '',

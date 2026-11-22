@@ -10,6 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { naira, whenLabel } from '@/lib/booking-time';
 import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const SETTLE_RULES = { reason: rules.text('a reason', 3, 300) };
 
 type Booking = { id: string; serviceName: string; providerName: string; startsAt: string; endsAt: string; total: number; status: string; location: string; cancelReason: string | null };
 
@@ -19,6 +24,7 @@ export default function AdminBookingsPage() {
   const [data, setData] = useState<{ bookings: Booking[]; now: number } | null>(null);
   const [settling, setSettling] = useState<{ b: Booking; action: 'complete' | 'cancel' } | null>(null);
   const [reason, setReason] = useState('');
+  const checks = useFieldChecks<'reason'>(SETTLE_RULES);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -28,6 +34,7 @@ export default function AdminBookingsPage() {
   useEffect(() => { load(); }, [load]);
 
   const go = async () => {
+    if (!checks.validateAll({ reason })) return;
     if (!settling) return;
     setBusy(true);
     const res = await fetch(`/api/admin/bookings/${settling.b.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: settling.action, reason }) });
@@ -88,7 +95,8 @@ export default function AdminBookingsPage() {
               <DialogTitle>{settling.action === 'complete' ? 'Pay the provider?' : 'Cancel and refund in full?'}</DialogTitle>
               <DialogDescription>{settling.b.serviceName} · {settling.b.providerName} · {naira(settling.b.total)}</DialogDescription>
             </DialogHeader>
-            <Textarea rows={3} placeholder="Reason (required), e.g. customer confirmed by phone" value={reason} onChange={(e) => setReason(e.target.value)} />
+            <Textarea rows={3} placeholder="Reason (required), e.g. customer confirmed by phone" {...checks.field('reason', reason, (v: string) => setReason(v))} />
+            <FieldError message={checks.error('reason')} />
             <DialogFooter><Button disabled={!reason.trim() || busy} onClick={go}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{settling.action === 'complete' ? 'Pay vendor' : 'Refund customer'}</Button></DialogFooter>
           </DialogContent>
         </Dialog>

@@ -17,6 +17,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const ADMIN_RULES = { name: rules.personName, email: rules.email };
 
 type AdminUser = {
   id: string; email: string; name: string; phone: string; roles: string[];
@@ -32,6 +37,7 @@ export default function AdminUsersPage() {
   const [me, setMe] = useState<{ id: string; isSuperAdmin: boolean } | null>(null);
   const [adding, setAdding] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ name: '', email: '' });
+  const adminChecks = useFieldChecks<'name' | 'email'>(ADMIN_RULES);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<AdminUser | null>(null);
   const { toast } = useToast();
@@ -71,6 +77,7 @@ export default function AdminUsersPage() {
   const admins = useMemo(() => users.filter((u) => u.roles.includes('admin')), [users]);
 
   async function addAdmin() {
+    if (!adminChecks.validateAll(newAdmin)) return;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/admins', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newAdmin) });
@@ -219,11 +226,13 @@ export default function AdminUsersPage() {
           <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addAdmin(); }}>
             <div className="space-y-2">
               <Label htmlFor="admin-name">Name</Label>
-              <Input id="admin-name" value={newAdmin.name} onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })} placeholder="E.g. Ada Okafor" required />
+              <Input id="admin-name" {...adminChecks.field('name', newAdmin.name, (v) => setNewAdmin({ ...newAdmin, name: v }))} placeholder="E.g. Ada Okafor" required />
+              <FieldError message={adminChecks.error('name')} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="admin-email">Work email</Label>
-              <Input id="admin-email" type="email" value={newAdmin.email} onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })} placeholder="ada@cbuyapp.com" required />
+              <Input id="admin-email" type="email" {...adminChecks.field('email', newAdmin.email, (v) => setNewAdmin({ ...newAdmin, email: v }))} placeholder="ada@cbuyapp.com" required />
+              <FieldError message={adminChecks.error('email')} />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setAdding(false)} disabled={saving}>Cancel</Button>

@@ -6,6 +6,10 @@ import { api } from '@/lib/api';
 import { useGet } from '@/lib/query';
 import { useSession } from '@/lib/session';
 import { useSide } from '@/lib/side';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const DELETE_RULES = { typed: (v: string) => (v.trim().toUpperCase() === 'DELETE' ? null : 'Type DELETE to confirm.'), password: (v: string) => (v ? null : 'Enter your password.') };
 
 export default function DeleteAccount() {
   const { c } = useSide();
@@ -13,12 +17,14 @@ export default function DeleteAccount() {
   const q = useGet<{ blockers: string[] }>(['delete-blockers'], '/api/account/delete');
   const [typed, setTyped] = useState('');
   const [password, setPassword] = useState('');
+  const checks = useFieldChecks<'typed' | 'password'>(DELETE_RULES);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [reasons, setReasons] = useState<string[]>([]);
   const blockers = reasons.length ? reasons : q.data?.blockers ?? [];
 
   const del = async () => {
+    if (!checks.validateAll({ typed, password })) return;
     setErr(null);
     setBusy(true);
     try {
@@ -49,8 +55,8 @@ export default function DeleteAccount() {
         </Card>
       ) : q.data ? (
         <View style={{ marginTop: 16 }}>
-          <Field label="Type DELETE to confirm" value={typed} onChangeText={setTyped} autoCapitalize="characters" />
-          <Field label="Your password" value={password} onChangeText={setPassword} secureTextEntry />
+          <Field label="Type DELETE to confirm" {...checks.input('typed', typed, setTyped)}  autoCapitalize="characters" />
+          <Field label="Your password" {...checks.input('password', password, setPassword)}  secureTextEntry />
           {err ? <Txt color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
           <Button kind="danger" title="Delete my account" onPress={del} loading={busy} disabled={typed !== 'DELETE' || !password} />
         </View>

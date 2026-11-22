@@ -9,6 +9,10 @@ import type { Errand } from '@/lib/types';
 import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { naira } from '@/lib/theme';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const ERRAND_RULES = { items: rules.text('what you need', 10, 1000), store: rules.maxLength(120, 'the store name'), address: rules.streetAddress };
 
 export default function Errands() {
   const c = useColors('shop');
@@ -18,11 +22,13 @@ export default function Errands() {
   const [items, setItems] = useState('');
   const [store, setStore] = useState('');
   const [address, setAddress] = useState('');
+  const checks = useFieldChecks<'items' | 'store' | 'address'>(ERRAND_RULES);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const list = [...(q.data?.errands ?? [])].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
 
   const submit = async () => {
+    if (!checks.validateAll({ items, store, address })) return;
     setErr(null);
     setBusy(true);
     try {
@@ -62,9 +68,9 @@ export default function Errands() {
         })}
       </View>
       <Sheet side="shop" visible={open} onClose={() => setOpen(false)} title="New errand">
-        <Field side="shop" label="What do you need?" value={items} onChangeText={setItems} multiline placeholder="e.g. 2 bags of rice (50kg), 1 crate of eggs" />
-        <Field side="shop" label="Where to buy (optional)" value={store} onChangeText={setStore} placeholder="e.g. Shoprite Lekki" />
-        <Field side="shop" label="Deliver to" value={address} onChangeText={setAddress} multiline style={{ minHeight: 60 }} />
+        <Field side="shop" label="What do you need?" {...checks.input('items', items, setItems)} multiline placeholder="e.g. 2 bags of rice (50kg), 1 crate of eggs" />
+        <Field side="shop" label="Where to buy (optional)" {...checks.input('store', store, setStore)} placeholder="e.g. Shoprite Lekki" />
+        <Field side="shop" label="Deliver to" {...checks.input('address', address, setAddress)} multiline style={{ minHeight: 60 }} />
         {err ? <Txt side="shop" color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
         <Button side="shop" title="Ask for quotes" onPress={submit} loading={busy} disabled={items.trim().length < 3 || address.trim().length < 5} />
       </Sheet>

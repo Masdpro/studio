@@ -11,6 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+// Same limits as the server (₦100 to ₦1,000,000 per top-up).
+const TOPUP_RULES = { amount: rules.naira('the amount', 100, 1_000_000) };
 
 const formatNumberWithCommas = (value: string): string => {
   if (value === null || value === undefined || value.trim() === '') return '';
@@ -34,6 +40,7 @@ export function UserWalletDisplay() {
   const searchParams = useSearchParams();
   const [balance, setBalance] = useState(0);
   const [addAmount, setAddAmount] = useState('');
+  const topup = useFieldChecks<'amount'>(TOPUP_RULES);
   const [isOpen, setIsOpen] = useState(false);
   const [isFundingWallet, setIsFundingWallet] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -187,6 +194,7 @@ export function UserWalletDisplay() {
   };
 
   const handleAddFunds = async () => {
+    if (!topup.validateAll({ amount: addAmount })) return;
     const amount = parseFloat(addAmount);
     if (isNaN(amount) || amount <= 0) {
       toast({
@@ -277,13 +285,19 @@ export function UserWalletDisplay() {
                 type="text"
                 placeholder="Amount (e.g., 5,000)"
                 value={formatNumberWithCommas(addAmount)}
-                onChange={handleAddAmountChange}
+                onChange={(e) => {
+                  handleAddAmountChange(e);
+                  topup.changed('amount', e.target.value.replace(/,/g, ''));
+                }}
+                onBlur={() => topup.blur('amount', addAmount)}
+                aria-invalid={topup.error('amount') ? true : undefined}
                 className="flex-1"
               />
               <Button onClick={handleAddFunds} size="icon" aria-label="Add Funds" disabled={isFundingWallet}>
                 {isFundingWallet ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
               </Button>
             </div>
+            <FieldError message={topup.error('amount')} />
           </div>
 
         </div>

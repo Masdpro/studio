@@ -10,6 +10,18 @@ import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { radius } from '@/lib/theme';
 import type { Vendor } from '@/lib/types';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const STORE_RULES = {
+  businessName: rules.businessName,
+  phone: rules.phone,
+  streetAddress: rules.streetAddress,
+  city: rules.place,
+  operatingHours: rules.maxLength(120, 'the opening hours'),
+  slug: rules.optionalLinkName,
+};
+type Checked = keyof typeof STORE_RULES;
 
 const STATUSES = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -26,6 +38,16 @@ export default function VendorProfile() {
     if (v) setF({ businessName: v.businessName ?? '', phone: v.phone ?? '', streetAddress: v.streetAddress ?? '', city: v.city ?? '', operatingHours: v.operatingHours ?? '', status: v.status ?? 'Open', imageUrl: v.imageUrl ?? '', slug: v.slug ?? '' });
   }, [q.data]);
   const set = (k: string) => (v: string) => setF((s) => ({ ...s, [k]: v }));
+  const checks = useFieldChecks<Checked>(STORE_RULES);
+  const field = (k: Checked) => ({
+    value: f[k],
+    onChangeText: (v: string) => {
+      set(k)(v);
+      checks.changed(k, v);
+    },
+    onBlur: () => checks.blur(k, f[k] ?? ''),
+    error: checks.error(k),
+  });
 
   const photo = async () => {
     const uri = await pickPhoto({});
@@ -43,6 +65,7 @@ export default function VendorProfile() {
   const save = async () => {
     setErr(null);
     setMsg(null);
+    if (!checks.validateAll(f)) return setErr('Some entries need fixing. Check the messages above.');
     setBusy('save');
     try {
       const { slug, ...rest } = f;
@@ -65,16 +88,16 @@ export default function VendorProfile() {
         {f.imageUrl ? <Img uri={f.imageUrl} style={{ width: '100%', height: 150 }} radius={0} /> : <ImagePlus color={c.muted} size={32} />}
       </Pressable>
       {busy === 'photo' ? <Loading /> : null}
-      <Field side="shop" label="Store name" value={f.businessName} onChangeText={set('businessName')} />
+      <Field side="shop" label="Store name" {...field('businessName')} />
       <Txt side="shop" size={13} weight="600" style={{ marginBottom: 6 }}>Status</Txt>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
         {STATUSES.map((s) => <Chip side="shop" key={s} label={s} active={f.status === s} onPress={() => set('status')(s)} />)}
       </ScrollView>
-      <Field side="shop" label="Phone" value={f.phone} onChangeText={set('phone')} keyboardType="phone-pad" />
-      <Field side="shop" label="Address" value={f.streetAddress} onChangeText={set('streetAddress')} />
-      <Field side="shop" label="City" value={f.city} onChangeText={set('city')} />
-      <Field side="shop" label="Opening hours" value={f.operatingHours} onChangeText={set('operatingHours')} placeholder="e.g. 9am to 7pm, Mon to Sat" />
-      <Field side="shop" label="Store link name" value={f.slug} onChangeText={set('slug')} autoCapitalize="none" hint={f.slug ? `cbuyapp.com/s/${f.slug}` : 'Your own short link to share'} />
+      <Field side="shop" label="Phone" {...field('phone')} keyboardType="phone-pad" placeholder="08012345678" />
+      <Field side="shop" label="Address" {...field('streetAddress')} />
+      <Field side="shop" label="City" {...field('city')} />
+      <Field side="shop" label="Opening hours" {...field('operatingHours')} placeholder="e.g. 9am to 7pm, Mon to Sat" />
+      <Field side="shop" label="Store link name" {...field('slug')} autoCapitalize="none" hint={f.slug ? `cbuyapp.com/s/${f.slug}` : 'Your own short link to share'} />
       {msg ? <Txt side="shop" color={c.success}>{msg}</Txt> : null}
       {err ? <Txt side="shop" color={c.danger}>{err}</Txt> : null}
     </Screen>

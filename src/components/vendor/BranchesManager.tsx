@@ -15,6 +15,12 @@ import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { BranchAccountControl } from '@/components/vendor/BranchAccountControl';
 import { SafeImage } from '@/components/ui/safe-image';
 import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+type Checked = 'name' | 'streetAddress' | 'city' | 'locationTag' | 'phone';
+const BRANCH_RULES = { name: rules.businessName, streetAddress: rules.streetAddress, city: rules.place, locationTag: rules.optional(rules.place), phone: rules.optional(rules.phone) };
 
 const STATUSES = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 const NO_MARKET = 'none';
@@ -29,6 +35,7 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<VendorBranch | 'new' | null>(null);
   const [form, setForm] = useState<Form>(EMPTY);
+  const checks = useFieldChecks<Checked>(BRANCH_RULES);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -43,14 +50,22 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
 
   const open = (b: VendorBranch | 'new') => {
     setEditing(b);
+    checks.reset();
     setForm(b === 'new' ? EMPTY : {
       name: b.name, streetAddress: b.streetAddress, city: b.city, country: b.country, locationTag: b.locationTag ?? '',
       marketId: b.marketId ?? NO_MARKET, phone: b.phone ?? '', operatingHours: b.operatingHours ?? '', status: b.status ?? 'Open', imageUrl: b.imageUrl ?? '',
     });
   };
-  const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+    if (k in BRANCH_RULES) checks.changed(k as Checked, e.target.value);
+  };
+  /** Leave handler and error message for a checked entry. */
+  const leave = (k: Checked) => ({ onBlur: () => checks.blur(k, form[k]), 'aria-invalid': checks.error(k) ? true : undefined });
+  const err = (k: Checked) => <FieldError message={checks.error(k)} />;
 
   const save = async () => {
+    if (!checks.validateAll(form)) return;
     setSaving(true);
     try {
       const body = { ...form, marketId: form.marketId === NO_MARKET ? '' : form.marketId };
@@ -134,15 +149,15 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
               <Label>Branch photo (optional)</Label>
               <ImageUploadField value={form.imageUrl} onChange={(v: string) => setForm((f) => ({ ...f, imageUrl: v }))} endpoint="/api/vendor/upload" />
             </div>
-            <div><Label htmlFor="b-name">Branch name</Label><Input id="b-name" value={form.name} onChange={set('name')} placeholder="e.g. Wuse 2 branch" /></div>
-            <div><Label htmlFor="b-street">Street address</Label><Input id="b-street" value={form.streetAddress} onChange={set('streetAddress')} /></div>
+            <div><Label htmlFor="b-name">Branch name</Label><Input id="b-name" value={form.name} onChange={set('name')} {...leave('name')} placeholder="e.g. Wuse 2 branch" />{err('name')}</div>
+            <div><Label htmlFor="b-street">Street address</Label><Input id="b-street" value={form.streetAddress} onChange={set('streetAddress')} {...leave('streetAddress')} />{err('streetAddress')}</div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label htmlFor="b-city">City</Label><CityInput id="b-city" country={form.country} value={form.city} onValueChange={(v) => setForm((f) => ({ ...f, city: v }))} /></div>
+              <div><Label htmlFor="b-city">City</Label><CityInput id="b-city" country={form.country} value={form.city} onValueChange={(v) => { setForm((f) => ({ ...f, city: v })); checks.changed('city', v); }} onBlur={() => checks.blur('city', form.city)} />{err('city')}</div>
               <div><Label htmlFor="b-country">Country</Label><CountrySelect id="b-country" value={form.country} onValueChange={(v) => setForm((f) => ({ ...f, country: v }))} /></div>
             </div>
             <div>
               <Label htmlFor="b-tag">Area (used by the city/area filter)</Label>
-              <Input id="b-tag" list="branch-tags" value={form.locationTag} onChange={set('locationTag')} placeholder="e.g. Abuja" />
+              <Input id="b-tag" list="branch-tags" value={form.locationTag} onChange={set('locationTag')} {...leave('locationTag')} placeholder="e.g. Abuja" />{err('locationTag')}
               <datalist id="branch-tags">{tags.map((t) => <option key={t} value={t} />)}</datalist>
             </div>
             <div>
@@ -155,7 +170,7 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
                 </SelectContent>
               </Select>
             </div>
-            <div><Label htmlFor="b-phone">Branch phone</Label><Input id="b-phone" value={form.phone} onChange={set('phone')} /></div>
+            <div><Label htmlFor="b-phone">Branch phone</Label><Input id="b-phone" value={form.phone} onChange={set('phone')} {...leave('phone')} inputMode="tel" placeholder="08012345678" />{err('phone')}</div>
             <div><Label>Opening hours</Label><OperatingHoursInput value={form.operatingHours} onChange={(v) => setForm((f) => ({ ...f, operatingHours: v }))} /></div>
             <div>
               <Label>Status</Label>

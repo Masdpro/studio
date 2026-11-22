@@ -15,6 +15,10 @@ import { useColors } from '@/lib/side';
 import { naira } from '@/lib/theme';
 import { useShareLocation } from '@/lib/tracking';
 import type { Order } from '@/lib/types';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const CODE_RULES = { code: rules.digits(4, 'the delivery code') };
 
 const maps = (address: string) => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(address)}`);
 
@@ -26,6 +30,7 @@ export default function AgentHome() {
   const [tab, setTab] = useState<'mine' | 'open' | 'done'>('mine');
   const [deliver, setDeliver] = useState<Order | null>(null);
   const [code, setCode] = useState('');
+  const checks = useFieldChecks<'code'>(CODE_RULES);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const all = q.data?.orders ?? [];
@@ -101,7 +106,7 @@ export default function AgentHome() {
               {(o.status === 'PickedUpByAgent' || o.status === 'Out for Delivery') && tab === 'mine' ? (
                 <Row style={{ marginTop: 10 }}>
                   <Button side="shop" small kind="ghost" title="Directions" onPress={() => maps(o.deliveryAddress)} />
-                  <Button side="shop" small title="Enter delivery code" style={{ flex: 1 }} onPress={() => { setDeliver(o); setCode(''); }} />
+                  <Button side="shop" small title="Enter delivery code" style={{ flex: 1 }} onPress={() => { setDeliver(o); setCode(''); checks.reset(); }} />
                 </Row>
               ) : null}
             </Card>
@@ -110,9 +115,9 @@ export default function AgentHome() {
       </View>
       <Sheet side="shop" visible={!!deliver} onClose={() => setDeliver(null)} title="Hand over the order">
         <Txt side="shop" muted style={{ marginBottom: 12 }}>Ask the customer for their 4-digit delivery code once they’ve checked the items.</Txt>
-        <Field side="shop" label="Delivery code" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" autoFocus />
+        <Field side="shop" label="Delivery code" {...checks.input('code', code, (t) => setCode(t.replace(/\D/g, '').slice(0, 4)))} keyboardType="number-pad" autoFocus />
         {err ? <Txt side="shop" color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
-        <Button side="shop" title="Confirm delivery" disabled={code.length !== 4} loading={!!deliver && busy === deliver.id} onPress={async () => { if (deliver && (await move(deliver, 'Delivered', { deliveryCode: code }))) setDeliver(null); }} />
+        <Button side="shop" title="Confirm delivery" disabled={code.length !== 4} loading={!!deliver && busy === deliver.id} onPress={async () => { if (!checks.validateAll({ code })) return; if (deliver && (await move(deliver, 'Delivered', { deliveryCode: code }))) setDeliver(null); }} />
       </Sheet>
     </Screen>
   );

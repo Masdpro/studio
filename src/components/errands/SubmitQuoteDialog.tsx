@@ -5,6 +5,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,8 +33,8 @@ import type { ErrandRequest, ErrandQuote } from '@/lib/types';
 import { DollarSign, MessageSquare, Send } from 'lucide-react';
 
 const quoteSchema = z.object({
-  estimatedItemCost: z.coerce.number().min(0, { message: 'Estimated cost must be zero or positive.' }),
-  deliveryFee: z.coerce.number().min(0, { message: 'Delivery fee must be zero or positive.' }),
+  estimatedItemCost: z.coerce.number({ invalid_type_error: 'Enter the cost of the items as a number, e.g. 5000.' }).min(1, { message: 'Enter the cost of the items.' }).max(10_000_000, { message: 'The item cost can’t be more than ₦10,000,000.' }),
+  deliveryFee: z.coerce.number({ invalid_type_error: 'Enter your delivery fee as a number, e.g. 1500.' }).min(0, { message: 'The delivery fee can’t be negative.' }).max(100_000, { message: 'The delivery fee can’t be more than ₦100,000.' }),
   agentNotes: z.string().max(300, { message: 'Notes cannot exceed 300 characters.' }).optional(),
 });
 
@@ -48,6 +51,8 @@ export function SubmitQuoteDialog({ errand, isOpen, onOpenChange, onSubmitQuote 
   const { toast } = useToast();
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: {
       estimatedItemCost: 0,
       deliveryFee: 0,

@@ -14,6 +14,11 @@ import { useRequireTrading } from '@/hooks/use-trading-status';
 import { dayLabel, lagosDate, lagosClock, naira, whenLabel } from '@/lib/booking-time';
 import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
 import { MoveDialog } from '@/components/services/MoveDialog';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const CODE_RULES = { code: rules.digits(4, "the customer's code") };
 
 type Booking = {
   id: string; serviceId: string; providerId: string; serviceName: string; startsAt: string; endsAt: string; location: 'shop' | 'home'; address: string | null;
@@ -170,6 +175,7 @@ function Empty({ text }: { text: string }) {
 
 function CodeDialog({ b, onClose, onSubmit, busy }: { b: Booking; onClose: () => void; onSubmit: (code: string) => void; busy: boolean }) {
   const [code, setCode] = useState('');
+  const checks = useFieldChecks<'code'>(CODE_RULES);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-sm">
@@ -177,9 +183,10 @@ function CodeDialog({ b, onClose, onSubmit, busy }: { b: Booking; onClose: () =>
           <DialogTitle>Enter the customer&apos;s code</DialogTitle>
           <DialogDescription>Ask {b.customerName} for the 4-digit code in their Closebuy bookings. You&apos;re paid {naira(b.total)} straight away.</DialogDescription>
         </DialogHeader>
-        <Input inputMode="numeric" autoFocus maxLength={4} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} className="text-center font-mono text-2xl tracking-[0.4em]" aria-label="Customer's code" />
+        <Input inputMode="numeric" autoFocus maxLength={4} {...checks.field('code', code, (v: string) => setCode(v.replace(/\D/g, '')))} className="text-center font-mono text-2xl tracking-[0.4em]" aria-label="Customer's code" />
+        <FieldError message={checks.error('code')} />
         <DialogFooter>
-          <Button disabled={code.length !== 4 || busy} onClick={() => onSubmit(code)}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirm job done</Button>
+          <Button disabled={code.length !== 4 || busy} onClick={() => checks.validateAll({ code }) && onSubmit(code)}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirm job done</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

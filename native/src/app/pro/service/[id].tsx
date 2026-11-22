@@ -12,6 +12,11 @@ import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { radius } from '@/lib/theme';
 import type { ProService } from '@/lib/types';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+// Same limits as the server.
+const SERVICE_RULES = { name: rules.text('the service name', 2, 80), description: rules.maxLength(1000, 'the description'), price: rules.naira('the price', 100, 10_000_000), fee: rules.optional(rules.naira('the call-out fee', 0, 1_000_000)) };
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 480];
 
@@ -29,6 +34,8 @@ export default function EditService() {
   const [dur, setDur] = useState(60);
   const [where, setWhere] = useState<'shop' | 'home' | 'either'>('shop');
   const [fee, setFee] = useState('');
+  const checks = useFieldChecks<'name' | 'description' | 'price' | 'fee'>(// Same limits as the server.
+ SERVICE_RULES);
   const [paused, setPaused] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -46,6 +53,7 @@ export default function EditService() {
   }, [s]);
 
   const save = async () => {
+    if (!checks.validateAll({ name, description, price, fee: where === 'shop' ? '' : fee })) return;
     setErr(null);
     setBusy('save');
     const body = { name, description, price: Number(price), priceFrom, durationMin: dur, location: where, callOutFee: where === 'shop' ? null : Number(fee || 0), paused };
@@ -101,9 +109,9 @@ export default function EditService() {
   return (
     <Screen side="book" edges={[]} footer={<Button side="book" title={isNew ? 'Add service' : 'Save'} onPress={save} loading={busy === 'save'} disabled={name.trim().length < 2 || !(Number(price) >= 100)} />}>
       <Stack.Screen options={{ title: isNew ? 'New service' : 'Edit service' }} />
-      <Field side="book" label="Service name" value={name} onChangeText={setName} placeholder="e.g. Knotless braids, medium" />
-      <Field side="book" label="Description" value={description} onChangeText={setDescription} multiline />
-      <Field side="book" label="Price (₦)" value={price} onChangeText={(t) => setPrice(t.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" />
+      <Field side="book" label="Service name" {...checks.input('name', name, setName)} placeholder="e.g. Knotless braids, medium" />
+      <Field side="book" label="Description" {...checks.input('description', description, setDescription)} multiline />
+      <Field side="book" label="Price (₦)" {...checks.input('price', price, (t) => setPrice(t.replace(/[^\d.]/g, '')))} keyboardType="decimal-pad" />
       <Row style={{ justifyContent: 'space-between', marginBottom: 14 }}>
         <Txt side="book" style={{ flex: 1 }}>Show as “from” price</Txt>
         <Switch value={priceFrom} onValueChange={setPriceFrom} />
@@ -118,7 +126,7 @@ export default function EditService() {
         <Chip side="book" label="Customer’s place" active={where === 'home'} onPress={() => setWhere('home')} />
         <Chip side="book" label="Either" active={where === 'either'} onPress={() => setWhere('either')} />
       </Row>
-      {where !== 'shop' ? <Field side="book" label="Call-out fee for home visits (₦)" value={fee} onChangeText={(t) => setFee(t.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" /> : null}
+      {where !== 'shop' ? <Field side="book" label="Call-out fee for home visits (₦)" {...checks.input('fee', fee, (t) => setFee(t.replace(/[^\d.]/g, '')))} keyboardType="decimal-pad" /> : null}
       {!isNew ? (
         <Row style={{ justifyContent: 'space-between', marginBottom: 14 }}>
           <Txt side="book" style={{ flex: 1 }}>Paused (hidden from customers)</Txt>

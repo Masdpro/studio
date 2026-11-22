@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const LINK_RULES = { value: rules.optionalLinkName };
 
 /** The vendor's own Closebuy link, for those without a website of their own. */
 export function StoreLinkCard({ slug, onSaved }: { slug?: string; onSaved: () => void }) {
@@ -13,11 +18,13 @@ export function StoreLinkCard({ slug, onSaved }: { slug?: string; onSaved: () =>
   const [value, setValue] = useState(slug ?? '');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const checks = useFieldChecks<'value'>(LINK_RULES);
   useEffect(() => setValue(slug ?? ''), [slug]);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const url = slug ? `${origin}/s/${slug}` : '';
 
   async function save() {
+    if (!checks.validateAll({ value })) return;
     setSaving(true);
     try {
       const res = await fetch('/api/vendor/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: value }) });
@@ -64,12 +71,13 @@ export function StoreLinkCard({ slug, onSaved }: { slug?: string; onSaved: () =>
         )}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">/s/</span>
-          <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="your-business-name" />
+          <Input {...checks.field('value', value, (v: string) => setValue(v))} placeholder="your-business-name" />
           <Button type="button" onClick={save} disabled={saving || !value.trim() || value === slug}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Change link
           </Button>
         </div>
+        <FieldError message={checks.error('value')} />
       </CardContent>
     </Card>
   );

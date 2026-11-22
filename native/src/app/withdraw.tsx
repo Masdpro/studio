@@ -7,6 +7,10 @@ import { day } from '@/lib/format';
 import { useGet } from '@/lib/query';
 import { useSide } from '@/lib/side';
 import { naira } from '@/lib/theme';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const BANK_RULES = { num: rules.accountNumber, password: (v: string) => (v ? null : 'Enter your Closebuy password.') };
 
 type Payouts = {
   earner: boolean;
@@ -28,8 +32,11 @@ export default function Withdraw() {
   const [msg, setMsg] = useState<string | null>(null);
   const [bankOpen, setBankOpen] = useState(false);
   const d = q.data;
+  const min = d?.minWithdrawal ?? 1000;
+  const amountChecks = useFieldChecks<'amount'>({ amount: rules.naira('the amount', min, Math.max(min, d?.summary?.withdrawable ?? min)) });
 
   const withdraw = async () => {
+    if (!amountChecks.validateAll({ amount })) return;
     setErr(null);
     setBusy(true);
     try {
@@ -66,7 +73,7 @@ export default function Withdraw() {
           </Card>
           {d.blockReason ? <Card><Txt>{d.blockReason}</Txt></Card> : (
             <Card>
-              <Field label="Amount (₦)" value={amount} onChangeText={(t) => setAmount(t.replace(/\D/g, ''))} keyboardType="number-pad" hint={`Minimum ${naira(d.minWithdrawal ?? 1000)}`} />
+              <Field label="Amount (₦)" {...amountChecks.input('amount', amount, (t) => setAmount(t.replace(/\D/g, '')))} keyboardType="number-pad" hint={`Minimum ${naira(d.minWithdrawal ?? 1000)}`} />
               <Button title="Withdraw" onPress={withdraw} loading={busy} disabled={!(Number(amount) >= (d.minWithdrawal ?? 1000)) || Number(amount) > d.summary.withdrawable} />
             </Card>
           )}
@@ -98,6 +105,7 @@ function BankSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: (
   const [num, setNum] = useState('');
   const [name, setName] = useState<string | null>(null);
   const [password, setPassword] = useState('');
+  const bankChecks = useFieldChecks<'num' | 'password'>(BANK_RULES);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const shown = (banks.data?.banks ?? []).filter((b) => b.name.toLowerCase().includes(filter.toLowerCase())).slice(0, 30);
@@ -115,6 +123,7 @@ function BankSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: (
     }
   };
   const save = async () => {
+    if (!bankChecks.validateAll({ num, password })) return;
     setErr(null);
     setBusy(true);
     try {
@@ -144,11 +153,11 @@ function BankSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: (
             <Txt weight="700">{bank.name}</Txt>
             <Button small kind="ghost" title="Change bank" onPress={() => { setBank(null); setName(null); }} />
           </Row>
-          <Field label="Account number" value={num} onChangeText={(t) => { setNum(t.replace(/\D/g, '').slice(0, 10)); setName(null); }} keyboardType="number-pad" />
+          <Field label="Account number" {...bankChecks.input('num', num, (t) => { setNum(t.replace(/\D/g, '').slice(0, 10)); setName(null); })} keyboardType="number-pad" />
           {name ? (
             <>
               <Txt weight="700" color={c.success} style={{ marginBottom: 10 }}>{name}</Txt>
-              <Field label="Your Closebuy password" value={password} onChangeText={setPassword} secureTextEntry hint="To protect your earnings" />
+              <Field label="Your Closebuy password" {...bankChecks.input('password', password, setPassword)}  secureTextEntry hint="To protect your earnings" />
               <Button title="Save account" onPress={save} loading={busy} disabled={!password} />
             </>
           ) : (

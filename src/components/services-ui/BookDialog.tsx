@@ -13,6 +13,11 @@ import { dayLabel, durationLabel, naira, whenLabel } from '@/lib/booking-time';
 import { getSavedAddress } from '@/lib/delivery-address';
 import { cn } from '@/lib/utils';
 import { clock12, type PublicService } from './parts';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const BOOK_RULES = { address: rules.streetAddress, note: rules.maxLength(500, 'the note') };
 
 type Slot = { startsAt: number; label: string };
 
@@ -31,6 +36,7 @@ export function BookDialog({ provider, service, onClose }: { provider: { id: str
   const [place, setPlace] = useState<'shop' | 'home'>(service.location === 'home' ? 'home' : 'shop');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
+  const checks = useFieldChecks<'address' | 'note'>(BOOK_RULES);
   const [busy, setBusy] = useState(false);
   const [short, setShort] = useState<number | null>(null);
   const own = !!user && user.id === provider.id;
@@ -67,6 +73,7 @@ export function BookDialog({ provider, service, onClose }: { provider: { id: str
       return;
     }
     if (!startsAt) return;
+    if (!checks.validateAll({ address: place === 'home' ? address : '12 Not needed', note })) return;
     setBusy(true);
     setShort(null);
     try {
@@ -146,12 +153,14 @@ export function BookDialog({ provider, service, onClose }: { provider: { id: str
           {place === 'home' && (
             <div className="space-y-1">
               <Label htmlFor="bk-address">Where should they come?</Label>
-              <Input id="bk-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos" />
+              <Input id="bk-address" {...checks.field('address', address, (v: string) => setAddress(v))} placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos" />
+              <FieldError message={checks.error('address')} />
             </div>
           )}
           <div className="space-y-1">
             <Label htmlFor="bk-note">Anything they should know? (optional)</Label>
-            <Textarea id="bk-note" value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} />
+            <Textarea id="bk-note" {...checks.field('note', note, (v: string) => setNote(v))}  rows={2} maxLength={500} />
+            <FieldError message={checks.error('note')} />
           </div>
 
           <div className="rounded-xl border bg-card p-4 text-sm">

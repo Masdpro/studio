@@ -9,6 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CheckCircle2, Circle, Loader2, ShieldCheck, FlaskConical, FileText, Upload, Clock, XCircle, ScanFace } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LiveSelfieCheck } from '@/components/account/LiveSelfieCheck';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const PHONE_RULES = { phone: rules.phone, code: rules.digits(6, 'the code from the text') };
 
 type Doc = { kind: string; label: string; uploaded: boolean; id: string | null; live?: boolean };
 export type RoleVerification = {
@@ -64,6 +69,7 @@ export function AccountVerification({ focus }: { focus?: 'vendor' | 'delivery_ag
   const [devCode, setDevCode] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
+  const phoneChecks = useFieldChecks<'phone' | 'code'>(PHONE_RULES);
   // Which verification route each role is showing (shops pick "with CAC" or "without CAC").
   const [routeChoice, setRouteChoice] = useState<Record<string, string>>({});
 
@@ -169,20 +175,24 @@ export function AccountVerification({ focus }: { focus?: 'vendor' | 'delivery_ag
           ) : (
             <>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="08012345678" inputMode="tel" />
-                <Button type="button" variant="outline" onClick={() => phoneAction({ action: 'send', phone })} disabled={busy === 'send' || !phone}>
+                <Input {...phoneChecks.field('phone', phone, (v: string) => setPhone(v))} placeholder="08012345678" inputMode="tel" />
+                <Button type="button" variant="outline" onClick={() => { phoneChecks.blur('phone', phone); if (!PHONE_RULES.phone(phone)) phoneAction({ action: 'send', phone }); }} disabled={busy === 'send' || !phone}>
                   {busy === 'send' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {codeSent ? 'Resend code' : 'Text me a code'}
                 </Button>
               </div>
+              <FieldError message={phoneChecks.error('phone')} />
               {codeSent && (
+                <>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="6-digit code" inputMode="numeric" />
-                  <Button type="button" onClick={() => phoneAction({ action: 'verify', code })} disabled={busy === 'verify' || code.length !== 6}>
+                  <Input {...phoneChecks.field('code', code, (v: string) => setCode(v.replace(/\D/g, '').slice(0, 6)))} placeholder="6-digit code" inputMode="numeric" />
+                  <Button type="button" onClick={() => { phoneChecks.blur('code', code); if (!PHONE_RULES.code(code)) phoneAction({ action: 'verify', code }); }} disabled={busy === 'verify' || code.length !== 6}>
                     {busy === 'verify' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Verify
                   </Button>
                 </div>
+                <FieldError message={phoneChecks.error('code')} />
+                </>
               )}
               {devCode && (
                 <Alert>

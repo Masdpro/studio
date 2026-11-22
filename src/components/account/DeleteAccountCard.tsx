@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const DELETE_RULES = { confirmText: (v: string) => (v.trim().toUpperCase() === 'DELETE' ? null : 'Type DELETE to confirm.'), password: (v: string) => (v ? null : 'Enter your password.') };
 
 /**
  * "Delete my account" on the profile page. The app stores require people to be able to do this
@@ -20,6 +25,7 @@ export function DeleteAccountCard({ onDeleted }: { onDeleted: () => void }) {
   const [confirmText, setConfirmText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const checks = useFieldChecks<'confirmText' | 'password'>(DELETE_RULES);
 
   const start = async () => {
     setOpen(true); setBlockers(null); setPassword(''); setConfirmText(''); setError(null);
@@ -82,11 +88,13 @@ export function DeleteAccountCard({ onDeleted }: { onDeleted: () => void }) {
               </ul>
               <div className="space-y-2">
                 <Label htmlFor="del-confirm">Type DELETE to confirm</Label>
-                <Input id="del-confirm" autoComplete="off" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+                <Input id="del-confirm" autoComplete="off" {...checks.field('confirmText', confirmText, setConfirmText)} />
+                <FieldError message={checks.error('confirmText')} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="del-pass">Your password</Label>
-                <Input id="del-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input id="del-pass" type="password" autoComplete="current-password" {...checks.field('password', password, setPassword)} />
+                <FieldError message={checks.error('password')} />
               </div>
               {error && <p className="text-destructive">{error}</p>}
             </div>

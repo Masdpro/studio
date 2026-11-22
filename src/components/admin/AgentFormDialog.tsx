@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,13 +24,13 @@ import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import type { DeliveryAgent } from '@/lib/types';
 
 const agentSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  phone: z.string().min(5, { message: 'Please enter a valid phone number.' }),
-  streetAddress: z.string().min(2, { message: 'Street address is required.' }),
-  city: z.string().min(2, { message: 'City is required.' }),
-  country: z.string().min(2, { message: 'Country is required.' }),
-  vehicleDetails: z.string().optional(),
+  name: zRule(rules.personName),
+  email: zRule(rules.email),
+  phone: zRule(rules.phone),
+  streetAddress: zRule(rules.streetAddress),
+  city: zRule(rules.place),
+  country: zRule(rules.place),
+  vehicleDetails: zRule(rules.maxLength(80, 'the vehicle details')).optional(),
   imageUrl: z.string().optional(),
 });
 
@@ -59,6 +62,8 @@ export function AgentFormDialog({ agent, open, onOpenChange, onSaved }: AgentFor
 
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: agentToFormValues(agent),
   });
 

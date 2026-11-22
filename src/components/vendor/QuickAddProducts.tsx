@@ -12,6 +12,12 @@ import { ALL_CATALOG_ITEMS, BUSINESS_TYPES, catalogImageFor, getBusinessType, ty
 import {
   ArrowLeft, Baby, Beef, CakeSlice, Gift, SprayCan, Check, ImageIcon, X, CupSoda, Loader2, Pill, Plus, Search, Shirt, ShoppingBasket, Smartphone, Sofa, Sparkles, Trash2, UtensilsCrossed,
 } from 'lucide-react';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const NAME_RULE = rules.text('the product name', 2, 100);
+const PRICE_RULE = rules.naira('the price', 1, 100_000_000);
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   UtensilsCrossed, CupSoda, ShoppingBasket, Shirt, Smartphone, Sparkles, Pill, Sofa, Baby, CakeSlice, SprayCan, Gift, Beef,
@@ -53,6 +59,12 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
   const [custom, setCustom] = useState('');
   const [finder, setFinder] = useState('');
   const [saving, setSaving] = useState(false);
+  // One check per product row: "<row key>:name" and "<row key>:price".
+  const rowRules = useMemo(
+    () => Object.fromEntries(picked.flatMap((p) => [[`${p.key}:name`, NAME_RULE], [`${p.key}:price`, PRICE_RULE]])),
+    [picked],
+  );
+  const checks = useFieldChecks<string>(rowRules);
   // Suggested prices for catalog products, by lower-cased name (kept up to date every quarter).
   const [suggested, setSuggested] = useState<Record<string, number>>({});
 
@@ -465,7 +477,8 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
           <li key={p.key} className={cn('min-w-0 space-y-2 rounded-md border p-3', complete(p) && 'border-green-300 bg-green-50/40')}>
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1 space-y-1">
-                <Input aria-label="Product name" value={p.name} onChange={(e) => update(p.key, { name: e.target.value })} className="h-8 font-medium" />
+                <Input aria-label="Product name" value={p.name} onChange={(e) => { update(p.key, { name: e.target.value }); checks.changed(`${p.key}:name`, e.target.value); }} onBlur={() => checks.blur(`${p.key}:name`, p.name)} className="h-8 font-medium" />
+                <FieldError message={checks.error(`${p.key}:name`)} />
                 <p className="text-xs text-muted-foreground">{p.category}</p>
               </div>
               <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Remove ${p.name}`} onClick={() => setPicked((prev) => prev.filter((x) => x.key !== p.key))}>
@@ -474,8 +487,9 @@ export function QuickAddProducts({ existingNames, onAdded }: { existingNames: st
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">₦</span>
-              <Input aria-label={`Price for ${p.name}`} inputMode="decimal" placeholder="Price" value={p.price} onChange={(e) => update(p.key, { price: e.target.value.replace(/[^\d.,]/g, ''), priceFrom: 'own' })} className="h-9" />
+              <Input aria-label={`Price for ${p.name}`} inputMode="decimal" placeholder="Price" value={p.price} onChange={(e) => { const v = e.target.value.replace(/[^\d.,]/g, ''); update(p.key, { price: v, priceFrom: 'own' }); checks.changed(`${p.key}:price`, v); }} onBlur={() => checks.blur(`${p.key}:price`, p.price)} className="h-9" />
             </div>
+            <FieldError message={checks.error(`${p.key}:price`)} />
             {p.priceFrom === 'suggested' && <p className="text-xs text-muted-foreground">Suggested price. Enter your own if yours is different.</p>}
             <ImageUploadField value={p.imageUrl} onChange={(url) => update(p.key, { imageUrl: url })} endpoint="/api/vendor/upload" emptyLabel="Photo required" />
             {p.catalogImage && p.imageUrl === p.catalogImage && (

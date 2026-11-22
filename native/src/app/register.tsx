@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Captcha } from '@/components/Captcha';
 import { Button, Card, Chip, Field, H1, Screen, Txt } from '@/components/ui';
@@ -7,8 +7,28 @@ import { api } from '@/lib/api';
 import { SERVICE_CATEGORIES } from '@/lib/service-categories';
 import { useSession } from '@/lib/session';
 import { useSide } from '@/lib/side';
+import { rules, type Rule } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
 
 type Kind = 'customer' | 'vendor' | 'provider' | 'delivery_agent';
+
+/** What each kind of sign-up must fill in, and the rule for each entry. */
+function rulesFor(kind: Kind, signedIn: boolean): Record<string, Rule> {
+  const out: Record<string, Rule> = {};
+  if (kind === 'customer' || kind === 'delivery_agent') out.name = rules.personName;
+  if (kind === 'vendor' || kind === 'provider') out.businessName = rules.businessName;
+  if (kind === 'provider') out.category = (v) => (v ? null : 'Choose what you offer.');
+  if (!signedIn) out.email = rules.email;
+  if (kind !== 'customer') {
+    out.phone = rules.phone;
+    out.streetAddress = rules.streetAddress;
+    out.city = rules.place;
+  }
+  if (kind === 'provider') out.area = rules.place;
+  if (kind === 'delivery_agent') out.vehicleDetails = rules.maxLength(80, 'the vehicle details');
+  if (!signedIn) out.password = rules.newPassword;
+  return out;
+}
 const KINDS: { id: Kind; label: string; blurb: string }[] = [
   { id: 'customer', label: 'Shop and book', blurb: 'Buy from local shops and book services' },
   { id: 'vendor', label: 'Sell products', blurb: 'Open a store on Closebuy' },
@@ -28,11 +48,28 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ email: string; password: string; devCode?: string } | null>(null);
   const [code, setCode] = useState('');
+  const [codeLeft, setCodeLeft] = useState(false);
 
   const business = kind !== 'customer';
+  const fieldRules = useMemo(() => rulesFor(kind, !!user), [kind, user]);
+  const checks = useFieldChecks<string>(fieldRules);
+  /** Value, change and leave handlers plus the message for one entry. */
+  const field = (k: string) => ({
+    value: f[k],
+    onChangeText: (v: string) => {
+      set(k)(v);
+      checks.changed(k, v);
+    },
+    onBlur: () => checks.blur(k, f[k] ?? ''),
+    error: checks.error(k),
+  });
 
   const submit = async () => {
     setError(null);
+    if (!checks.validateAll(f)) {
+      setError('Some entries need fixing. Check the messages above.');
+      return;
+    }
     setBusy(true);
     try {
       const email = (f.email ?? '').trim().toLowerCase();
@@ -81,7 +118,7 @@ export default function Register() {
         <H1>Check your email</H1>
         <Txt muted style={{ marginVertical: 12 }}>We sent a 6-digit code to {pending.email}. Enter it below to finish.</Txt>
         {pending.devCode ? <Txt muted size={12}>Test code: {pending.devCode}</Txt> : null}
-        <Field label="Code" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" textContentType="oneTimeCode" />
+        <Field label="Code" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))} onBlur={() => setCodeLeft(true)} error={codeLeft ? rules.digits(6, 'the code from the email')(code) : null} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" textContentType="oneTimeCode" />
         {error ? <Txt color={c.danger} style={{ marginBottom: 12 }}>{error}</Txt> : null}
         <Button title="Confirm" onPress={confirm} loading={busy} disabled={code.trim().length !== 6} />
         <Button kind="ghost" title="Send a new code" style={{ marginTop: 10 }} onPress={() => api('/api/auth/resend-verification', { body: { email: pending.email } }).catch(() => {})} />
@@ -94,31 +131,32 @@ export default function Register() {
       <H1>{user ? 'Add a business' : 'Join Closebuy'}</H1>
       <Txt muted style={{ marginBottom: 14 }}>What would you like to do?</Txt>
       {KINDS.filter((k) => !user || k.id !== 'customer').map((k) => (
-        <Card key={k.id} onPress={() => setKind(k.id)} style={{ marginBottom: 8, borderColor: kind === k.id ? c.primary : c.border, borderWidth: kind === k.id ? 2 : 1 }}>
+        <Card key={k.id} onPress={() => { setKind(k.id); checks.reset(); setError(null); }} style={{ marginBottom: 8, borderColor: kind === k.id ? c.primary : c.border, borderWidth: kind === k.id ? 2 : 1 }}>
           <Txt weight="700">{k.label}</Txt>
           <Txt muted size={13}>{k.blurb}</Txt>
         </Card>
       ))}
       <View style={{ height: 12 }} />
-      {kind === 'customer' || kind === 'delivery_agent' ? <Field label="Your name" value={f.name} onChangeText={set('name')} autoComplete="name" /> : null}
-      {kind === 'vendor' || kind === 'provider' ? <Field label="Business name" value={f.businessName} onChangeText={set('businessName')} /> : null}
+      {kind === 'customer' || kind === 'delivery_agent' ? <Field label="Your name" {...field('name')} autoComplete="name" /> : null}
+      {kind === 'vendor' || kind === 'provider' ? <Field label="Business name" {...field('businessName')} /> : null}
       {kind === 'provider' ? (
         <View style={{ marginBottom: 14 }}>
           <Txt size={13} weight="600" style={{ marginBottom: 6 }}>What do you offer?</Txt>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {SERVICE_CATEGORIES.map((k) => (
-              <Chip key={k.id} label={k.label} active={f.category === k.id} onPress={() => set('category')(k.id)} />
+              <Chip key={k.id} label={k.label} active={f.category === k.id} onPress={() => { set('category')(k.id); checks.blur('category', k.id); }} />
             ))}
           </ScrollView>
+          {checks.error('category') ? <Txt size={12} color={c.danger} style={{ marginTop: 4 }}>{checks.error('category')}</Txt> : null}
         </View>
       ) : null}
-      {!user ? <Field label="Email" value={f.email} onChangeText={set('email')} autoCapitalize="none" keyboardType="email-address" autoComplete="email" /> : null}
-      {business ? <Field label="Mobile number" value={f.phone} onChangeText={set('phone')} keyboardType="phone-pad" placeholder="08012345678" /> : null}
-      {business ? <Field label={kind === 'delivery_agent' ? 'Home address' : 'Business address'} value={f.streetAddress} onChangeText={set('streetAddress')} /> : null}
-      {kind === 'provider' ? <Field label="Area" value={f.area} onChangeText={set('area')} placeholder="e.g. Lekki Phase 1" /> : null}
-      {business ? <Field label="City" value={f.city} onChangeText={set('city')} /> : null}
-      {kind === 'delivery_agent' ? <Field label="Vehicle" value={f.vehicleDetails} onChangeText={set('vehicleDetails')} placeholder="e.g. Motorcycle, plate ABC123XY" /> : null}
-      {!user ? <Field label="Password" value={f.password} onChangeText={set('password')} secureTextEntry hint="At least 8 characters" autoComplete="new-password" /> : null}
+      {!user ? <Field label="Email" {...field('email')} autoCapitalize="none" keyboardType="email-address" autoComplete="email" /> : null}
+      {business ? <Field label="Mobile number" {...field('phone')} keyboardType="phone-pad" placeholder="08012345678" /> : null}
+      {business ? <Field label={kind === 'delivery_agent' ? 'Home address' : 'Business address'} {...field('streetAddress')} /> : null}
+      {kind === 'provider' ? <Field label="Area" {...field('area')} placeholder="e.g. Lekki Phase 1" /> : null}
+      {business ? <Field label="City" {...field('city')} /> : null}
+      {kind === 'delivery_agent' ? <Field label="Vehicle" {...field('vehicleDetails')} placeholder="e.g. Motorcycle, plate ABC123XY" /> : null}
+      {!user ? <Field label="Password" {...field('password')} secureTextEntry hint="At least 8 characters" autoComplete="new-password" /> : null}
       {!user ? <Captcha onToken={setCaptcha} onNeeded={setNeedsCaptcha} /> : null}
       {error ? <Txt color={c.danger} style={{ marginBottom: 12 }}>{error}</Txt> : null}
       <Button title={user ? 'Add business' : 'Create account'} onPress={submit} loading={busy} disabled={needsCaptcha && !captcha && !user} />

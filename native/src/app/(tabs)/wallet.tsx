@@ -12,6 +12,11 @@ import { useGet } from '@/lib/query';
 import { useSession } from '@/lib/session';
 import { useSide } from '@/lib/side';
 import { naira, radius } from '@/lib/theme';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+// Same limits as the server.
+const TOPUP_RULES = { amount: rules.naira('the amount', 100, 1_000_000) };
 
 type Entry = { id: string; type: string; amount: number; description: string | null; createdAt: number };
 
@@ -23,6 +28,8 @@ export default function WalletTab() {
   const tx = useGet<{ entries: Entry[] }>(['wallet-tx'], user ? '/api/wallet/transactions' : null);
   const [topUp, setTopUp] = useState(false);
   const [amount, setAmount] = useState('5000');
+  const checks = useFieldChecks<'amount'>(// Same limits as the server.
+ TOPUP_RULES);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -36,6 +43,7 @@ export default function WalletTab() {
   };
 
   const startTopUp = async () => {
+    if (!checks.validateAll({ amount })) return;
     setErr(null);
     setBusy(true);
     try {
@@ -86,7 +94,7 @@ export default function WalletTab() {
             <Chip key={a} label={naira(Number(a))} active={amount === a} onPress={() => setAmount(a)} />
           ))}
         </Row>
-        <Field label="Amount (₦)" value={amount} onChangeText={(t) => setAmount(t.replace(/\D/g, ''))} keyboardType="number-pad" hint="Between ₦100 and ₦1,000,000. You pay securely with Paystack." />
+        <Field label="Amount (₦)" {...checks.input('amount', amount, (t) => setAmount(t.replace(/\D/g, '')))} keyboardType="number-pad" hint="Between ₦100 and ₦1,000,000. You pay securely with Paystack." />
         {err ? <Txt color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
         <Button title={`Pay ${naira(Number(amount) || 0)}`} onPress={startTopUp} loading={busy} disabled={!(Number(amount) >= 100)} />
       </Sheet>

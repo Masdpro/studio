@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { VendorBranch } from '@/lib/types';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const LOGIN_RULES = { email: rules.email, password: rules.newPassword };
+const PASSWORD_ONLY = { password: rules.newPassword };
 
 /** Gives a branch its own login (orders, analytics and its own products), or resets / removes it. */
 export function BranchAccountControl({ branch, onChanged }: { branch: VendorBranch; onChanged: () => void }) {
@@ -14,9 +20,11 @@ export function BranchAccountControl({ branch, onChanged }: { branch: VendorBran
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const checks = useFieldChecks<'email' | 'password'>(branch.accountEmail ? PASSWORD_ONLY : LOGIN_RULES);
   const url = `/api/vendor/branches/${branch.id}/account`;
 
   async function submit() {
+    if (!checks.validateAll({ email, password })) return;
     setBusy(true);
     try {
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
@@ -52,13 +60,17 @@ export function BranchAccountControl({ branch, onChanged }: { branch: VendorBran
         )}
       </div>
       {open && (
+        <>
         <div className="flex flex-wrap items-center gap-2">
-          {!branch.accountEmail && <Input className="max-w-[14rem]" type="email" placeholder="Branch email" value={email} onChange={(e) => setEmail(e.target.value)} />}
-          <Input className="max-w-[14rem]" type="text" placeholder="Temporary password (8+ characters)" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Button type="button" size="sm" onClick={submit} disabled={busy || password.length < 8 || (!branch.accountEmail && !email)}>
+          {!branch.accountEmail && <Input className="max-w-[14rem]" type="email" placeholder="Branch email" {...checks.field('email', email, (v: string) => setEmail(v))} />}
+          <Input className="max-w-[14rem]" type="text" placeholder="Temporary password (8+ characters)" {...checks.field('password', password, (v: string) => setPassword(v))} />
+          <Button type="button" size="sm" onClick={submit} disabled={busy || checks.hasErrors || !password || (!branch.accountEmail && !email)}>
             {busy && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}Save
           </Button>
         </div>
+        <FieldError message={checks.error('email')} />
+        <FieldError message={checks.error('password')} />
+        </>
       )}
     </div>
   );

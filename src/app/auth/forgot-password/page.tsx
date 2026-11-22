@@ -9,6 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Turnstile, useTurnstile } from '@/components/auth/Turnstile';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const FORGOT_RULES = { email: rules.email };
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -16,10 +21,12 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [devLink, setDevLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const checks = useFieldChecks<'email'>(FORGOT_RULES);
   const captcha = useTurnstile();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!checks.validateAll({ email })) return;
     setError(null);
     setBusy(true);
     try {
@@ -59,7 +66,8 @@ export default function ForgotPasswordPage() {
               {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
               <div className="space-y-2">
                 <Label htmlFor="fp-email">Email</Label>
-                <Input id="fp-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input id="fp-email" type="email" autoComplete="email" placeholder="you@example.com" {...checks.field('email', email, setEmail)} required />
+                <FieldError message={checks.error('email')} />
               </div>
               <Turnstile key={captcha.widgetKey} {...captcha.widgetProps} />
               <Button type="submit" className="w-full" disabled={busy || !email || captcha.waiting}>

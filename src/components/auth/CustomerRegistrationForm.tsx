@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -25,10 +28,10 @@ import { Turnstile, useTurnstile } from '@/components/auth/Turnstile';
 
 const customerRegistrationSchema = z
   .object({
-    displayName: z.string().min(2, { message: 'Please enter your name.' }),
-    email: z.string().email({ message: 'Enter a valid email address.' }),
-    password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
-    confirmPassword: z.string(),
+    displayName: zRule(rules.personName),
+    email: zRule(rules.email),
+    password: zRule(rules.newPassword),
+    confirmPassword: z.string().min(1, { message: 'Type the password again.' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match.",
@@ -47,6 +50,8 @@ export function CustomerRegistrationForm() {
 
   const form = useForm<CustomerRegistrationFormValues>({
     resolver: zodResolver(customerRegistrationSchema),
+    // Check each entry as soon as the person leaves it, then again as they correct it.
+    mode: 'onTouched',
     defaultValues: { displayName: '', email: '', password: '', confirmPassword: '' },
   });
 

@@ -5,6 +5,9 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,9 +34,9 @@ import type { Product } from '@/lib/types';
 import { ProductMediaField } from '@/components/vendor/ProductMediaField';
 
 const editProductSchema = z.object({
-  name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
-  price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
+  name: zRule(rules.text('the product name', 2, 100)),
+  description: zRule(rules.text('a description', 10, 2000)),
+  price: z.coerce.number({ invalid_type_error: 'Enter the price as a number, e.g. 3500.' }).positive({ message: 'Enter a price above ₦0.' }).max(100_000_000, { message: 'The price can’t be more than ₦100,000,000.' }),
   discountPrice: z.coerce.number().positive().optional().or(z.literal(NaN)),
   imageUrl: z.string().optional(),
   galleryImages: z.array(z.string()).optional(),
@@ -41,8 +44,8 @@ const editProductSchema = z.object({
   category: z.string().optional(),
   colors: z.string().optional(),
   sizes: z.string().optional(),
-  stock: z.string().optional(),
-});
+  stock: zRule(rules.optional(rules.wholeNumber('the stock', 0, 100000))).optional(),
+}).refine((v) => !v.discountPrice || Number.isNaN(v.discountPrice) || v.discountPrice < v.price, { message: 'The Awoof price must be lower than the normal price.', path: ['discountPrice'] });
 
 type EditProductFormValues = z.infer<typeof editProductSchema>;
 
@@ -75,6 +78,8 @@ export function EditProductDialog({ product, open, onOpenChange, onSaved }: Edit
 
   const form = useForm<EditProductFormValues>({
     resolver: zodResolver(editProductSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: productToFormValues(product),
   });
 

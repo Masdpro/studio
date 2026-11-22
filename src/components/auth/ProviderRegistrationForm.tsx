@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zPasswordWhen, zRule } from '@/lib/form-rules';
+
 import { AlertCircle, CalendarCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,15 +25,15 @@ import { BusinessKindPicker } from '@/components/auth/BusinessKindPicker';
 import { SERVICE_CATEGORIES } from '@/lib/service-categories';
 
 const schema = z.object({
-  businessName: z.string().min(2, { message: 'Enter your business name.' }),
+  businessName: zRule(rules.businessName),
   category: z.string().min(1, { message: 'Choose what kind of service you offer.' }),
-  tagline: z.string().max(120).optional(),
-  contactEmail: z.string().email({ message: 'Enter a valid email address.' }),
+  tagline: zRule(rules.maxLength(120, 'the tagline')).optional(),
+  contactEmail: zRule(rules.email),
   password: z.string().optional(),
-  phone: z.string().min(10, { message: 'Enter your mobile number, e.g. 08012345678.' }),
-  streetAddress: z.string().min(5, { message: 'Enter your business address.' }),
-  area: z.string().min(2, { message: 'Enter your area, e.g. Lekki Phase 1.' }),
-  city: z.string().min(2, { message: 'Enter your city.' }),
+  phone: zRule(rules.phone),
+  streetAddress: zRule(rules.streetAddress),
+  area: zRule(rules.place),
+  city: zRule(rules.place),
   imageUrl: z.string().optional(),
 });
 type Values = z.infer<typeof schema>;
@@ -45,8 +48,13 @@ export function ProviderRegistrationForm() {
   const [busy, setBusy] = useState(false);
   const captcha = useTurnstile();
 
+  // New logins need a password; someone already signed in is adding a business to their account.
+  const needsPassword = useRef(!user);
+  needsPassword.current = !user;
+  const formSchema = useMemo(() => schema.extend({ password: zPasswordWhen(() => needsPassword.current) }), []);
   const form = useForm<Values>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: { businessName: '', category: '', tagline: '', contactEmail: user?.email ?? '', password: '', phone: '', streetAddress: '', area: '', city: 'Lagos', imageUrl: '' },
   });
 

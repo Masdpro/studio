@@ -4,6 +4,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -20,9 +23,9 @@ import { ThumbsUp, ThumbsDown, MessageSquare, Building, Bike } from 'lucide-reac
 
 const reviewSchema = z.object({
   vendorRating: z.enum(['positive', 'negative'], { required_error: "Please rate the vendor." }),
-  vendorComment: z.string().optional(),
+  vendorComment: zRule(rules.maxLength(500, 'your comment')).optional(),
   agentRating: z.enum(['positive', 'negative']).optional(),
-  agentComment: z.string().optional(),
+  agentComment: zRule(rules.maxLength(500, 'your comment')).optional(),
 });
 
 type ReviewFormValues = z.infer<typeof reviewSchema>;
@@ -38,6 +41,8 @@ export function LeaveReviewForm({ orderId, vendorId, deliveryAgentId, onReviewSu
   const { toast } = useToast();
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: {
       vendorRating: undefined,
       vendorComment: '',

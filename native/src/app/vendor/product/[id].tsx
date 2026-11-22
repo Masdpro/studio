@@ -11,6 +11,20 @@ import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { radius } from '@/lib/theme';
 import type { Product } from '@/lib/types';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const PRODUCT_RULES = {
+  name: rules.text('the product name', 2, 100),
+  price: rules.naira('the price', 1, 100_000_000),
+  discountPrice: rules.optional(rules.naira('the deal price', 1, 100_000_000)),
+  stock: rules.optional(rules.wholeNumber('the stock', 0, 100_000)),
+  category: rules.maxLength(60, 'the category'),
+  description: rules.maxLength(2000, 'the description'),
+  colors: rules.maxLength(200, 'the colours'),
+  sizes: rules.maxLength(200, 'the sizes'),
+};
+type Checked = keyof typeof PRODUCT_RULES;
 
 const list = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
 
@@ -23,11 +37,15 @@ export default function EditProduct() {
   const p = q.data?.products.find((x) => x.id === id);
   const [f, setF] = useState({ name: '', price: '', discountPrice: '', category: '', description: '', stock: '', colors: '', sizes: '' });
   const [awoof, setAwoof] = useState(false);
+  const dealTooHigh = awoof && !!f.discountPrice && !!f.price && Number(f.discountPrice) >= Number(f.price);
   const [image, setImage] = useState<string | null>(null);
   const [gallery, setGallery] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
+  const checks = useFieldChecks<Checked>(PRODUCT_RULES);
+  /** Value, change and leave handlers plus the message for one entry; `clean` filters what can be typed. */
+  const field = (k: Checked, clean: (t: string) => string = (t) => t) => checks.input(k, f[k], (t) => set(k)(clean(t)));
 
   useEffect(() => {
     if (!p) return;
@@ -55,6 +73,8 @@ export default function EditProduct() {
 
   const save = async () => {
     setErr(null);
+    if (!checks.validateAll(f)) return setErr('Some entries need fixing. Check the messages above.');
+    if (dealTooHigh) return setErr('The deal price must be lower than the normal price.');
     setBusy('save');
     const body: Record<string, unknown> = {
       name: f.name.trim(),
@@ -127,10 +147,10 @@ export default function EditProduct() {
           </Pressable>
         ) : null}
       </ScrollView>
-      <Field side="shop" label="Name" value={f.name} onChangeText={set('name')} />
+      <Field side="shop" label="Name" {...field('name')} />
       <Row gap={10}>
-        <View style={{ flex: 1 }}><Field side="shop" label="Price (₦)" value={f.price} onChangeText={(t) => set('price')(t.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" /></View>
-        <View style={{ flex: 1 }}><Field side="shop" label="Stock" value={f.stock} onChangeText={(t) => set('stock')(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder="Not counted" editable={!p?.variantStock?.length} hint={p?.variantStock?.length ? 'Counted per colour/size on the website' : undefined} /></View>
+        <View style={{ flex: 1 }}><Field side="shop" label="Price (₦)" {...field('price', (t) => t.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" /></View>
+        <View style={{ flex: 1 }}><Field side="shop" label="Stock" {...field('stock', (t) => t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder="Not counted" editable={!p?.variantStock?.length} hint={p?.variantStock?.length ? 'Counted per colour/size on the website' : undefined} /></View>
       </Row>
       <Row style={{ justifyContent: 'space-between', marginBottom: 10 }}>
         <View style={{ flex: 1 }}>
@@ -139,11 +159,11 @@ export default function EditProduct() {
         </View>
         <Switch value={awoof} onValueChange={setAwoof} trackColor={{ true: c.primary }} />
       </Row>
-      {awoof ? <Field side="shop" label="Deal price (₦)" value={f.discountPrice} onChangeText={(t) => set('discountPrice')(t.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" /> : null}
-      <Field side="shop" label="Category" value={f.category} onChangeText={set('category')} placeholder="e.g. Groceries" />
-      <Field side="shop" label="Description" value={f.description} onChangeText={set('description')} multiline />
-      <Field side="shop" label="Colours (optional)" value={f.colors} onChangeText={set('colors')} placeholder="Red, Blue, Black" hint="Separate with commas. Customers must pick one." />
-      <Field side="shop" label="Sizes (optional)" value={f.sizes} onChangeText={set('sizes')} placeholder="S, M, L" />
+      {awoof ? <Field side="shop" label="Deal price (₦)" {...field('discountPrice', (t) => t.replace(/[^\d.]/g, ''))} error={checks.error('discountPrice') ?? (dealTooHigh ? 'The deal price must be lower than the normal price.' : null)} keyboardType="decimal-pad" /> : null}
+      <Field side="shop" label="Category" {...field('category')} placeholder="e.g. Groceries" />
+      <Field side="shop" label="Description" {...field('description')} multiline />
+      <Field side="shop" label="Colours (optional)" {...field('colors')} placeholder="Red, Blue, Black" hint="Separate with commas. Customers must pick one." />
+      <Field side="shop" label="Sizes (optional)" {...field('sizes')} placeholder="S, M, L" />
       {err ? <Txt side="shop" color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
       {!isNew ? <Button side="shop" kind="ghost" title="Delete product" onPress={remove} /> : null}
     </Screen>

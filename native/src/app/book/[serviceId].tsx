@@ -9,6 +9,10 @@ import { useCatalog, useGet } from '@/lib/query';
 import { useSession } from '@/lib/session';
 import { useColors } from '@/lib/side';
 import { naira } from '@/lib/theme';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const BOOK_RULES = { address: rules.streetAddress, note: rules.maxLength(500, 'the note') };
 
 type Slot = { startsAt: number; label: string };
 
@@ -26,6 +30,7 @@ export default function BookService() {
   const [where, setWhere] = useState<'shop' | 'home'>('shop');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
+  const checks = useFieldChecks<'address' | 'note'>(BOOK_RULES);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const wallet = useGet<{ wallet: { balance: number } }>(['wallet'], user ? '/api/wallet' : null);
@@ -50,6 +55,7 @@ export default function BookService() {
   const short = !reschedule && balance != null && balance < total;
 
   const submit = async () => {
+    if (!checks.validateAll({ address: !reschedule && where === 'home' ? address : '12 Not needed', note })) return;
     if (!user) return router.push('/sign-in');
     setErr(null);
     setBusy(true);
@@ -119,8 +125,8 @@ export default function BookService() {
           </Row>
         </View>
       ) : null}
-      {!reschedule && where === 'home' ? <Field side="book" label="Your address" value={address} onChangeText={setAddress} multiline style={{ minHeight: 60 }} /> : null}
-      {!reschedule ? <Field side="book" label="Note for the business (optional)" value={note} onChangeText={setNote} multiline placeholder="Anything they should know" /> : null}
+      {!reschedule && where === 'home' ? <Field side="book" label="Your address" {...checks.input('address', address, setAddress)} multiline style={{ minHeight: 60 }} /> : null}
+      {!reschedule ? <Field side="book" label="Note for the business (optional)" {...checks.input('note', note, setNote)} multiline placeholder="Anything they should know" /> : null}
 
       {!reschedule ? (
         <Card side="book" style={{ marginTop: 6 }}>

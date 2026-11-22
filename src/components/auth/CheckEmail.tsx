@@ -9,6 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Mail, Loader2, FlaskConical, AlertCircle } from 'lucide-react';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const CODE_RULES = { email: rules.email, code: rules.digits(6, 'the code from the email') };
 
 const DEV_CODE_KEY = 'closebuyDevVerifyCode';
 
@@ -35,6 +40,7 @@ export function EmailCodeVerification({ initialEmail, onVerified, devCode: devCo
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [checking, setChecking] = useState(false);
+  const checks = useFieldChecks<'email' | 'code'>(CODE_RULES);
 
   useEffect(() => {
     if (devCodeProp) {
@@ -144,7 +150,8 @@ export function EmailCodeVerification({ initialEmail, onVerified, devCode: devCo
           {!initialEmail && (
             <div className="space-y-2">
               <Label htmlFor="verify-email">Email</Label>
-              <Input id="verify-email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="verify-email" type="email" placeholder="you@example.com" {...checks.field('email', email, setEmail)} />
+              <FieldError message={checks.error('email')} />
             </div>
           )}
           <div className="space-y-2">
@@ -157,9 +164,9 @@ export function EmailCodeVerification({ initialEmail, onVerified, devCode: devCo
               placeholder="123456"
               autoFocus
               className="text-center font-mono text-2xl tracking-[0.5em]"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
+              {...checks.field('code', code, (v) => setCode(v.replace(/[^\d]/g, '').slice(0, 6)))}
             />
+            <FieldError message={checks.error('code')} />
           </div>
           <Button type="submit" className="w-full" disabled={checking || !email || code.length !== 6}>
             {checking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

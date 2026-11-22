@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const REASON_RULES = { reason: rules.text('a reason', 3, 200) };
 
 interface ReasonDialogProps {
   open: boolean;
@@ -21,7 +26,9 @@ interface ReasonDialogProps {
 export function ReasonDialog({ open, onOpenChange, title, description, confirmLabel, placeholder, onConfirm }: ReasonDialogProps) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  useEffect(() => { if (open) setReason(''); }, [open]);
+  const checks = useFieldChecks<'reason'>(REASON_RULES);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open) { setReason(''); checks.reset(); } }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
@@ -32,7 +39,8 @@ export function ReasonDialog({ open, onOpenChange, title, description, confirmLa
         </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor="admin-reason">Reason (they will see this)</Label>
-          <Textarea id="admin-reason" value={reason} maxLength={200} placeholder={placeholder} onChange={(e) => setReason(e.target.value)} />
+          <Textarea id="admin-reason" maxLength={200} placeholder={placeholder} {...checks.field('reason', reason, setReason)} />
+          <FieldError message={checks.error('reason')} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
@@ -40,6 +48,7 @@ export function ReasonDialog({ open, onOpenChange, title, description, confirmLa
             variant="destructive"
             disabled={busy || reason.trim().length < 3}
             onClick={async () => {
+              if (!checks.validateAll({ reason })) return;
               setBusy(true);
               try { await onConfirm(reason.trim()); } finally { setBusy(false); }
             }}

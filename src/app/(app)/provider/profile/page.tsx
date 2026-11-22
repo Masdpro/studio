@@ -12,6 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { useToast } from '@/hooks/use-toast';
 import { SERVICE_CATEGORIES } from '@/lib/service-categories';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+type Checked = 'businessName' | 'tagline' | 'since' | 'contactEmail' | 'phone' | 'streetAddress' | 'area' | 'city';
+const PROFILE_RULES = {
+  businessName: rules.businessName,
+  tagline: rules.maxLength(120, 'the short description'),
+  since: rules.optionalYear,
+  contactEmail: rules.email,
+  phone: rules.phone,
+  streetAddress: rules.streetAddress,
+  area: rules.place,
+  city: rules.place,
+};
 
 type Profile = {
   businessName: string; slug: string; category: string; tagline: string | null; about: string | null; contactEmail: string; phone: string;
@@ -23,6 +38,7 @@ export default function ProviderProfilePage() {
   const { toast } = useToast();
   const [f, setF] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
+  const checks = useFieldChecks<Checked>(PROFILE_RULES);
 
   useEffect(() => {
     fetch('/api/provider/profile', { cache: 'no-store' }).then((r) => r.json()).then((d) => setF(d.provider ?? null));
@@ -31,7 +47,13 @@ export default function ProviderProfilePage() {
   if (!f) return <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   const set = (patch: Partial<Profile>) => setF((x) => (x ? { ...x, ...patch } : x));
 
+  const text = (k: Checked) => String(f[k] ?? '');
   const save = async () => {
+    const values = Object.fromEntries((Object.keys(PROFILE_RULES) as Checked[]).map((k) => [k, text(k)])) as Record<Checked, string>;
+    if (!checks.validateAll(values)) {
+      toast({ title: 'Check the highlighted fields', variant: 'destructive' });
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch('/api/provider/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...f, since: f.since ?? '' }) });
@@ -49,7 +71,17 @@ export default function ProviderProfilePage() {
   const field = (key: keyof Profile, label: string, props: React.ComponentProps<typeof Input> = {}) => (
     <div className="space-y-1">
       <Label htmlFor={`pf-${key}`}>{label}</Label>
-      <Input id={`pf-${key}`} value={(f[key] as string | number | null) ?? ''} onChange={(e) => set({ [key]: e.target.value } as Partial<Profile>)} {...props} />
+      <Input
+        id={`pf-${key}`}
+        value={(f[key] as string | number | null) ?? ''}
+        onChange={(e) => {
+          set({ [key]: e.target.value } as Partial<Profile>);
+          if (key in PROFILE_RULES) checks.changed(key as Checked, e.target.value);
+        }}
+        {...(key in PROFILE_RULES ? checks.bind(key as Checked, String(f[key] ?? '')) : {})}
+        {...props}
+      />
+      {key in PROFILE_RULES ? <FieldError message={checks.error(key as Checked)} /> : null}
     </div>
   );
 

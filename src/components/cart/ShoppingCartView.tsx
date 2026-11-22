@@ -18,6 +18,10 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { getBranchChoice } from '@/lib/branch-choice';
 import { getSavedAddress, getAddressHistory, rememberAddress } from '@/lib/delivery-address';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
 
 type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
 
@@ -29,7 +33,10 @@ export function ShoppingCartView() {
   const ownItems = user?.ownVendorId ? cartItems.filter((i) => i.vendorId === user.ownVendorId) : [];
   const [isDeliverySelected, setIsDeliverySelected] = useState(true);
   const [deliveryAddress, setDeliveryAddress] = useState('');
+
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  // The same box holds a delivery address, or the name of whoever collects a pickup order.
+  const checks = useFieldChecks<'deliveryAddress'>({ deliveryAddress: isDeliverySelected ? rules.streetAddress : rules.personName });
   // Set when checkout fails for lack of funds; shown inline (the cart sheet is modal, so a toast button can't be clicked).
   const [fundsShort, setFundsShort] = useState<{ balance: number; needed: number; shortfall: number } | null>(null);
   const { toast } = useToast();
@@ -128,6 +135,7 @@ export function ShoppingCartView() {
       return;
     }
 
+    if (!checks.validateAll({ deliveryAddress })) return;
     if (!deliveryAddress.trim()) {
       toast({
         title: isDeliverySelected ? 'Delivery address required' : 'Pickup name required',
@@ -246,14 +254,17 @@ export function ShoppingCartView() {
             <div className="relative">
               <Input
                 id="delivery-address"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
+                {...checks.field('deliveryAddress', deliveryAddress, (v: string) => setDeliveryAddress(v))}
                 onFocus={() => setAddrOpen(true)}
-                onBlur={() => setAddrOpen(false)}
+                onBlur={() => {
+                  setAddrOpen(false);
+                  checks.blur('deliveryAddress', deliveryAddress);
+                }}
                 autoComplete="off"
                 placeholder={isDeliverySelected ? 'e.g. 12 Allen Avenue, Ikeja, Lagos' : 'e.g. Your name'}
                 className="mt-1"
               />
+              <FieldError message={checks.error('deliveryAddress')} />
               {isDeliverySelected && addrOpen && suggestions.length > 0 && (
                 <ul role="listbox" className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
                   <li className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Recent addresses</li>
@@ -261,7 +272,7 @@ export function ShoppingCartView() {
                     <li key={a} role="option" aria-selected={deliveryAddress.trim().toLowerCase() === a.toLowerCase()}>
                       <button
                         type="button"
-                        onMouseDown={(e) => { e.preventDefault(); setDeliveryAddress(a); setAddrOpen(false); }}
+                        onMouseDown={(e) => { e.preventDefault(); setDeliveryAddress(a); checks.changed('deliveryAddress', a); setAddrOpen(false); }}
                         className="flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground"
                       >
                         <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />

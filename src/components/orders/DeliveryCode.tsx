@@ -5,6 +5,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const DELIVERY_RULES = { code: rules.digits(4, 'the delivery code') };
 
 /** Shown to the customer while their delivery is on its way. */
 export function CustomerDeliveryCode({ orderId }: { orderId: string }) {
@@ -44,9 +49,11 @@ export function DeliveryCodeDialog({
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const checks = useFieldChecks<'code'>(DELIVERY_RULES);
 
   useEffect(() => {
     if (open) {
+      checks.reset();
       setCode('');
       setError(null);
     }
@@ -54,6 +61,7 @@ export function DeliveryCodeDialog({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!checks.validateAll({ code })) return;
     setBusy(true);
     setError(null);
     try {
@@ -93,9 +101,9 @@ export function DeliveryCodeDialog({
             placeholder="0000"
             aria-label="Delivery code"
             className="text-center font-mono text-2xl tracking-[0.5em]"
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            {...checks.field('code', code, (v) => setCode(v.replace(/\D/g, '').slice(0, 4)))}
           />
+          <FieldError message={checks.error('code')} />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>

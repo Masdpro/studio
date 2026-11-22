@@ -12,6 +12,9 @@ import { SuggestInput } from '@/components/forms/PlaceFields';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, Banknote, Building2, Loader2, Wallet } from 'lucide-react';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
 
 type Entry = { id: string; type: string; amount: number; balanceAfter: number; fee: number | null; orderId: string | null; description: string; createdAt: number };
 type WithdrawalRow = { id: string; amount: number; fee: number; net: number; status: 'awaiting_approval' | 'awaiting_otp' | 'pending' | 'success' | 'failed' | 'reversed' | 'rejected'; failureReason: string | null; bankName: string; accountNumber: string; createdAt: number };
@@ -184,6 +187,7 @@ function EarningsCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { summary, bankAccount, blockReason, minWithdrawal, withdrawals } = data;
+  const wd = useFieldChecks<'amount'>({ amount: rules.naira('the amount', minWithdrawal, Math.max(minWithdrawal, summary.withdrawable)) });
 
   const value = Number(amount.replace(/,/g, ''));
   const fee = value > 0 ? transferFee(value) : 0;
@@ -280,8 +284,7 @@ function EarningsCard({
                 id="wd-amount"
                 inputMode="decimal"
                 placeholder={`Minimum ${naira(minWithdrawal)}`}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ''))}
+                {...wd.field('amount', amount, (v) => setAmount(v.replace(/[^\d.,]/g, '')))}
               />
               <Button type="button" variant="outline" onClick={() => setAmount(String(summary.withdrawable))} disabled={summary.withdrawable <= 0}>
                 Max
@@ -296,6 +299,7 @@ function EarningsCard({
                 Transfer fee {naira(fee)} · you receive <span className="font-medium text-foreground">{naira(Math.max(0, value - fee))}</span> in {bankAccount.bankName} {bankAccount.accountNumber}
               </p>
             )}
+            <FieldError message={wd.error('amount')} />
             {pending && <p className="text-xs text-muted-foreground">A withdrawal is in progress. You can make another once it has been paid.</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
           </form>
@@ -347,6 +351,11 @@ function BankAccountForm({ hasExisting, onSaved, onCancel }: { hasExisting: bool
   const [resolving, setResolving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const checks = useFieldChecks<'bankName' | 'accountNumber' | 'password'>({
+    bankName: (v) => (!v.trim() ? 'Choose your bank.' : banks.length && !banks.some((b) => b.name.toLowerCase() === v.trim().toLowerCase()) ? 'Choose your bank from the list.' : null),
+    accountNumber: rules.accountNumber,
+    password: (v) => (v ? null : 'Enter your Closebuy password.'),
+  });
 
   useEffect(() => {
     fetch('/api/banks')
@@ -380,6 +389,7 @@ function BankAccountForm({ hasExisting, onSaved, onCancel }: { hasExisting: bool
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (!checks.validateAll({ bankName, accountNumber, password })) return;
     if (!bank || !accountName) return;
     setSaving(true);
     setError(null);
@@ -397,11 +407,13 @@ function BankAccountForm({ hasExisting, onSaved, onCancel }: { hasExisting: bool
     <form method="post" onSubmit={save} className="space-y-3 rounded-md border p-3">
       <div className="space-y-1.5">
         <Label htmlFor="bank-name">Bank</Label>
-        <SuggestInput id="bank-name" value={bankName} onValueChange={setBankName} suggestions={names} placeholder={banks.length ? 'Start typing, e.g. Access, GTBank, Opay' : 'Loading banks…'} />
+        <SuggestInput id="bank-name" value={bankName} onValueChange={(v) => { setBankName(v); checks.changed('bankName', v); }} onBlur={() => checks.blur('bankName', bankName)} suggestions={names} placeholder={banks.length ? 'Start typing, e.g. Access, GTBank, Opay' : 'Loading banks…'} />
+        <FieldError message={checks.error('bankName')} />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="acct-no">Account number</Label>
-        <Input id="acct-no" inputMode="numeric" maxLength={10} placeholder="10 digits" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))} />
+        <Input id="acct-no" inputMode="numeric" maxLength={10} placeholder="10 digits" {...checks.field('accountNumber', accountNumber, (v) => setAccountNumber(v.replace(/\D/g, '').slice(0, 10)))} />
+        <FieldError message={checks.error('accountNumber')} />
       </div>
       {resolving && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -415,7 +427,8 @@ function BankAccountForm({ hasExisting, onSaved, onCancel }: { hasExisting: bool
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="bank-pw">Your Closebuy password</Label>
-            <Input id="bank-pw" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input id="bank-pw" type="password" autoComplete="current-password" {...checks.field('password', password, setPassword)} />
+            <FieldError message={checks.error('password')} />
             <p className="text-xs text-muted-foreground">
               We ask for it to keep your earnings safe.{hasExisting ? ' After a change, withdrawals pause for 24 hours.' : ''}
             </p>

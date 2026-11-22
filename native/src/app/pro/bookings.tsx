@@ -10,6 +10,10 @@ import { BOOKING_STATUS, when } from '@/lib/format';
 import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { naira } from '@/lib/theme';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const CODE_RULES = { code: rules.digits(4, "the customer's code") };
 
 type PB = { id: string; serviceName: string; startsAt: string; endsAt: string; status: string; location: 'shop' | 'home'; address: string | null; note: string | null; price: number; total: number; customerName: string; customerPhone: string | null; respondBy: string | null };
 
@@ -20,6 +24,7 @@ export default function ProBookings() {
   const [tab, setTab] = useState<'requests' | 'upcoming' | 'past'>('upcoming');
   const [finish, setFinish] = useState<PB | null>(null);
   const [code, setCode] = useState('');
+  const checks = useFieldChecks<'code'>(CODE_RULES);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const all = q.data?.bookings ?? [];
@@ -92,9 +97,9 @@ export default function ProBookings() {
       </View>
       <Sheet side="book" visible={!!finish} onClose={() => setFinish(null)} title="Finish the job">
         <Txt side="book" muted style={{ marginBottom: 12 }}>Ask {finish?.customerName} for their 4-digit code. Entering it marks the job done and pays you.</Txt>
-        <Field side="book" label="Customer’s code" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" />
+        <Field side="book" label="Customer’s code" {...checks.input('code', code, (t) => setCode(t.replace(/\D/g, '').slice(0, 4)))} keyboardType="number-pad" />
         {err ? <Txt side="book" color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
-        <Button side="book" title="Confirm" disabled={code.length !== 4} loading={!!finish && busy === finish.id + 'complete'} onPress={async () => { if (finish && (await act(finish, 'complete', { code }))) setFinish(null); }} />
+        <Button side="book" title="Confirm" disabled={code.length !== 4} loading={!!finish && busy === finish.id + 'complete'} onPress={async () => { if (!checks.validateAll({ code })) return; if (finish && (await act(finish, 'complete', { code }))) setFinish(null); }} />
       </Sheet>
     </Screen>
   );

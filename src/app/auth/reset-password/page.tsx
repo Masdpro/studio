@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+const RESET_RULES = { password: rules.newPassword };
 
 function ResetForm() {
   const params = useSearchParams();
@@ -19,12 +24,14 @@ function ResetForm() {
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const checks = useFieldChecks<'password'>(RESET_RULES);
 
   const mismatch = confirm.length > 0 && confirm !== password;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirm) return;
+    if (!checks.validateAll({ password })) return;
     setError(null);
     setBusy(true);
     try {
@@ -60,14 +67,15 @@ function ResetForm() {
       )}
       <div className="space-y-2">
         <Label htmlFor="rp-new">New password</Label>
-        <Input id="rp-new" type="password" autoComplete="new-password" placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Input id="rp-new" type="password" autoComplete="new-password" placeholder="At least 8 characters" {...checks.field('password', password, setPassword)} required />
+        <FieldError message={checks.error('password')} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="rp-confirm">Confirm new password</Label>
         <Input id="rp-confirm" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
         {mismatch && <p className="text-sm text-destructive">The passwords don&apos;t match.</p>}
       </div>
-      <Button type="submit" className="w-full" disabled={busy || password.length < 8 || password !== confirm}>
+      <Button type="submit" className="w-full" disabled={busy || checks.hasErrors || !password || password !== confirm}>
         {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Set new password
       </Button>
     </form>

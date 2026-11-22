@@ -17,6 +17,18 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useRequireTrading } from '@/hooks/use-trading-status';
 import { dayLabel, durationLabel, naira } from '@/lib/booking-time';
+import { FieldError } from '@/components/forms/FieldError';
+import { useFieldChecks } from '@/hooks/use-field-checks';
+import { rules } from '@/lib/field-rules';
+
+// Same limits as the server.
+const SERVICE_RULES = {
+  name: rules.text('the service name', 2, 80),
+  description: rules.maxLength(1000, 'the description'),
+  price: rules.naira('the price', 100, 10_000_000),
+  callOutFee: rules.optional(rules.naira('the call-out fee', 0, 1_000_000)),
+};
+type ServiceField = keyof typeof SERVICE_RULES;
 
 type Interval = [string, string];
 type Settings = { weeklyHours: Record<string, Interval[]>; capacity: number; instantBooking: boolean; daysOff: string[] };
@@ -225,7 +237,18 @@ function ServiceDialog({ service, onClose, onSaved }: { service: Service | null;
     durationMin: String(service?.durationMin ?? 60), location: service?.location ?? 'shop', callOutFee: service?.callOutFee ? String(service.callOutFee) : '',
   });
   const [busy, setBusy] = useState(false);
+  const checks = useFieldChecks<ServiceField>(SERVICE_RULES);
+  const bind = (k: ServiceField) => ({
+    value: f[k],
+    onChange: (e: { target: { value: string } }) => {
+      setF({ ...f, [k]: e.target.value });
+      checks.changed(k, e.target.value);
+    },
+    onBlur: () => checks.blur(k, f[k]),
+    'aria-invalid': checks.error(k) ? true : undefined,
+  });
   const save = async () => {
+    if (!checks.validateAll({ ...f, callOutFee: f.location === 'shop' ? '' : f.callOutFee })) return;
     setBusy(true);
     try {
       const body = { ...f, price: Number(f.price), durationMin: Number(f.durationMin), callOutFee: f.location === 'shop' ? null : Number(f.callOutFee || 0) };
@@ -246,10 +269,10 @@ function ServiceDialog({ service, onClose, onSaved }: { service: Service | null;
           <DialogDescription>Price, how long it takes and where it&apos;s done.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1"><Label htmlFor="sv-name">Name</Label><Input id="sv-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="e.g. Haircut, Box braids, Phone screen repair" /></div>
-          <div className="space-y-1"><Label htmlFor="sv-desc">Description (optional)</Label><Textarea id="sv-desc" rows={2} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
+          <div className="space-y-1"><Label htmlFor="sv-name">Name</Label><Input id="sv-name" {...bind('name')} placeholder="e.g. Haircut, Box braids, Phone screen repair" /><FieldError message={checks.error('name')} /></div>
+          <div className="space-y-1"><Label htmlFor="sv-desc">Description (optional)</Label><Textarea id="sv-desc" rows={2} {...bind('description')} /><FieldError message={checks.error('description')} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label htmlFor="sv-price">Price (₦)</Label><Input id="sv-price" type="number" min={100} value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="sv-price">Price (₦)</Label><Input id="sv-price" type="number" min={100} {...bind('price')} /><FieldError message={checks.error('price')} /></div>
             <div className="space-y-1">
               <Label>How long it takes</Label>
               <Select value={f.durationMin} onValueChange={(v) => setF({ ...f, durationMin: v })}>
@@ -267,7 +290,7 @@ function ServiceDialog({ service, onClose, onSaved }: { service: Service | null;
               <SelectContent>{Object.entries(PLACES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          {f.location !== 'shop' && <div className="space-y-1"><Label htmlFor="sv-callout">Call-out fee for home visits (₦)</Label><Input id="sv-callout" type="number" min={0} value={f.callOutFee} onChange={(e) => setF({ ...f, callOutFee: e.target.value })} placeholder="0" /></div>}
+          {f.location !== 'shop' && <div className="space-y-1"><Label htmlFor="sv-callout">Call-out fee for home visits (₦)</Label><Input id="sv-callout" type="number" min={0} {...bind('callOutFee')} placeholder="0" /><FieldError message={checks.error('callOutFee')} /></div>}
         </div>
         <DialogFooter>
           <Button onClick={save} disabled={busy || !f.name.trim() || !f.price}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{service ? 'Save' : 'Add service'}</Button>

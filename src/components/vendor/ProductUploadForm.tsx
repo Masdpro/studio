@@ -5,6 +5,9 @@ import { isProductPhoto } from '@/lib/product-media';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SafeImage } from '@/components/ui/safe-image';
 import { useSearchParams } from 'next/navigation';
@@ -27,16 +30,16 @@ import { ProductMediaField } from '@/components/vendor/ProductMediaField';
 import { Separator } from '@/components/ui/separator';
 
 const productSchema = z.object({
-  name: z.string().min(2, { message: 'Product name must be at least 2 characters.' }),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
-  price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
+  name: zRule(rules.text('the product name', 2, 100)),
+  description: zRule(rules.text('a description', 10, 2000)),
+  price: z.coerce.number({ invalid_type_error: 'Enter the price as a number, e.g. 3500.' }).positive({ message: 'Enter a price above ₦0.' }).max(100_000_000, { message: 'The price can’t be more than ₦100,000,000.' }),
   imageUrl: z.string().refine(isProductPhoto, { message: 'Add at least one photo of the product.' }),
   galleryImages: z.array(z.string()).optional(),
   videoUrl: z.string().optional(),
   category: z.string().optional(),
   colors: z.string().optional(),
   sizes: z.string().optional(),
-  stock: z.string().optional(),
+  stock: zRule(rules.optional(rules.wholeNumber('the stock', 0, 100000))).optional(),
   aiHint: z.string().optional().refine(value => !value || value.split(' ').length <= 2, {
     message: "AI hint can have at most two words."
   }),
@@ -55,6 +58,8 @@ export function ProductUploadForm({ onProductAdd }: ProductUploadFormProps) {
   // Form state
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: {
       name: '',
       description: '',

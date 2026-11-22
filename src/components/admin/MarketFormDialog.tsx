@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,9 +33,9 @@ import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import type { Market } from '@/lib/types';
 
 const marketSchema = z.object({
-  name: z.string().min(2, { message: 'Market name must be at least 2 characters.' }),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
-  locationTag: z.string().min(2, { message: 'A location (e.g. Lagos Island) is required.' }),
+  name: zRule(rules.businessName),
+  description: zRule(rules.text('a description', 10, 1000)),
+  locationTag: zRule(rules.place),
   imageUrl: z.string().optional(),
   aiHint: z.string().optional(),
   isTrending: z.boolean(),
@@ -64,6 +67,8 @@ export function MarketFormDialog({ market, open, onOpenChange, onSaved }: Market
 
   const form = useForm<MarketFormValues>({
     resolver: zodResolver(marketSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: marketToFormValues(market),
   });
 

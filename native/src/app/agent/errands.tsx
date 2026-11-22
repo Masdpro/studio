@@ -8,6 +8,10 @@ import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { naira } from '@/lib/theme';
 import type { Errand } from '@/lib/types';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+const QUOTE_RULES = { items: rules.naira('the cost of the items', 1, 10_000_000), fee: rules.naira('your delivery fee', 0, 100_000), notes: rules.maxLength(300, 'the note') };
 
 export default function AgentErrands() {
   const c = useColors('shop');
@@ -16,11 +20,13 @@ export default function AgentErrands() {
   const [items, setItems] = useState('');
   const [fee, setFee] = useState('');
   const [notes, setNotes] = useState('');
+  const checks = useFieldChecks<'items' | 'fee' | 'notes'>(QUOTE_RULES);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sent, setSent] = useState<string[]>([]);
 
   const send = async () => {
+    if (!checks.validateAll({ items, fee, notes })) return;
     if (!quote) return;
     setErr(null);
     setBusy(true);
@@ -53,9 +59,9 @@ export default function AgentErrands() {
         ))}
       </View>
       <Sheet side="shop" visible={!!quote} onClose={() => setQuote(null)} title="Your quote">
-        <Field side="shop" label="Items will cost about (₦)" value={items} onChangeText={(t) => setItems(t.replace(/\D/g, ''))} keyboardType="number-pad" />
-        <Field side="shop" label="Your delivery fee (₦)" value={fee} onChangeText={(t) => setFee(t.replace(/\D/g, ''))} keyboardType="number-pad" />
-        <Field side="shop" label="Note (optional)" value={notes} onChangeText={setNotes} multiline />
+        <Field side="shop" label="Items will cost about (₦)" {...checks.input('items', items, (t) => setItems(t.replace(/\D/g, '')))} keyboardType="number-pad" />
+        <Field side="shop" label="Your delivery fee (₦)" {...checks.input('fee', fee, (t) => setFee(t.replace(/\D/g, '')))} keyboardType="number-pad" />
+        <Field side="shop" label="Note (optional)" {...checks.input('notes', notes, setNotes)} multiline />
         <Row style={{ justifyContent: 'space-between', marginBottom: 12 }}>
           <Txt side="shop" muted>Customer sees</Txt>
           <Txt side="shop" weight="800">{naira((Number(items) || 0) + (Number(fee) || 0))}</Txt>

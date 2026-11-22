@@ -8,6 +8,11 @@ import { api } from '@/lib/api';
 import { day } from '@/lib/format';
 import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
+import { rules } from '@/lib/field-rules';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+// Needed only to send an application back.
+const REJECT_RULES = { note: rules.text('a note telling them what to fix', 5, 300) };
 
 type Acc = {
   id: string;
@@ -33,6 +38,7 @@ export default function AdminVerifications() {
   const [filter, setFilter] = useState<'pending' | 'rejected' | 'approved'>('pending');
   const [open, setOpen] = useState<Acc | null>(null);
   const [note, setNote] = useState('');
+  const noteChecks = useFieldChecks<'note'>(REJECT_RULES);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
@@ -107,11 +113,11 @@ export default function AdminVerifications() {
               </View>
             ) : null}
             {open.approvalNote ? <Txt side="shop" size={13} muted style={{ marginTop: 10 }}>Last note: {open.approvalNote}</Txt> : null}
-            <Field side="shop" label="Note to them (needed to reject)" value={note} onChangeText={setNote} multiline style={{ minHeight: 60, marginTop: 12 }} />
+            <Field side="shop" label="Note to them (needed to reject)" value={note} onChangeText={(t) => { setNote(t); noteChecks.changed('note', t); }} error={noteChecks.error('note')} multiline style={{ minHeight: 60, marginTop: 12 }} />
             {err ? <Txt side="shop" color={c.danger} style={{ marginBottom: 10 }}>{err}</Txt> : null}
             <Row>
               <Button side="shop" title="Approve" style={{ flex: 1 }} loading={busy === 'approve'} disabled={!open.readyForReview || open.approvalStatus === 'approved'} onPress={() => act('approve')} />
-              <Button side="shop" kind="danger" title="Reject" style={{ flex: 1 }} loading={busy === 'reject'} disabled={note.trim().length < 5} onPress={() => act('reject')} />
+              <Button side="shop" kind="danger" title="Reject" style={{ flex: 1 }} loading={busy === 'reject'} onPress={() => noteChecks.validateAll({ note }) && act('reject')} />
             </Row>
           </>
         ) : null}

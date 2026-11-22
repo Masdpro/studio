@@ -8,6 +8,19 @@ import { day } from '@/lib/format';
 import { useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { radius } from '@/lib/theme';
+import { useFieldChecks } from '@/lib/use-field-checks';
+
+/** A day off: a real date written YYYY-MM-DD, today or later. */
+const DAY_OFF_RULES = {
+  newOff: (v: string) => {
+    const s = v.trim();
+    if (!s) return 'Enter a date, e.g. 2026-12-25.';
+    const d = new Date(`${s}T12:00:00`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s) return 'Write the date as YYYY-MM-DD, e.g. 2026-12-25.';
+    if (s < new Date().toISOString().slice(0, 10)) return 'Choose today or a later date.';
+    return null;
+  },
+};
 
 type Settings = { weeklyHours: Record<string, [string, string][]>; capacity: number; instantBooking: boolean; daysOff: string[] };
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -18,6 +31,8 @@ export default function Hours() {
   const q = useGet<{ settings: Settings }>(['pro-settings'], '/api/provider/settings');
   const [s, setS] = useState<Settings | null>(null);
   const [newOff, setNewOff] = useState('');
+  const checks = useFieldChecks<'newOff'>(/** A day off: a real date written YYYY-MM-DD, today or later. */
+ DAY_OFF_RULES);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -98,8 +113,8 @@ export default function Hours() {
           </Row>
         )) : <Txt side="book" muted>None</Txt>}
         <Row style={{ marginTop: 10, alignItems: 'flex-start' }}>
-          <View style={{ flex: 1 }}><Field side="book" value={newOff} onChangeText={setNewOff} placeholder="YYYY-MM-DD" /></View>
-          <Button side="book" small title="Add" disabled={!/^\d{4}-\d{2}-\d{2}$/.test(newOff)} onPress={() => { setS({ ...s, daysOff: [...new Set([...s.daysOff, newOff])].sort() }); setNewOff(''); }} />
+          <View style={{ flex: 1 }}><Field side="book" {...checks.input('newOff', newOff, setNewOff)} placeholder="YYYY-MM-DD" /></View>
+          <Button side="book" small title="Add" onPress={() => { if (!checks.validateAll({ newOff })) return; setS({ ...s, daysOff: [...new Set([...s.daysOff, newOff])].sort() }); setNewOff(''); checks.reset(); }} />
         </Row>
       </Card>
       {msg ? <Txt side="book" color={c.success} style={{ marginTop: 10 }}>{msg}</Txt> : null}

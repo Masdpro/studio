@@ -1,12 +1,15 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zPasswordWhen, zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -35,15 +38,16 @@ import { BusinessKindPicker } from '@/components/auth/BusinessKindPicker';
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
 const vendorRegistrationSchema = z.object({
-  businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
-  contactEmail: z.string().email({ message: 'Invalid email address.' }),
+  businessName: zRule(rules.businessName),
+  contactEmail: zRule(rules.email),
+  // Required only for new logins (checked when the form is sent).
   password: z.string().optional(),
-  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  streetAddress: z.string().min(5, { message: 'Street address must be at least 5 characters.' }),
-  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
-  country: z.string().min(2, { message: 'Country must be at least 2 characters.' }),
+  phone: zRule(rules.phone),
+  streetAddress: zRule(rules.streetAddress),
+  city: zRule(rules.place),
+  country: zRule(rules.place),
   imageUrl: z.string().optional(),
-  externalStoreUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  externalStoreUrl: zRule(rules.optionalUrl).optional(),
   operatingHours: z.string().min(5, { message: "Choose the days and times you are open." }),
   status: z.enum(vendorStatusOptions, { required_error: "Please select a status." }),
 });
@@ -60,8 +64,13 @@ export function VendorRegistrationForm() {
   const captcha = useTurnstile();
   const [redirecting, setRedirecting] = useState(false);
 
+  // New logins need a password; someone already signed in is adding a business to their account.
+  const needsPassword = useRef(!user);
+  needsPassword.current = !user;
+  const formSchema = useMemo(() => vendorRegistrationSchema.extend({ password: zPasswordWhen(() => needsPassword.current) }), []);
   const form = useForm<VendorRegistrationFormValues>({
-    resolver: zodResolver(vendorRegistrationSchema),
+    resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       businessName: '',
       contactEmail: '',

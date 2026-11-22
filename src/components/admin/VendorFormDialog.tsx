@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { rules } from '@/lib/field-rules';
+import { zRule } from '@/lib/form-rules';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,17 +35,17 @@ import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/form
 const NO_MARKET_VALUE = '__none__';
 
 const vendorSchema = z.object({
-  businessName: z.string().min(2, { message: 'Business name must be at least 2 characters.' }),
-  contactEmail: z.string().email({ message: 'Please enter a valid email.' }),
-  phone: z.string().min(5, { message: 'Please enter a valid phone number.' }),
-  streetAddress: z.string().min(2, { message: 'Street address is required.' }),
-  city: z.string().min(2, { message: 'City is required.' }),
-  country: z.string().min(2, { message: 'Country is required.' }),
+  businessName: zRule(rules.businessName),
+  contactEmail: zRule(rules.email),
+  phone: zRule(rules.phone),
+  streetAddress: zRule(rules.streetAddress),
+  city: zRule(rules.place),
+  country: zRule(rules.place),
   locationTag: z.string().optional(),
   marketId: z.string(),
   operatingHours: z.string().optional(),
   status: z.enum(['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable']),
-  externalStoreUrl: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
+  externalStoreUrl: zRule(rules.optionalUrl).optional(),
   imageUrl: z.string().optional(),
 });
 
@@ -79,6 +82,8 @@ export function VendorFormDialog({ vendor, markets, open, onOpenChange, onSaved 
 
   const form = useForm<VendorFormValues>({
     resolver: zodResolver(vendorSchema),
+    // Check each entry as soon as the person leaves it.
+    mode: 'onTouched',
     defaultValues: vendorToFormValues(vendor),
   });
 
