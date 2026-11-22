@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { track, getSessionId } from '@/lib/track';
 import { useRouter } from 'next/navigation';
 import { cartLineKey } from '@/lib/cart-line';
@@ -36,6 +36,8 @@ export function ShoppingCartView() {
   const ownItems = user?.ownVendorId ? cartItems.filter((i) => i.vendorId === user.ownVendorId) : [];
   const [isDeliverySelected, setIsDeliverySelected] = useState(true);
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  // While one choice is showing, what was typed for the other (delivery address / pickup name) waits here.
+  const otherEntry = useRef<{ delivery: string; pickup: string }>({ delivery: '', pickup: '' });
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   // The same box holds a delivery address, or the name of whoever collects a pickup order.
@@ -294,12 +296,15 @@ export function ShoppingCartView() {
               checked={isDeliverySelected}
               onCheckedChange={(checked) => {
                 const delivery = Boolean(checked);
+                if (delivery === isDeliverySelected) return;
+                // Delivery and pickup each keep their own entry (an address, or a name): put away what was
+                // typed for the old choice and bring back what belongs to the new one.
+                otherEntry.current[isDeliverySelected ? 'delivery' : 'pickup'] = deliveryAddress;
+                const kept = otherEntry.current[delivery ? 'delivery' : 'pickup'];
+                setDeliveryAddress(kept || (delivery ? getSavedAddress()?.address ?? '' : ''));
                 setIsDeliverySelected(delivery);
-                // The box now asks for something else (an address or a name): drop the old message.
+                // The box now asks for something else: drop the old message.
                 checks.reset();
-                const saved = getSavedAddress();
-                // The saved address is for delivery; the pickup field wants a name instead.
-                if (saved) setDeliveryAddress((cur) => (delivery ? cur || saved.address : cur === saved.address ? '' : cur));
               }}
             />
           </div>
