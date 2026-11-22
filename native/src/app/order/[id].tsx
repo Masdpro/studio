@@ -35,7 +35,10 @@ export default function OrderScreen() {
   const q = useGet<{ order: Order }>(['order', id], `/api/orders/${id}`, { refetchInterval: 15000 });
   const o = q.data?.order;
   const onTheWay = o && (o.status === 'PickedUpByAgent' || o.status === 'Out for Delivery');
-  const code = useGet<{ code: string | null }>(['order-code', id], onTheWay ? `/api/orders/${id}/delivery-code` : null);
+  // Pickup orders show their code from the start; deliveries once the rider has the order.
+  const awaitingPickup = o && o.deliveryPreference === 'pickup' && ['Pending', 'Processing', 'ReadyForCustomerPickup'].includes(o.status);
+  const showCode = onTheWay || awaitingPickup;
+  const code = useGet<{ code: string | null }>(['order-code', id], showCode ? `/api/orders/${id}/delivery-code` : null);
   const { data } = useCatalog();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -70,11 +73,15 @@ export default function OrderScreen() {
       </Row>
       <Txt side="shop" size={20} weight="800" style={{ marginTop: 10 }}>{vendor?.businessName ?? 'Your order'}</Txt>
 
-      {onTheWay ? (
+      {showCode ? (
         <View style={{ backgroundColor: c.ink, borderRadius: radius.xl, padding: 20, marginTop: 14, borderWidth: 1, borderColor: c.inkBorder, ...glassShadow }}>
-          <Row gap={8}><KeyRound color={c.primary} size={18} /><Txt color={c.onInk} weight="700">Your delivery code</Txt></Row>
+          <Row gap={8}><KeyRound color={c.primary} size={18} /><Txt color={c.onInk} weight="700">{awaitingPickup ? 'Your pickup code' : 'Your delivery code'}</Txt></Row>
           <Txt color={c.text} size={40} weight="800" style={{ letterSpacing: 8, marginVertical: 6 }} selectable>{code.data?.code ?? '····'}</Txt>
-          <Txt color={c.onInk} size={13}>Check your items first. Give this code to the rider only when you’re happy: it confirms delivery and pays the shop.</Txt>
+          <Txt color={c.onInk} size={13}>
+            {awaitingPickup
+              ? 'Show this code at the shop when you collect. Check your items first: giving the code confirms you have them and pays the shop.'
+              : 'Check your items first. Give this code to the rider only when you’re happy: it confirms delivery and pays the shop.'}
+          </Txt>
         </View>
       ) : null}
 
@@ -121,7 +128,6 @@ export default function OrderScreen() {
       </Card>
 
       <ErrorNote error={err ? new Error(err) : null} />
-      {o.status === 'ReadyForCustomerPickup' ? <Button side="shop" title="I’ve collected my order" style={{ marginTop: 14 }} loading={busy} onPress={() => confirmAsk('Collected your order?', 'Only confirm once you have your items. This pays the shop.', 'Yes, collected', () => move('PickedUpByCustomer'))} /> : null}
       {o.status === 'Pending' || o.status === 'Processing' ? (
         <Button side="shop" kind="ghost" title="Cancel order" style={{ marginTop: 14 }} loading={busy} onPress={() => confirmAsk('Cancel this order?', 'You get a full refund to your wallet.', 'Cancel order', () => move('Cancelled'))} />
       ) : null}

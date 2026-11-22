@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { DeliveryAgent } from '@/lib/types';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const initials = (name: string) =>
   name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]!.toUpperCase()).join('');
@@ -70,8 +71,8 @@ export default function AdminAgentsPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Delivery Agents</h1>
-            <p className="text-muted-foreground">The riders who pick up and deliver orders and errands.</p>
+            <h1 className="text-2xl font-bold">Delivery Agents<InfoTip>The riders who pick up and deliver orders and errands.</InfoTip></h1>
+            
           </div>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" /> New Agent

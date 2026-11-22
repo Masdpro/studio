@@ -6,7 +6,7 @@ import { SITE, SHOP_PATH } from '@/lib/site';
 const COLUMNS = [
   { title: 'Closebuy', links: [{ href: SHOP_PATH, label: 'Shop now' }, { href: '/about', label: 'About us' }, { href: '/contact', label: 'Contact' }, { href: '/#faq', label: 'FAQ' }] },
   { title: 'Earn with us', links: [{ href: '/auth/register/vendor', label: 'Become a vendor' }, { href: '/auth/register/provider', label: 'Offer your services' }, { href: '/auth/register/delivery-agent', label: 'Become a delivery agent' }] },
-  { title: 'Legal', links: [{ href: '/terms', label: 'Terms of Service' }, { href: '/privacy', label: 'Privacy Policy' }, { href: '/refunds', label: 'Refund & Cancellation Policy' }, { href: '/credits', label: 'Photo credits' }] },
+  { title: 'Legal', links: [{ href: '/terms', label: 'Terms of Service' }, { href: '/privacy', label: 'Privacy Policy' }, { href: '/refunds', label: 'Refund Policy' }, { href: '/credits', label: 'Photo credits' }] },
 ];
 
 export function SiteFooter() {

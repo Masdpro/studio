@@ -151,9 +151,9 @@ export function DeliveryAgentRegistrationForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl">
           <Bike className="h-6 w-6 text-primary" />
-          Become a Delivery Agent
+          Become a rider
         </CardTitle>
-        <CardDescription>Sign up to start delivering with Swiftbuy.</CardDescription>
+        <CardDescription>Sign up to start delivering with Closebuy.</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (

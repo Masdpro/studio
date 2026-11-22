@@ -48,13 +48,13 @@ export function systemHealth(now = new Date()) {
 
   checks.push({
     id: 'backups',
-    label: 'Backups (Litestream to R2)',
+    label: 'Backups',
     status: has('R2_BUCKET', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY') ? 'ok' : live ? 'fail' : 'off',
     detail: has('R2_BUCKET') ? 'Every database change is copied to R2 within seconds.' : 'R2 is not set up, so the database is not backed up.',
   });
   checks.push({
     id: 'errors',
-    label: 'Error tracking (Sentry)',
+    label: 'Error tracking',
     status: sentryDsn() ? 'ok' : live ? 'warn' : 'off',
     detail: sentryDsn() ? 'Server and browser errors are reported to Sentry.' : 'SENTRY_DSN is not set.',
   });
@@ -70,7 +70,7 @@ export function systemHealth(now = new Date()) {
   const lastRun = lastPriceRun();
   checks.push({
     id: 'prices',
-    label: 'Suggested price update',
+    label: 'Price suggestions',
     status: prices.problem ? 'warn' : 'ok',
     detail: prices.problem ?? (lastRun ? `Last ran ${lastRun.toISOString().slice(0, 10)}; next around ${prices.nextRunAt?.slice(0, 10)}.` : 'Has not run yet.'),
   });
@@ -81,7 +81,7 @@ export function systemHealth(now = new Date()) {
   const errors24h = Object.values(counts24h).reduce((n, c) => n + c.error, 0);
   checks.push({
     id: 'recent-errors',
-    label: 'Problems in the last 24 hours',
+    label: 'Problems (24h)',
     status: errors24h > 20 ? 'fail' : errors24h > 0 ? 'warn' : 'ok',
     detail: errors24h ? `${errors24h} error(s). See the list below.` : 'No errors.',
   });

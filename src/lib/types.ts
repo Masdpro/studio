@@ -103,6 +103,10 @@ export type Order = {
   agentLongitude?: number;
   agentLocationUpdatedAt?: Date;
   branchId?: string; // vendor branch the order is collected from (undefined = main address)
+  /** Display names added by the orders list (not stored on the order). */
+  vendorName?: string;
+  customerName?: string;
+  agentName?: string;
 };
 
 export type TimeWindow = {

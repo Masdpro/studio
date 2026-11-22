@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CalendarCheck, Clock, Home, Images, Loader2, Pencil, Plus, Store, Trash2, X } from 'lucide-react';
 import { PortfolioDialog, type PortfolioItem } from '@/components/services/PortfolioDialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { dayLabel, durationLabel, naira } from '@/lib/booking-time';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 // Same limits as the server.
 const SERVICE_RULES = {
@@ -91,7 +92,7 @@ export default function ProviderServicesPage() {
   return (
     <div className="container mx-auto max-w-3xl space-y-6 py-2">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Services, portfolio &amp; hours</h1>
+        <h1 className="text-2xl font-bold">Your services</h1>
         <Button variant="outline" size="sm" asChild><Link href="/provider/bookings"><CalendarCheck className="mr-1.5 h-4 w-4" />Bookings</Link></Button>
       </div>
       <p className="text-sm text-muted-foreground">Services are booked for a time, not bought. Customers pay when they book; you&apos;re paid when they give you their code at the end of the job.</p>
@@ -99,8 +100,7 @@ export default function ProviderServicesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle className="text-lg">Your services</CardTitle>
-            <CardDescription>Shown on your business page with a Book button. Add photos of past work to each one.</CardDescription>
+            <CardTitle className="text-lg">Your services<InfoTip>Shown on your business page with a Book button. Add photos of past work to each one.</InfoTip></CardTitle>
           </div>
           <Button size="sm" onClick={() => setEditing('new')}><Plus className="mr-1 h-4 w-4" />Add a service</Button>
         </CardHeader>
@@ -161,8 +161,7 @@ function HoursCard({ settings, onSaved }: { settings: Settings; onSaved: (s: Set
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Hours and booking settings</CardTitle>
-        <CardDescription>Customers can book from 1 hour to 30 days ahead, only inside these hours.</CardDescription>
+        <CardTitle className="text-lg">Hours and booking settings<InfoTip>Customers can book from 1 hour to 30 days ahead, only inside these hours.</InfoTip></CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between gap-4">
@@ -174,7 +173,7 @@ function HoursCard({ settings, onSaved }: { settings: Settings; onSaved: (s: Set
         </div>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <Label htmlFor="capacity">Customers you can serve at the same time</Label>
+            <Label htmlFor="capacity">Customers at once</Label>
             <p className="text-xs text-muted-foreground">For example, the number of chairs or staff.</p>
           </div>
           <Input id="capacity" type="number" min={1} max={50} className="w-20" value={draft.capacity} onChange={(e) => setDraft((s) => ({ ...s, capacity: Number(e.target.value) }))} />

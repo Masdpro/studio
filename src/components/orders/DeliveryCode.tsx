@@ -9,10 +9,10 @@ import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
 
-const DELIVERY_RULES = { code: rules.digits(4, 'the delivery code') };
+const DELIVERY_RULES = { code: rules.digits(4, 'the code') };
 
-/** Shown to the customer while their delivery is on its way. */
-export function CustomerDeliveryCode({ orderId }: { orderId: string }) {
+/** The customer's 4-digit code: given to the rider at delivery, or to the shop when collecting. */
+export function CustomerDeliveryCode({ orderId, pickup }: { orderId: string; pickup?: boolean }) {
   const [code, setCode] = useState<string | null>(null);
   useEffect(() => {
     fetch(`/api/orders/${orderId}/delivery-code`)
@@ -24,27 +24,34 @@ export function CustomerDeliveryCode({ orderId }: { orderId: string }) {
   return (
     <div className="mt-3 rounded-md border border-dashed border-primary/50 bg-primary/5 p-3">
       <p className="flex items-center gap-1.5 text-sm font-medium">
-        <KeyRound className="h-4 w-4 text-primary" /> Your delivery code
+        <KeyRound className="h-4 w-4 text-primary" /> {pickup ? 'Your pickup code' : 'Your delivery code'}
       </p>
       <p className="my-1 font-mono text-3xl font-bold tracking-[0.4em]">{code}</p>
       <p className="text-xs text-muted-foreground">
-        Check your items first. Only give this code to the delivery agent once you&apos;re happy with them; giving it confirms delivery and pays the vendor.
+        {pickup
+          ? 'Show this code at the shop when you collect your order. Check your items first: giving the code confirms you have them and pays the shop.'
+          : 'Check your items first. Only give this code to the delivery agent once you’re happy with them; giving it confirms delivery and pays the vendor.'}
       </p>
     </div>
   );
 }
 
-/** The delivery agent types the customer's code to complete the delivery. */
+/**
+ * Types the customer's 4-digit code to finish an order: the rider at delivery, or the shop when the
+ * customer collects (`pickup`).
+ */
 export function DeliveryCodeDialog({
   orderId,
   open,
   onOpenChange,
   onDelivered,
+  pickup,
 }: {
   orderId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDelivered: () => void;
+  pickup?: boolean;
 }) {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -68,11 +75,11 @@ export function DeliveryCodeDialog({
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Delivered', deliveryCode: code, actingAs: 'agent' }),
+        body: JSON.stringify(pickup ? { status: 'PickedUpByCustomer', deliveryCode: code, actingAs: 'vendor' } : { status: 'Delivered', deliveryCode: code, actingAs: 'agent' }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(d.error ?? 'Could not confirm the delivery.');
+        setError(d.error ?? (pickup ? 'Could not confirm the collection.' : 'Could not confirm the delivery.'));
         return;
       }
       onOpenChange(false);
@@ -87,10 +94,12 @@ export function DeliveryCodeDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" /> Confirm delivery
+            <ShieldCheck className="h-5 w-5 text-primary" /> {pickup ? 'Hand over the order' : 'Confirm delivery'}
           </DialogTitle>
           <DialogDescription>
-            Let the customer check their items. When they&apos;re happy, ask for the 4-digit delivery code shown in their Closebuy app.
+            {pickup
+              ? 'Let the customer check their items. When they’re happy, ask for the 4-digit pickup code shown in their Closebuy app.'
+              : 'Let the customer check their items. When they’re happy, ask for the 4-digit delivery code shown in their Closebuy app.'}
           </DialogDescription>
         </DialogHeader>
         <form method="post" onSubmit={submit} className="space-y-3">
@@ -99,7 +108,7 @@ export function DeliveryCodeDialog({
             inputMode="numeric"
             autoComplete="one-time-code"
             placeholder="0000"
-            aria-label="Delivery code"
+            aria-label={pickup ? 'Pickup code' : 'Delivery code'}
             className="text-center font-mono text-2xl tracking-[0.5em]"
             {...checks.field('code', code, (v) => setCode(v.replace(/\D/g, '').slice(0, 4)))}
           />
@@ -111,7 +120,7 @@ export function DeliveryCodeDialog({
             </Button>
             <Button type="submit" disabled={busy || code.length !== 4}>
               {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm delivery
+              {pickup ? 'Confirm collection' : 'Confirm delivery'}
             </Button>
           </DialogFooter>
         </form>

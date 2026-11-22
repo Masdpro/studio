@@ -36,7 +36,7 @@ export default function ContactPage() {
         </div>
       </div>
       <p className="mt-8 text-sm text-muted-foreground">
-        Questions about payments or refunds? See our <Link href="/refunds" className="text-primary underline">Refund &amp; Cancellation Policy</Link>.
+        Questions about payments or refunds? See our <Link href="/refunds" className="text-primary underline">Refund Policy</Link>.
       </p>
     </div>
   );

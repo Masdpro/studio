@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CalendarCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,6 +13,7 @@ import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const SETTLE_RULES = { reason: rules.text('a reason', 3, 300) };
 
@@ -79,13 +80,12 @@ export default function AdminBookingsPage() {
       <h1 className="flex items-center gap-2 text-2xl font-bold"><CalendarCheck className="h-6 w-6 text-primary" />Bookings</h1>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">To settle ({overdue.length})</CardTitle>
-          <CardDescription>Jobs that ended over an hour ago without the provider entering the code. Nothing is paid out on its own: check with both sides, then pay the provider or refund the customer.</CardDescription>
+          <CardTitle className="text-lg">To settle ({overdue.length})<InfoTip>Jobs that ended over an hour ago without the provider entering the code. Nothing is paid out on its own: check with both sides, then pay the provider or refund the customer.</InfoTip></CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">{overdue.length ? table(overdue, true) : <p className="text-sm text-muted-foreground">Nothing to settle.</p>}</CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="text-lg">All bookings</CardTitle><CardDescription>Upcoming first, then the latest closed ones.</CardDescription></CardHeader>
+        <CardHeader><CardTitle className="text-lg">All bookings<InfoTip>Upcoming first, then the latest closed ones.</InfoTip></CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">{rest.length ? table(rest, true) : <p className="text-sm text-muted-foreground">No bookings yet.</p>}</CardContent>
       </Card>
       {settling && (

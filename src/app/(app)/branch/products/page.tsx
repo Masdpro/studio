@@ -6,12 +6,13 @@ import { ProductUploadForm } from '@/components/vendor/ProductUploadForm';
 import { StockManager } from '@/components/vendor/StockManager';
 import { EditProductDialog } from '@/components/vendor/EditProductDialog';
 import type { Product } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackagePlus, PackageSearch, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function BranchProductManagementPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
@@ -102,8 +103,7 @@ export default function BranchProductManagementPage() {
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackagePlus className="h-6 w-6 text-primary" />
               Add to Inventory / List Product
-            </CardTitle>
-            <CardDescription>Add products from your inventory to display them on Closebuy.</CardDescription>
+            <InfoTip>Add products from your inventory to display them on Closebuy.</InfoTip></CardTitle>
           </CardHeader>
           <CardContent>
             <Suspense fallback={<p className="text-muted-foreground text-sm">Loading form…</p>}>
@@ -119,8 +119,7 @@ export default function BranchProductManagementPage() {
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackageSearch className="h-6 w-6 text-primary" />
               Your Listed Products
-            </CardTitle>
-            <CardDescription>View and manage your products listed on Closebuy.</CardDescription>
+            <InfoTip>View and manage your products listed on Closebuy.</InfoTip></CardTitle>
           </CardHeader>
           <CardContent>
             <Suspense fallback={null}>

@@ -5,7 +5,7 @@ import { useRequireTrading } from '@/hooks/use-trading-status';
 import { useState, useEffect, useCallback } from 'react';
 import { BranchesManager } from '@/components/vendor/BranchesManager';
 import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2, MapPin } from 'lucide-react';
@@ -128,7 +128,7 @@ export default function VendorOrdersPage() {
     <div className="container mx-auto py-8">
       <OrderTrackingView
             orders={displayedVendorOrders}
-            title="Track Your Orders"
+            title="Orders"
             description="Monitor the status of orders placed with your business."
             userRole="vendor"
             onAttendToOrder={handleAttendToOrder}

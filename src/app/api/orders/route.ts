@@ -1,4 +1,4 @@
-import { userHasRole, getBranchForUser, ownBusinessId } from '@/lib/roles';
+import { userHasRole, getBranchForUser, ownBusinessId, getDisplayName } from '@/lib/roles';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -39,7 +39,18 @@ export async function GET(request: Request) {
         ? [...(await getOrdersForDeliveryAgent(id)), ...(await getUnassignedReadyForPickupOrders())]
         : await getOrdersForCustomer(id);
 
-  return NextResponse.json({ orders });
+  // Names to show instead of account ids: the shop (for customers and riders), the customer
+  // (for shops: first name only) and the rider.
+  const shopNames = new Map<string, string | undefined>();
+  for (const vid of new Set(orders.map((o) => o.vendorId))) shopNames.set(vid, (await getVendorById(vid))?.businessName);
+  const firstName = (id?: string) => (id ? getDisplayName(id)?.split(/[\s@]/)[0] : undefined);
+  const named = orders.map((o) => ({
+    ...o,
+    vendorName: shopNames.get(o.vendorId),
+    customerName: firstName(o.customerId),
+    agentName: firstName(o.deliveryAgentId),
+  }));
+  return NextResponse.json({ orders: named });
 }
 
 /**

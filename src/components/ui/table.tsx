@@ -1,19 +1,44 @@
+"use client"
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * On phones (see .rtable in globals.css) each row shows as a card and each cell is labelled with
+ * its column heading, so wide tables don't run off the screen. The labels are copied from the
+ * header row after every render.
+ */
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-))
+>(({ className, ...props }, ref) => {
+  const own = React.useRef<HTMLTableElement | null>(null)
+  React.useEffect(() => {
+    const table = own.current
+    if (!table) return
+    const heads = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent?.trim() ?? "")
+    table.querySelectorAll("tbody tr").forEach((tr) => {
+      Array.from(tr.children).forEach((td, i) => {
+        if (heads[i]) td.setAttribute("data-label", heads[i])
+        else td.removeAttribute("data-label")
+      })
+    })
+  })
+  return (
+    <div className="relative w-full overflow-auto">
+      <table
+        ref={(el) => {
+          own.current = el
+          if (typeof ref === "function") ref(el)
+          else if (ref) ref.current = el
+        }}
+        className={cn("rtable w-full caption-bottom text-sm", className)}
+        {...props}
+      />
+    </div>
+  )
+})
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<

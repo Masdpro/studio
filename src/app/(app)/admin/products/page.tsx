@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Vendor } from '@/lib/types';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -76,8 +77,8 @@ export default function AdminProductsPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Products</h1>
-            <p className="text-muted-foreground">Every product listed across all vendors.</p>
+            <h1 className="text-2xl font-bold">Products<InfoTip>Every product listed across all vendors.</InfoTip></h1>
+            
           </div>
           <Button onClick={handleAdd} disabled={vendors.length === 0}>
             <Plus className="h-4 w-4 mr-2" /> New Product

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Refund & Cancellation Policy | Close
 
 export default function RefundsPage() {
   return (
-    <LegalPage title="Refund & Cancellation Policy" updated={SITE.policiesUpdated} intro="We want every order to go smoothly. This policy explains when an order can be cancelled and how you get your money back.">
+    <LegalPage title="Refund policy" updated={SITE.policiesUpdated} intro="We want every order to go smoothly. This policy explains when an order can be cancelled and how you get your money back.">
       <h2>1. Your Closebuy wallet</h2>
       <p>
         Orders on Closebuy are paid from your Closebuy wallet, which you top up by card or bank transfer through Paystack. Refunds for cancelled orders are returned to the same wallet
@@ -21,7 +21,7 @@ export default function RefundsPage() {
         <li>Once an order is ready for pickup or has been collected by a delivery agent, it can no longer be cancelled in the app. Contact us and we will do our best to help.</li>
       </ul>
 
-      <h2>3. Orders cancelled by a vendor or by Closebuy</h2>
+      <h2>3. Cancelled by vendor or us</h2>
       <p>
         A vendor may cancel an order they cannot fulfil, for example if an item is out of stock, and Closebuy support may cancel an order where something has gone wrong. In both cases you
         receive a <strong>full refund to your wallet</strong>, and we notify you with the reason.

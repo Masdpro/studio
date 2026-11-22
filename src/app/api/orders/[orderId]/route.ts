@@ -14,7 +14,8 @@ import { orderMachine, ORDER_COMPLETED, type OrderActor } from '@/lib/state-mach
 const STATUS_MESSAGES: Partial<Record<Order['status'], string>> = {
   Processing: 'Your order is being processed.',
   ReadyForPickup: 'Your order is ready and waiting for a delivery agent.',
-  ReadyForCustomerPickup: 'Your order is ready for pickup.',
+  ReadyForCustomerPickup: 'Your order is ready to collect. Show the shop your pickup code when you get there.',
+  PickedUpByCustomer: 'You collected your order. Thanks for shopping on Closebuy!',
   AcceptedByAgent: 'A delivery agent has been assigned to your order.',
   PickedUpByAgent: 'Your order is out for delivery.',
   Delivered: 'Your order has been delivered.',
@@ -28,6 +29,7 @@ const IconByStatus: Partial<Record<Order['status'], string>> = {
   AcceptedByAgent: 'Bike',
   PickedUpByAgent: 'Truck',
   Delivered: 'CheckCircle',
+  PickedUpByCustomer: 'CheckCircle',
   Cancelled: 'XCircle',
 };
 
@@ -111,8 +113,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
     if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
   }
 
-  // Delivery is only complete when the customer, having checked the goods, gives the agent their code.
-  if (status === 'Delivered') {
+  // Delivery or collection is only complete when the customer, having checked the goods, gives
+  // the rider (delivery) or the shop (pickup) their 4-digit code.
+  if (status === 'Delivered' || status === 'PickedUpByCustomer') {
     const code = checkDeliveryCode(order.id, deliveryCode);
     if (!code.ok) return NextResponse.json({ error: code.error, code: 'DELIVERY_CODE' }, { status: 400 });
   }
@@ -153,15 +156,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ or
         iconName: IconByStatus[status] ?? 'Package',
       });
     }
-  }
-  if (actor === 'customer' && status === 'PickedUpByCustomer') {
-    await createNotification({
-      userId: order.vendorId,
-      message: 'A customer confirmed they collected their order.',
-      category: 'Activity',
-      link: '/vendor/orders',
-      iconName: 'CheckCircle',
-    });
   }
 
   return NextResponse.json({ ok: true, refunded });

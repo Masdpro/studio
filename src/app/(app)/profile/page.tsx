@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, BadgeCheck, KeyRound, Loader2, Mail, MapPin, Pencil, Phone, User } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { WalletCard } from '@/components/wallet/WalletCard';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const DETAIL_RULES = { name: rules.personName, address: rules.optional(rules.streetAddress) };
 const PHONE_RULES = { phone: rules.phone };
@@ -131,8 +132,7 @@ export default function CustomerProfilePage() {
           <Avatar className="mx-auto mb-4 h-24 w-24 border-2 border-primary">
             <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
           </Avatar>
-          <CardTitle className="text-3xl font-bold">{profile.name || 'Your profile'}</CardTitle>
-          <CardDescription>Your personal account details.</CardDescription>
+          <CardTitle className="text-3xl font-bold">{profile.name || 'Your profile'}<InfoTip>Your personal account details.</InfoTip></CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* The wallet lives here now (it used to sit in the header). */}

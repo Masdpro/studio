@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { SuggestInput } from '@/components/forms/PlaceFields';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, Banknote, Building2, Loader2, Wallet } from 'lucide-react';
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Banknote, Building2, Loader2, Plus, Wallet } from 'lucide-react';
+import { openWallet } from '@/hooks/use-wallet-balance';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
@@ -121,8 +122,11 @@ export function WalletView() {
           </CardDescription>
           <CardTitle className="text-4xl">{balance === null ? <Loader2 className="h-8 w-8 animate-spin" /> : naira(balance)}</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Top up from the wallet button at the top of the page. Purchases, refunds{payouts?.earner ? ', earnings and withdrawals' : ''} all show below.
+        <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>Purchases, refunds{payouts?.earner ? ', earnings and withdrawals' : ''} all show below.</span>
+          <Button onClick={() => openWallet()} className="w-full shrink-0 sm:w-auto">
+            <Plus className="mr-1.5 h-4 w-4" />Add funds
+          </Button>
         </CardContent>
       </Card>
 

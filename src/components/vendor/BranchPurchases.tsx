@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Activity = { id: string; name: string; orders: number; spent: number; recent: { id: string; date: number; store: string; items: string; total: number; status: string }[] };
 const naira = (n: number) => '₦' + Math.round(n).toLocaleString();
@@ -24,8 +25,7 @@ export function BranchPurchases() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Customer activity</CardTitle>
-        <CardDescription>What your branch account owners have been buying on Closebuy.</CardDescription>
+        <CardTitle className="text-lg">Customer activity<InfoTip>What your branch account owners have been buying on Closebuy.</InfoTip></CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {data.length === 0 && <p className="text-sm text-muted-foreground">No branch logins yet. Create one in the Branches tab and their purchases will show up here.</p>}

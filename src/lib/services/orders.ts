@@ -66,7 +66,8 @@ export async function createOrder(data: Omit<Order, 'id' | 'createdAt'> & { id?:
       deliveryAgentId: data.deliveryAgentId,
       deliveryPreference: data.deliveryPreference,
       branchId: data.branchId ?? null,
-      deliveryCode: data.deliveryPreference === 'delivery' ? newDeliveryCode() : null,
+      // Every order has a 4-digit handover code: the rider asks for it at delivery, the shop at pickup.
+      deliveryCode: newDeliveryCode(),
     })
     .run();
   return id;

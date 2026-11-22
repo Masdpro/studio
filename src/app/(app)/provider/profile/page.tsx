@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,7 @@ import { SERVICE_CATEGORIES } from '@/lib/service-categories';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Checked = 'businessName' | 'tagline' | 'since' | 'contactEmail' | 'phone' | 'streetAddress' | 'area' | 'city';
 const PROFILE_RULES = {
@@ -90,8 +91,7 @@ export default function ProviderProfilePage() {
       <Button variant="ghost" size="sm" asChild className="-ml-2"><Link href="/provider/dashboard"><ArrowLeft className="mr-1 h-4 w-4" />Dashboard</Link></Button>
       <Card>
         <CardHeader>
-          <CardTitle>Business profile</CardTitle>
-          <CardDescription>What customers see on your page: closebuy.ng/services/p/{f.slug}</CardDescription>
+          <CardTitle>Business profile<InfoTip>What customers see on your page: closebuy.ng/services/p/{f.slug}</InfoTip></CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">

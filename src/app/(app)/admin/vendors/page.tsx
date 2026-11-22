@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Market, Vendor } from '@/lib/types';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -74,8 +75,8 @@ export default function AdminVendorsPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Vendors</h1>
-            <p className="text-muted-foreground">Vendor stalls, including which market they belong to.</p>
+            <h1 className="text-2xl font-bold">Vendors<InfoTip>Vendor stalls, including which market they belong to.</InfoTip></h1>
+            
           </div>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" /> New Vendor

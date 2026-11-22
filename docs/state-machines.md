@@ -23,7 +23,7 @@ stateDiagram-v2
   Processing --> Cancelled : customer cancels or vendor declines (customer, vendor)
   Processing --> ReadyForPickup : vendor marks it ready for delivery (vendor)
   Processing --> ReadyForCustomerPickup : vendor marks it ready for collection (vendor)
-  ReadyForCustomerPickup --> PickedUpByCustomer : customer confirms collection (customer)
+  ReadyForCustomerPickup --> PickedUpByCustomer : shop enters the customer's pickup code (vendor)
   ReadyForPickup --> AcceptedByAgent : a delivery agent claims it (agent)
   AcceptedByAgent --> PickedUpByAgent : agent collects it from the vendor (agent)
   PickedUpByAgent --> Delivered : agent enters the customer's delivery code (agent)
@@ -46,7 +46,7 @@ stateDiagram-v2
 | `Processing` | The vendor is preparing it. |
 | `ReadyForPickup` | Packed and waiting for a delivery agent to claim it. |
 | `ReadyForCustomerPickup` | Packed and waiting for the customer to collect it. |
-| `PickedUpByCustomer` | The customer collected it. Vendor is paid. |
+| `PickedUpByCustomer` | The customer collected it and gave the shop their pickup code. Vendor is paid. |
 | `AcceptedByAgent` | A delivery agent claimed it and is heading to the vendor. |
 | `PickedUpByAgent` | On its way to the customer. The customer has their delivery code. |
 | `Out for Delivery` | Old name for PickedUpByAgent. _(legacy)_ |
@@ -59,7 +59,7 @@ stateDiagram-v2
 | `Pending`, `Processing` | `Cancelled` | customer cancels or vendor declines | customer, vendor | — |
 | `Processing` | `ReadyForPickup` | vendor marks it ready for delivery | vendor | order is for delivery |
 | `Processing` | `ReadyForCustomerPickup` | vendor marks it ready for collection | vendor | order is for customer pickup |
-| `ReadyForCustomerPickup` | `PickedUpByCustomer` | customer confirms collection | customer | — |
+| `ReadyForCustomerPickup` | `PickedUpByCustomer` | shop enters the customer's pickup code | vendor | correct pickup code (5 tries) |
 | `ReadyForPickup` | `AcceptedByAgent` | a delivery agent claims it | agent | agent is verified and approved; no agent assigned yet |
 | `AcceptedByAgent` | `PickedUpByAgent` | agent collects it from the vendor | agent | — |
 | `PickedUpByAgent`, `Out for Delivery` | `Delivered` | agent enters the customer's delivery code | agent | correct delivery code (5 tries) |

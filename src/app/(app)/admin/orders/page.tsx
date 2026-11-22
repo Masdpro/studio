@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/lib/types';
+import { statusLabel } from '@/lib/order-status-label';
 
 type AdminOrder = Order & { customerName: string; customerEmail?: string; vendorName: string };
 
@@ -87,7 +88,7 @@ export default function AdminOrdersPage() {
               <SelectItem value={ALL}>All statuses</SelectItem>
               <SelectItem value="open">Open (not finished)</SelectItem>
               {['Pending', 'Processing', 'ReadyForPickup', 'ReadyForCustomerPickup', 'AcceptedByAgent', 'PickedUpByAgent', 'Delivered', 'PickedUpByCustomer', 'Cancelled'].map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -122,7 +123,7 @@ export default function AdminOrdersPage() {
                       {o.items.map((i) => `${i.name} ×${i.quantity}${i.color ? `, ${i.color}` : ''}${i.size ? `, ${i.size}` : ''}`).join('; ')}
                     </TableCell>
                     <TableCell className="text-right font-medium">₦{o.totalAmount.toLocaleString()}</TableCell>
-                    <TableCell><Badge variant={o.status === 'Cancelled' ? 'destructive' : o.status === 'Delivered' || o.status === 'PickedUpByCustomer' ? 'default' : 'outline'}>{o.status}</Badge></TableCell>
+                    <TableCell><Badge variant={o.status === 'Cancelled' ? 'destructive' : o.status === 'Delivered' || o.status === 'PickedUpByCustomer' ? 'default' : 'outline'}>{statusLabel(o.status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       {o.status !== 'Cancelled' && (
                         <Button variant="outline" size="sm" onClick={() => setRefunding(o)}>

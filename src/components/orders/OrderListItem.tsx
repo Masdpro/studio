@@ -1,19 +1,18 @@
 
 'use client';
 
+import { STATUS_LABEL } from '@/lib/order-status-label';
 import type { Order } from '@/lib/types';
 import { orderMachine, ORDER_COMPLETED, type OrderActor } from '@/lib/state-machines';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, User, ShoppingBag, DollarSign, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Star, PhoneCall, Ban, PlayCircle, Send, UserCheck, ScanLine, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Package, User, ShoppingBag, Clock, Truck, CheckCircle, XCircle, Eye, PackageCheck, ShieldCheck, Ban, PlayCircle, Send, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
-import { BarcodeDisplay } from './BarcodeDisplay';
-import { CustomerDeliveryCode } from './DeliveryCode';
+import { CustomerDeliveryCode, DeliveryCodeDialog } from './DeliveryCode';
 import { ReviewDialog } from '@/components/reviews/ReviewDialog';
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { OrderDetailsDialog } from './OrderDetailsDialog';
-import { sampleReviews } from '@/lib/mockData';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface OrderListItemProps {
@@ -26,7 +25,20 @@ interface OrderListItemProps {
   onAttendToOrder?: (orderId: string) => void;
   onMarkAsReadyForPickup?: (orderId: string) => void;
   onDeclineOrder?: (orderId: string) => void;
-  onScanForCustomerPickup?: (orderId: string) => void;
+}
+
+
+/** One labelled detail line: icon, small label, then the value. */
+function InfoLine({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="break-words leading-snug">{children}</p>
+      </div>
+    </div>
+  );
 }
 
 const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof Badge>['variant'] => {
@@ -55,27 +67,27 @@ const getStatusVariant = (status: Order['status']): React.ComponentProps<typeof 
 const getStatusIcon = (status: Order['status']) => {
   switch (status) {
     case 'Pending':
-      return <Clock className="h-4 w-4 mr-1.5" />;
+      return <Clock className="h-3 w-3 mr-1" />;
     case 'Processing':
-      return <Package className="h-4 w-4 mr-1.5" />;
+      return <Package className="h-3 w-3 mr-1" />;
     case 'ReadyForPickup':
-      return <ShoppingBag className="h-4 w-4 mr-1.5 text-orange-600" />;
+      return <ShoppingBag className="h-3 w-3 mr-1 text-orange-600" />;
     case 'ReadyForCustomerPickup':
-      return <UserCheck className="h-4 w-4 mr-1.5 text-teal-600" />;
+      return <UserCheck className="h-3 w-3 mr-1 text-teal-600" />;
     case 'PickedUpByCustomer':
-      return <PackageCheck className="h-4 w-4 mr-1.5 text-green-600" />;
+      return <PackageCheck className="h-3 w-3 mr-1 text-green-600" />;
     case 'AcceptedByAgent':
-      return <User className="h-4 w-4 mr-1.5" />;
+      return <User className="h-3 w-3 mr-1" />;
     case 'PickedUpByAgent':
-      return <PackageCheck className="h-4 w-4 mr-1.5 text-blue-600" />;
+      return <PackageCheck className="h-3 w-3 mr-1 text-blue-600" />;
     case 'Out for Delivery':
-      return <Truck className="h-4 w-4 mr-1.5" />;
+      return <Truck className="h-3 w-3 mr-1" />;
     case 'Delivered':
-      return <CheckCircle className="h-4 w-4 mr-1.5 text-green-600" />;
+      return <CheckCircle className="h-3 w-3 mr-1 text-green-600" />;
     case 'Cancelled':
-      return <XCircle className="h-4 w-4 mr-1.5" />;
+      return <XCircle className="h-3 w-3 mr-1" />;
     default:
-      return <Clock className="h-4 w-4 mr-1.5" />;
+      return <Clock className="h-3 w-3 mr-1" />;
   }
 };
 
@@ -97,7 +109,7 @@ const getStatusColorClass = (status: Order['status']): string => {
 
 
 export function OrderListItem({
-  order,
+  order: orderProp,
   userRole,
   onAcceptDelivery,
   onScanForPickup,
@@ -106,44 +118,35 @@ export function OrderListItem({
   onAttendToOrder,
   onMarkAsReadyForPickup,
   onDeclineOrder,
-  onScanForCustomerPickup,
 }: OrderListItemProps) {
+  // After the shop enters a pickup code here, show the new status straight away.
+  const [localStatus, setLocalStatus] = useState<Order['status'] | null>(null);
+  const order = localStatus ? { ...orderProp, status: localStatus } : orderProp;
+  const [codeOpen, setCodeOpen] = useState(false);
   // Cancelling / declining refunds the customer and can't be undone, so ask first.
-  const [confirming, setConfirming] = useState<null | 'cancel' | 'decline'>(null);
+  const [confirming, setConfirming] = useState<null | 'cancel' | 'decline' | 'collect'>(null);
   const itemSummary = order.items.map(item => `${item.name} (x${item.quantity}${item.color ? `, ${item.color}` : ''}${item.size ? `, ${item.size}` : ''})`).join(', ');
-  const displayDate = format(new Date(order.createdAt), 'PPpp');
+  const shortDate = format(new Date(order.createdAt), 'd MMM, h:mm a');
+  // Who the order is with, from this person's side.
+  const headline =
+    userRole === 'customer' ? order.vendorName ?? 'Your order'
+      : userRole === 'vendor' ? (order.customerName ? `Order for ${order.customerName}` : 'Customer order')
+        : order.vendorName ?? 'Delivery';
 
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
-  const vendorReviews = useMemo(() => {
-    const reviewsForVendor = sampleReviews.filter(
-      (review) => review.revieweeId === order.vendorId && review.revieweeType === 'vendor'
-    );
-    return {
-      positive: reviewsForVendor.filter((r) => r.rating === 'positive').length,
-      negative: reviewsForVendor.filter((r) => r.rating === 'negative').length,
-    };
-  }, [order.vendorId]);
 
-  const agentReviews = useMemo(() => {
-    if (!order.deliveryAgentId) return { positive: 0, negative: 0 };
-    const reviewsForAgent = sampleReviews.filter(
-      (review) => review.revieweeId === order.deliveryAgentId && review.revieweeType === 'delivery_agent'
-    );
-    return {
-      positive: reviewsForAgent.filter((r) => r.rating === 'positive').length,
-      negative: reviewsForAgent.filter((r) => r.rating === 'negative').length,
-    };
-  }, [order.deliveryAgentId]);
-
-  const showVendorAgentPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'delivery' && (order.status === 'ReadyForPickup' || order.status === 'AcceptedByAgent');
-  const showVendorCustomerPickupBarcode = userRole === 'vendor' && order.deliveryPreference === 'pickup' && order.status === 'ReadyForCustomerPickup';
-
-  const showCustomerDeliveryBarcode = userRole === 'customer' && order.deliveryPreference === 'delivery' && (order.status === 'AcceptedByAgent' || order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
+  // The customer's 4-digit code: for delivery once a rider is on it, for pickup from the moment it's ordered.
+  const showCustomerCode =
+    userRole === 'customer' &&
+    (order.deliveryPreference === 'delivery'
+      ? ['AcceptedByAgent', 'PickedUpByAgent', 'Out for Delivery'].includes(order.status)
+      : ['Pending', 'Processing', 'ReadyForCustomerPickup'].includes(order.status));
   // Which buttons to show comes from the same rules the server enforces (src/lib/state-machines/order.ts).
   const can = (to: Order['status'], actor: OrderActor) => orderMachine.can(order.status, to, actor);
-  const canCustomerScanForPickup = userRole === 'customer' && can('PickedUpByCustomer', 'customer') && onScanForCustomerPickup;
+  // The shop hands over a pickup order by entering the customer's code.
+  const canVendorConfirmPickup = userRole === 'vendor' && can('PickedUpByCustomer', 'vendor');
 
   const canVendorAttend = userRole === 'vendor' && can('Processing', 'vendor') && onAttendToOrder;
 
@@ -167,7 +170,6 @@ export function OrderListItem({
 
 
   const canLeaveReview = userRole === 'customer' && ORDER_COMPLETED.includes(order.status);
-  const canViewCustomerPhone = userRole === 'delivery_agent' && (order.status === 'PickedUpByAgent' || order.status === 'Out for Delivery');
   const canCustomerCancel = userRole === 'customer' && can('Cancelled', 'customer') && onCancelOrder;
   const canVendorDecline = userRole === 'vendor' && can('Cancelled', 'vendor') && onDeclineOrder;
 
@@ -177,139 +179,59 @@ export function OrderListItem({
 
   return (
     <>
-      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-lg md:text-xl">Order ID: {order.id}</CardTitle>
-              <CardDescription className="text-xs md:text-sm">
-                Placed on: {displayDate}
-              </CardDescription>
-            </div>
-            <Badge variant={getStatusVariant(order.status)} className={`flex items-center text-xs md:text-sm ${getStatusColorClass(order.status)}`}>
+      <Card className="overflow-hidden rounded-2xl shadow-sm">
+        <CardHeader className="space-y-1 p-4 pb-2">
+          <div className="flex items-start justify-between gap-3">
+            <CardTitle className="min-w-0 truncate text-base font-bold leading-snug sm:text-lg">{headline}</CardTitle>
+            <Badge variant={getStatusVariant(order.status)} className={`shrink-0 whitespace-nowrap px-2 py-0.5 text-[11px] font-semibold ${getStatusColorClass(order.status)}`}>
               {getStatusIcon(order.status)}
-              {order.status === 'ReadyForCustomerPickup' ? 'Ready for Self-Pickup' : order.status}
+              {STATUS_LABEL[order.status] ?? order.status}
             </Badge>
           </div>
+          <CardDescription className="text-xs">
+            #{order.id.slice(0, 8).toUpperCase()} · {shortDate}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="pb-3 space-y-3">
-          <div>
-            <h4 className="font-semibold text-sm text-muted-foreground">Items:</h4>
-            <p className="text-sm line-clamp-2">{itemSummary}</p>
-          </div>
-          {userRole === 'vendor' && order.deliveryPreference && (
-              <p className="text-xs text-muted-foreground">
-                  Customer Preference: {order.deliveryPreference === 'delivery' ? 'Delivery Requested' : 'Self Pickup'}
-              </p>
-          )}
+        <CardContent className="space-y-3 px-4 pb-3 pt-0 text-sm">
+          <p className="line-clamp-2">{itemSummary}</p>
 
           {userRole === 'customer' && (
             <>
-              <div>
-                <h4 className="font-semibold text-sm text-muted-foreground">Vendor:</h4>
-                <div className="flex items-center gap-2 text-sm">
-                  <span>{order.vendorId}</span>
-                  <div className="flex items-center gap-1 text-xs">
-                    <ThumbsUp className="h-3 w-3 text-green-500" />
-                    <span>{vendorReviews.positive}</span>
-                    <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
-                    <span>{vendorReviews.negative}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">Pickup from: {order.pickupAddress}</p>
-              </div>
-               {order.deliveryAgentId && (
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Truck className="h-3 w-3" />
-                  <span>Agent: {order.deliveryAgentId}</span>
-                   <div className="flex items-center gap-1 text-xs">
-                    (<ThumbsUp className="h-3 w-3 text-green-500" />
-                    <span>{agentReviews.positive}</span>
-                    <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
-                    <span>{agentReviews.negative})</span>
-                  </div>
-                </div>
-              )}
-              {showCustomerDeliveryBarcode && (
-                <CustomerDeliveryCode orderId={order.id} />
+              <InfoLine icon={order.deliveryPreference === 'delivery' ? Truck : ShoppingBag} label={order.deliveryPreference === 'delivery' ? 'Deliver to' : 'Collect from'}>
+                {order.deliveryPreference === 'delivery' ? order.deliveryAddress : order.pickupAddress}
+              </InfoLine>
+              {order.agentName && <InfoLine icon={User} label="Rider">{order.agentName}</InfoLine>}
+              {showCustomerCode && (
+                <CustomerDeliveryCode orderId={order.id} pickup={order.deliveryPreference === 'pickup'} />
               )}
             </>
           )}
 
           {userRole === 'vendor' && (
             <>
-              <div>
-                <h4 className="font-semibold text-sm text-muted-foreground">Customer:</h4>
-                <p className="text-sm">{order.customerId}</p>
-                <p className="text-xs text-muted-foreground">Delivery to: {order.deliveryAddress}</p>
-              </div>
-              {order.deliveryAgentId && (
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Truck className="h-3 w-3" />
-                   <span>Assigned Agent: {order.deliveryAgentId}</span>
-                   <div className="flex items-center gap-1 text-xs">
-                    (<ThumbsUp className="h-3 w-3 text-green-500" />
-                    <span>{agentReviews.positive}</span>
-                    <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
-                    <span>{agentReviews.negative})</span>
-                  </div>
-                </div>
-              )}
-              {showVendorAgentPickupBarcode && (
-                <BarcodeDisplay orderId={order.id} label="Barcode for Agent Pickup" />
-              )}
-              {showVendorCustomerPickupBarcode && (
-                <BarcodeDisplay orderId={order.id} label="Barcode for Customer Pickup Confirmation" />
-              )}
+              <InfoLine icon={order.deliveryPreference === 'delivery' ? Truck : UserCheck} label={order.deliveryPreference === 'delivery' ? 'Delivery to' : 'Customer collects'}>
+                {order.deliveryPreference === 'delivery' ? order.deliveryAddress : order.deliveryAddress || 'At your shop'}
+              </InfoLine>
+              {order.agentName && <InfoLine icon={User} label="Rider">{order.agentName}</InfoLine>}
             </>
           )}
 
           {userRole === 'delivery_agent' && (
-             <>
-              <div className="flex items-start gap-2">
-                <Package className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-                <div>
-                  <p className="font-semibold">Pickup From (Vendor):</p>
-                   <div className="flex items-center gap-2 text-sm">
-                    <span>{order.vendorId}</span>
-                    <div className="flex items-center gap-1 text-xs">
-                        <ThumbsUp className="h-3 w-3 text-green-500" />
-                        <span>{vendorReviews.positive}</span>
-                        <ThumbsDown className="h-3 w-3 text-red-500 ml-1" />
-                        <span>{vendorReviews.negative}</span>
-                    </div>
-                  </div>
-                  <p className="text-sm">{order.pickupAddress}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <User className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
-                <div>
-                  <p className="font-semibold">Deliver To (Customer):</p>
-                  <p className="text-sm">{order.deliveryAddress}</p>
-                  {canViewCustomerPhone && (
-                    <div className="mt-1 flex items-center gap-1 text-xs text-primary">
-                      <PhoneCall className="h-3 w-3" />
-                      <span>Contact: (Mock) 080-1234-5678</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                  Distance: {order.estimatedDistance || 'N/A'}
-              </div>
-             </>
+            <>
+              <InfoLine icon={Package} label={`Collect from ${order.vendorName ?? 'the shop'}`}>{order.pickupAddress}</InfoLine>
+              <InfoLine icon={User} label={`Deliver to ${order.customerName ?? 'the customer'}`}>{order.deliveryAddress}</InfoLine>
+              {order.estimatedDistance && <p className="text-xs text-muted-foreground">About {order.estimatedDistance}</p>}
+            </>
           )}
-
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-3 border-t gap-2">
+        <CardFooter className="flex flex-col items-stretch gap-3 border-t p-4 pt-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center">
-            <span className="font-semibold text-md text-primary">
+            <span className="text-base font-bold text-primary">
                {userRole === 'delivery_agent' ? `Fee: ₦${order.deliveryFee.toLocaleString()}` : `Total: ₦${order.totalAmount.toLocaleString()}`}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end [&>button]:flex-1 sm:[&>button]:flex-none">
             {canVendorAttend && (
               <Button
                 variant="default"
@@ -340,8 +262,13 @@ export function OrderListItem({
               </Button>
             )}
             {userRole === 'delivery_agent' && can('PickedUpByAgent', 'agent') && onScanForPickup && (
-              <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => onScanForPickup(order.id)}>
-                <PackageCheck className="h-4 w-4 mr-2" /> Scan at Pickup
+              <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => setConfirming('collect')}>
+                <PackageCheck className="h-4 w-4 mr-2" /> I&apos;ve collected it
+              </Button>
+            )}
+            {canVendorConfirmPickup && (
+              <Button className="bg-primary hover:bg-primary/90" onClick={() => setCodeOpen(true)}>
+                <ShieldCheck className="h-4 w-4 mr-2" /> Enter pickup code
               </Button>
             )}
             {userRole === 'delivery_agent' && can('Delivered', 'agent') && onScanForDelivery && (
@@ -368,17 +295,6 @@ export function OrderListItem({
               </Button>
             )}
 
-            {canCustomerScanForPickup && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-teal-500 text-teal-600 hover:bg-teal-50 hover:text-teal-700"
-                onClick={() => onScanForCustomerPickup && onScanForCustomerPickup(order.id)}
-              >
-                <ScanLine className="h-4 w-4 mr-1 sm:mr-2" />
-                Scan to Confirm Pickup
-              </Button>
-            )}
 
             {shouldShowViewDetailsButton && (
               <Button
@@ -406,28 +322,34 @@ export function OrderListItem({
       <AlertDialog open={confirming !== null} onOpenChange={(o) => { if (!o) setConfirming(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirming === 'decline' ? 'Decline this order?' : 'Cancel this order?'}</AlertDialogTitle>
+            <AlertDialogTitle>{confirming === 'collect' ? 'Collected from the shop?' : confirming === 'decline' ? 'Decline this order?' : 'Cancel this order?'}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirming === 'decline'
+              {confirming === 'collect'
+                ? 'Only confirm once you have the order with you. The customer then gets their delivery code.'
+                : confirming === 'decline'
                 ? `The customer will be refunded ₦${order.totalAmount.toLocaleString()} to their wallet and told you couldn't fulfil it. This can't be undone.`
                 : `₦${order.totalAmount.toLocaleString()} will be refunded to your wallet. This can't be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep order</AlertDialogCancel>
+            <AlertDialogCancel>{confirming === 'collect' ? 'Not yet' : 'Keep order'}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={confirming === 'collect' ? '' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}
               onClick={() => {
-                if (confirming === 'decline') onDeclineOrder?.(order.id);
+                if (confirming === 'collect') onScanForPickup?.(order.id);
+                else if (confirming === 'decline') onDeclineOrder?.(order.id);
                 else onCancelOrder?.(order.id);
                 setConfirming(null);
               }}
             >
-              {confirming === 'decline' ? 'Decline order' : 'Cancel order'}
+              {confirming === 'collect' ? 'Yes, collected' : confirming === 'decline' ? 'Decline order' : 'Cancel order'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {canVendorConfirmPickup && (
+        <DeliveryCodeDialog pickup orderId={order.id} open={codeOpen} onOpenChange={setCodeOpen} onDelivered={() => setLocalStatus('PickedUpByCustomer')} />
+      )}
       {isDetailsDialogOpen && (
         <OrderDetailsDialog
           order={order}

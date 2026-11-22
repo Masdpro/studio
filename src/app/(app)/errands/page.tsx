@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { CreateErrandRequestForm } from '@/components/errands/CreateErrandRequestForm';
 import { ClipboardList, PlusCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type QuoteWithAgentName = ErrandQuote & { agentName: string };
 
@@ -120,8 +121,8 @@ export default function ErrandsPage() {
           <h1 className="flex items-center gap-3 text-3xl font-bold text-primary">
             <ClipboardList className="h-8 w-8" />
             Errands
-          </h1>
-          <p className="mt-1 text-muted-foreground">Ask an agent to buy and deliver anything, then follow it here.</p>
+          <InfoTip>Ask an agent to buy and deliver anything, then follow it here.</InfoTip></h1>
+          
         </div>
         {!showForm && (
           <Button size="lg" onClick={() => setFormOpen(true)}>

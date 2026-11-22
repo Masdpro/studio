@@ -46,7 +46,7 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
         <Button variant="outline" asChild>
           <Link href="/shop">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Products
+            Back to the shop
           </Link>
         </Button>
       </div>
@@ -56,10 +56,7 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
             <AvatarImage src={vendor.imageUrl ?? `https://placehold.co/100x100.png?text=${vendorInitials}`} alt={vendor.businessName} data-ai-hint="store logo" />
             <AvatarFallback className="text-3xl">{vendorInitials}</AvatarFallback>
           </Avatar>
-          <CardTitle className="text-3xl font-bold flex items-center justify-center gap-2">
-            <Store className="h-8 w-8 text-primary" />
-            {vendor.businessName}
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold sm:text-3xl">{vendor.businessName}</CardTitle>
           <CardDescription className="mb-2">
             {vendor.locationTag ? `Located in ${vendor.locationTag}` : 'Vendor Profile'}
           </CardDescription>
@@ -125,9 +122,6 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
               </div>
             </div>
           )}
-          <div className="mt-6 flex justify-end">
-            <Button variant="outline" disabled>Edit Profile (Vendor Dashboard)</Button>
-          </div>
         </CardContent>
       </Card>
     </div>

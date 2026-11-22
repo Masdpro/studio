@@ -25,7 +25,7 @@ export default function TermsPage() {
       <ul>
         <li>Prices are set by vendors and shown in Naira. Any delivery charge is shown at checkout before you pay.</li>
         <li>An order is placed when you check out and the total is taken from your wallet. The vendor then accepts and prepares it, or cancels it if they cannot fulfil it.</li>
-        <li>Cancellations and refunds follow our <Link href="/refunds">Refund &amp; Cancellation Policy</Link>.</li>
+        <li>Cancellations and refunds follow our <Link href="/refunds">Refund Policy</Link>.</li>
       </ul>
 
       <h2>4. Wallet and payments</h2>

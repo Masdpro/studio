@@ -79,7 +79,7 @@ export default function NotificationsPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+              className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground transition-opacity hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
               onClick={() => handleDeleteNotification(notification.id)}
               aria-label="Delete notification"
             >
@@ -91,8 +91,8 @@ export default function NotificationsPage() {
     );
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-6">
+    <div className="container mx-auto py-2 md:py-8">
+      <div className="mb-6 hidden md:block">
         <Button variant="outline" asChild>
           <Link href="/shop">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -100,36 +100,34 @@ export default function NotificationsPage() {
           </Link>
         </Button>
       </div>
-      <Card className="w-full max-w-2xl mx-auto shadow-xl">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* On phones the page itself is the card: no box around the list. */}
+      <Card className="mx-auto w-full max-w-2xl max-md:border-0 max-md:bg-transparent max-md:shadow-none md:shadow-xl">
+        <CardHeader className="flex flex-col gap-3 max-md:px-0 max-md:pt-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-3xl font-bold flex items-center gap-2">
-              <BellRing className="h-8 w-8 text-primary" />
-              All Notifications
+            <CardTitle className="flex items-center gap-2 text-2xl font-bold md:text-3xl">
+              <BellRing className="h-6 w-6 text-primary md:h-8 md:w-8" />
+              Notifications
             </CardTitle>
-            <CardDescription>View and manage all your notifications.</CardDescription>
+            <CardDescription>{unreadCount ? `${unreadCount} unread` : 'All caught up'}</CardDescription>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex shrink-0 gap-2 [&>button]:flex-1 sm:[&>button]:flex-none">
             <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-              <CheckCheck className="mr-2 h-4 w-4" /> Mark All Read
+              <CheckCheck className="mr-2 h-4 w-4" /> Mark all read
             </Button>
-            <Button variant="destructive" size="sm" onClick={handleDeleteAllNotifications} disabled={notifications.length === 0}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete All
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={handleDeleteAllNotifications} disabled={notifications.length === 0}>
+              <Trash2 className="mr-2 h-4 w-4" /> Clear all
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-6 pb-4 border-b">
-            You have {unreadCount} unread notification{unreadCount === 1 ? '' : 's'}.
-          </p>
+        <CardContent className="max-md:px-0">
 
           <Tabs defaultValue="Transaction" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
               {TABS.map(({ value, label, icon: Icon }) => {
                 const hasUnread = notifications.some((n) => n.category === value && !n.read);
                 return (
-                  <TabsTrigger key={value} value={value} className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" /> {label}
+                  <TabsTrigger key={value} value={value} className="flex items-center gap-1.5 px-1 text-xs sm:gap-2 sm:text-sm">
+                    <Icon className="hidden h-4 w-4 sm:block" /> {label}
                     {hasUnread && (
                       <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" aria-label="Unread notifications" />
                     )}

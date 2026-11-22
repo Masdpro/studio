@@ -18,8 +18,8 @@ export type VerificationRoute = { id: VerificationRouteId; label: string; hint: 
 
 export const VERIFICATION_ROUTES: Record<string, VerificationRoute[]> = {
   vendor: [
-    { id: 'individual', label: 'No CAC registration', hint: 'For anyone selling as a person: from home, a stall or online. Show your ID and take the live selfie.', documents: ['government_id', 'selfie'] },
-    { id: 'registered', label: 'Registered business (CAC)', hint: 'Shops registered with CAC get a "Registered business" badge customers can see.', documents: ['business_proof', 'store_photo'] },
+    { id: 'individual', label: 'Individual', hint: 'For anyone selling as a person: from home, a stall or online. Show your ID and take the live selfie.', documents: ['government_id', 'selfie'] },
+    { id: 'registered', label: 'CAC registered', hint: 'Shops registered with CAC get a "Registered business" badge customers can see.', documents: ['business_proof', 'store_photo'] },
   ],
   delivery_agent: [{ id: 'standard', label: 'ID check', hint: '', documents: ['government_id', 'selfie'] }],
   // Service providers often work in customers' homes, so they prove who they are like delivery agents do.

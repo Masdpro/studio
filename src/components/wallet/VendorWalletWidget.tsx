@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Loader2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Summary = { balance: number; totalEarned: number; totalWithdrawn: number; withdrawable: number };
 const naira = (n: number) => `${n < 0 ? '−' : ''}₦${Math.abs(n).toLocaleString('en-NG', { maximumFractionDigits: 2 })}`;
@@ -32,8 +33,7 @@ export function VendorWalletWidget() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl">
           <Wallet className="h-6 w-6 text-primary" /> Earnings
-        </CardTitle>
-        <CardDescription>Money from your sales and deliveries arrives here as soon as each order is delivered or collected.</CardDescription>
+        <InfoTip>Money from your sales and deliveries arrives here as soon as each order is delivered or collected.</InfoTip></CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {!loaded ? (
@@ -42,7 +42,7 @@ export function VendorWalletWidget() {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-md border border-primary/40 bg-primary/5 p-2">
               <p className="text-lg font-semibold text-primary">{naira(summary.withdrawable)}</p>
-              <p className="text-xs text-muted-foreground">Available to withdraw</p>
+              <p className="text-xs text-muted-foreground">Available</p>
             </div>
             <div className="rounded-md border p-2">
               <p className="text-lg font-semibold">{naira(summary.totalEarned)}</p>

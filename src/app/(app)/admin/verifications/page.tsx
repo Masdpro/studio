@@ -11,6 +11,7 @@ import { ArrowLeft, CheckCircle2, Circle, FileText, Loader2 } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import type { VerificationState } from '@/components/account/AccountVerification';
 import { STEP_PROMPTS, type LivenessStep } from '@/lib/liveness';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type LiveCheck = { id: string; steps: LivenessStep[]; frameCount: number; completedAt: string | null };
 // One entry per role to review: an account with both roles appears twice, each approved on its own.
@@ -105,8 +106,8 @@ export default function AdminVerificationsPage() {
     <Card key={keyOf(a)}>
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-lg">{a.name}</CardTitle>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="truncate text-lg" title={a.name}>{a.name}</CardTitle>
             <CardDescription>
               <span className="font-medium text-foreground">{ROLE_NAME[a.reviewRole]}</span> · {a.email}
               {a.phone ? ` · ${a.phone}` : ''}
@@ -192,8 +193,8 @@ export default function AdminVerificationsPage() {
               <ArrowLeft className="h-4 w-4 mr-2" /> Admin
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold">Verifications</h1>
-          <p className="text-muted-foreground">Review documents from new vendors and delivery agents before they can trade.</p>
+          <h1 className="text-3xl font-bold">Verifications<InfoTip>Review documents from new vendors and delivery agents before they can trade.</InfoTip></h1>
+          
         </div>
         {loading ? (
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />

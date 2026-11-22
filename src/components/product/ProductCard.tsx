@@ -4,7 +4,7 @@
 import { SafeImage } from '@/components/ui/safe-image';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart, Store, MapPin, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';

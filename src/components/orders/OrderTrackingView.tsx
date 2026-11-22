@@ -2,9 +2,9 @@
 'use client';
 
 import type { Order } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrderListItem } from './OrderListItem';
 import { ClipboardList, Search } from 'lucide-react';
+import { InfoTip } from '@/components/ui/info-tip';
 
 interface OrderTrackingViewProps {
   orders: Order[];
@@ -15,7 +15,6 @@ interface OrderTrackingViewProps {
   onAttendToOrder?: (orderId: string) => void;
   onMarkAsReadyForPickup?: (orderId: string) => void;
   onDeclineOrder?: (orderId: string) => void;
-  onScanForCustomerPickup?: (orderId: string) => void; // New prop
 }
 
 export function OrderTrackingView({
@@ -27,50 +26,47 @@ export function OrderTrackingView({
   onAttendToOrder,
   onMarkAsReadyForPickup,
   onDeclineOrder,
-  onScanForCustomerPickup, // New prop
 }: OrderTrackingViewProps) {
+  // A plain page heading and a list of order cards (no card around the cards).
+  const heading = (
+    <div className="mb-4 space-y-1">
+      <h1 className="flex items-center gap-2 text-2xl font-bold md:text-3xl">
+        <ClipboardList className="h-6 w-6 text-primary md:h-7 md:w-7" />
+        {title}
+        {description && <InfoTip>{description}</InfoTip>}
+      </h1>
+    </div>
+  );
+
   if (!orders || orders.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <ClipboardList className="h-6 w-6 text-primary" />
-            {title}
-          </CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
-        <CardContent className="text-center py-12">
-          <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground">No orders found.</p>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-3xl">
+        {heading}
+        <div className="rounded-2xl border bg-card px-6 py-12 text-center">
+          <Search className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+          <p className="text-muted-foreground">No orders yet.</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-2xl md:text-3xl">
-          <ClipboardList className="h-7 w-7 md:h-8 md:w-8 text-primary" />
-          {title}
-        </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="mx-auto max-w-3xl">
+      {heading}
+      <div className="space-y-3">
         {orders.map((order) => (
-          <OrderListItem 
-            key={order.id} 
-            order={order} 
+          <OrderListItem
+            key={order.id}
+            order={order}
             userRole={userRole}
             onCancelOrder={userRole === 'customer' ? onCancelOrder : undefined}
             onAttendToOrder={userRole === 'vendor' ? onAttendToOrder : undefined}
             onMarkAsReadyForPickup={userRole === 'vendor' ? onMarkAsReadyForPickup : undefined}
             onDeclineOrder={userRole === 'vendor' ? onDeclineOrder : undefined}
-            onScanForCustomerPickup={userRole === 'customer' ? onScanForCustomerPickup : undefined} // Pass down
           />
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

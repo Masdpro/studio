@@ -9,16 +9,16 @@ import { openWallet, useWalletBalance } from '@/hooks/use-wallet-balance';
 export function WalletCard() {
   const balance = useWalletBalance();
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-background p-4">
+    <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl border bg-background p-4 sm:grid-cols-[auto_1fr_auto]">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15">
         <Wallet className="h-5 w-5 text-primary" />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <p className="text-xs text-muted-foreground">Wallet balance</p>
-        <p className="text-2xl font-bold">{balance === null ? '…' : `₦${balance.toLocaleString()}`}</p>
+        <p className="whitespace-nowrap text-2xl font-bold">{balance === null ? '…' : `₦${balance.toLocaleString()}`}</p>
         <Link href="/wallet" className="text-xs font-medium text-primary underline">History &amp; withdrawals</Link>
       </div>
-      <Button onClick={() => openWallet()} className="shrink-0">
+      <Button onClick={() => openWallet()} className="col-span-2 w-full sm:col-span-1 sm:w-auto">
         <Plus className="mr-1.5 h-4 w-4" />Add funds
       </Button>
     </div>

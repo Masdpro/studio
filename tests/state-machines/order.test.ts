@@ -25,7 +25,7 @@ async function move(orderId: string, as: string, status: string, extra: Record<s
 const ALLOWED: [string, string, string, 'delivery' | 'pickup', boolean][] = [
   ['customer', 'Pending', 'Cancelled', 'delivery', false],
   ['customer', 'Processing', 'Cancelled', 'delivery', false],
-  ['customer', 'ReadyForCustomerPickup', 'PickedUpByCustomer', 'pickup', false],
+  ['vendor', 'ReadyForCustomerPickup', 'PickedUpByCustomer', 'pickup', false],
   ['vendor', 'Pending', 'Processing', 'delivery', false],
   ['vendor', 'Pending', 'Cancelled', 'delivery', false],
   ['vendor', 'Processing', 'ReadyForPickup', 'delivery', false],
@@ -37,11 +37,33 @@ const ALLOWED: [string, string, string, 'delivery' | 'pickup', boolean][] = [
   ['agent', 'Out for Delivery', 'Delivered', 'delivery', true],
 ];
 
+describe('order: pickup is handed over with the customer\'s code', () => {
+  it('the customer can no longer mark their own pickup as collected', async () => {
+    const id = makeOrder({ customerId: customer, vendorId: vendor, status: 'ReadyForCustomerPickup', preference: 'pickup', agentId: null });
+    const r = await move(id, customer, 'PickedUpByCustomer', { deliveryCode: getDeliveryCode(id) });
+    expect(r.status).toBe(409);
+    expect(orderStatus(id)).toBe('ReadyForCustomerPickup');
+  });
+
+  it('the shop needs the right code', async () => {
+    const id = makeOrder({ customerId: customer, vendorId: vendor, status: 'ReadyForCustomerPickup', preference: 'pickup', agentId: null });
+    const right = getDeliveryCode(id)!;
+    expect(right).toMatch(/^\d{4}$/);
+    const wrong = right === '0000' ? '1111' : '0000';
+    const r = await move(id, vendor, 'PickedUpByCustomer', { deliveryCode: wrong });
+    expect(r.status).toBe(400);
+    expect(orderStatus(id)).toBe('ReadyForCustomerPickup');
+    const ok = await move(id, vendor, 'PickedUpByCustomer', { deliveryCode: right });
+    expect(ok.status).toBe(200);
+    expect(orderStatus(id)).toBe('PickedUpByCustomer');
+  });
+});
+
 describe('order: allowed transitions', () => {
   it.each(ALLOWED)('%s moves %s → %s', async (actor, from, to, preference, assigned) => {
     const id = makeOrder({ customerId: customer, vendorId: vendor, status: from, preference, agentId: assigned ? agent : null });
     const who = actor === 'customer' ? customer : actor === 'vendor' ? vendor : agent;
-    const extra = to === 'Delivered' ? { deliveryCode: getDeliveryCode(id) } : {};
+    const extra = to === 'Delivered' || to === 'PickedUpByCustomer' ? { deliveryCode: getDeliveryCode(id) } : {};
     const r = await move(id, who, to, extra);
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(orderStatus(id)).toBe(to);

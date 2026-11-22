@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const ADMIN_RULES = { name: rules.personName, email: rules.email };
 
@@ -122,15 +123,14 @@ export default function AdminUsersPage() {
           <Link href="/admin"><ArrowLeft className="h-4 w-4 mr-2" /> Back to Admin</Link>
         </Button>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">Users</h1>
-          <p className="text-muted-foreground">Look up any account. Suspending blocks sign-in, signs them out everywhere and hides their shop.</p>
+          <h1 className="text-2xl font-bold">Users<InfoTip>Look up any account. Suspending blocks sign-in, signs them out everywhere and hides their shop.</InfoTip></h1>
+          
         </div>
         {me?.isSuperAdmin && (
           <Card className="mb-6">
             <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
               <div>
-                <CardTitle className="flex items-center gap-2 text-lg"><Crown className="h-5 w-5 text-primary" />Admins</CardTitle>
-                <CardDescription>As super admin, you decide who can run Closebuy. New admins get an email to choose their own password.</CardDescription>
+                <CardTitle className="flex items-center gap-2 text-lg"><Crown className="h-5 w-5 text-primary" />Admins<InfoTip>As super admin, you decide who can run Closebuy. New admins get an email to choose their own password.</InfoTip></CardTitle>
               </div>
               <Button size="sm" onClick={() => setAdding(true)}><UserPlus className="mr-1 h-4 w-4" />Add admin</Button>
             </CardHeader>

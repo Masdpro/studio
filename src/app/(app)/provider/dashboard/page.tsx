@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTradingStatus } from '@/hooks/use-trading-status';
 import { naira, whenLabel } from '@/lib/booking-time';
 import { categoryLabel } from '@/lib/service-categories';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Summary = {
   provider: { businessName: string; slug: string; category: string; area: string; city: string };
@@ -88,16 +89,16 @@ export default function ProviderDashboardPage() {
           <p className="text-sm text-muted-foreground">{categoryLabel(p.category)} · {p.area}, {p.city}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild><Link href={`/services/p/${p.slug}`}><ExternalLink className="mr-1.5 h-4 w-4" />View your page</Link></Button>
-          <Button variant="outline" size="sm" asChild><Link href="/provider/profile"><Settings2 className="mr-1.5 h-4 w-4" />Business profile</Link></Button>
+          <Button variant="outline" size="sm" asChild><Link href={`/services/p/${p.slug}`}><ExternalLink className="mr-1.5 h-4 w-4" />My page</Link></Button>
+          <Button variant="outline" size="sm" asChild><Link href="/provider/profile"><Settings2 className="mr-1.5 h-4 w-4" />Profile</Link></Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stat('Requests to answer', summary.requests, Inbox, '/provider/bookings', summary.requests ? 'Answer within 4 hours' : 'All caught up')}
+        {stat('To answer', summary.requests, Inbox, '/provider/bookings', summary.requests ? 'Answer within 4 hours' : 'All caught up')}
         {stat('Upcoming', summary.upcoming.length, CalendarCheck, '/provider/bookings')}
-        {stat('Completed this month', summary.completedThisMonth, CalendarCog)}
-        {stat('Earned this month', naira(summary.earnedThisMonth), Wallet, '/wallet', 'After the Closebuy fee')}
+        {stat('Done this month', summary.completedThisMonth, CalendarCog)}
+        {stat('Earned this month', naira(summary.earnedThisMonth), Wallet, '/wallet', 'After fees')}
       </div>
 
       {(summary.services === 0 || summary.servicesWithoutPhotos > 0) && (
@@ -119,8 +120,7 @@ export default function ProviderDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
-              <CardTitle className="text-lg">Coming up</CardTitle>
-              <CardDescription>Your next bookings.</CardDescription>
+              <CardTitle className="text-lg">Coming up<InfoTip>Your next bookings.</InfoTip></CardTitle>
             </div>
             <Button variant="ghost" size="sm" asChild><Link href="/provider/bookings">All bookings<ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
           </CardHeader>

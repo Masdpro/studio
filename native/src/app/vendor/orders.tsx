@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Button, Card, Chip, Empty, ErrorNote, Loading, Pill, Row, Screen, Txt } from '@/components/ui';
+import { Button, Card, Chip, Empty, ErrorNote, Field, Loading, Pill, Row, Screen, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
 import { confirmAsk } from '@/lib/confirm';
 import { orderStatus, when } from '@/lib/format';
@@ -25,15 +25,17 @@ export default function VendorOrders() {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('new');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  // Pickup codes being typed, per order.
+  const [codes, setCodes] = useState<Record<string, string>>({});
   const statuses = TABS.find((t) => t[0] === tab)![2] as readonly string[];
   const list = [...(q.data?.orders ?? [])].filter((o) => statuses.includes(o.status)).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
   const count = (s: readonly string[]) => q.data?.orders.filter((o) => s.includes(o.status)).length ?? 0;
 
-  const move = async (o: Order, status: string) => {
+  const move = async (o: Order, status: string, deliveryCode?: string) => {
     setErr(null);
     setBusy(o.id);
     try {
-      await api(`/api/orders/${o.id}`, { method: 'PATCH', body: { status, actingAs: 'vendor' } });
+      await api(`/api/orders/${o.id}`, { method: 'PATCH', body: { status, actingAs: 'vendor', deliveryCode } });
       await q.refetch();
       qc.invalidateQueries({ queryKey: ['vendor-analytics'] });
     } catch (e: any) {
@@ -77,6 +79,25 @@ export default function VendorOrders() {
                   <Button side="shop" small title={o.deliveryPreference === 'delivery' ? 'Ready for a rider' : 'Ready to collect'} loading={loading} style={{ flex: 1 }} onPress={() => move(o, o.deliveryPreference === 'delivery' ? 'ReadyForPickup' : 'ReadyForCustomerPickup')} />
                   <Button side="shop" small kind="ghost" title="Cancel" onPress={() => confirmAsk('Cancel this order?', 'The customer gets a full refund and the items go back in stock.', 'Cancel order', () => move(o, 'Cancelled'))} />
                 </Row>
+              ) : null}
+              {o.status === 'ReadyForCustomerPickup' ? (
+                <View style={{ marginTop: 10, gap: 8 }}>
+                  <Txt side="shop" size={12} muted>When the customer has checked their items, ask for the 4-digit pickup code in their Closebuy app.</Txt>
+                  <Row>
+                    <View style={{ flex: 1 }}>
+                      <Field
+                        side="shop"
+                        placeholder="0000"
+                        keyboardType="number-pad"
+                        maxLength={4}
+                        value={codes[o.id] ?? ''}
+                        onChangeText={(v) => setCodes((m) => ({ ...m, [o.id]: v.replace(/\D/g, '').slice(0, 4) }))}
+                        accessibilityLabel="Pickup code"
+                      />
+                    </View>
+                    <Button side="shop" small title="Confirm collection" loading={loading} disabled={(codes[o.id] ?? '').length !== 4} onPress={() => move(o, 'PickedUpByCustomer', codes[o.id])} />
+                  </Row>
+                </View>
               ) : null}
             </Card>
           );

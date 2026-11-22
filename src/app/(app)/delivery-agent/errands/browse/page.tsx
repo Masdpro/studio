@@ -6,9 +6,10 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ErrandRequest, ErrandQuote } from '@/lib/types';
 import { AvailableErrandListItem } from '@/components/errands/AvailableErrandListItem';
 import { SubmitQuoteDialog } from '@/components/errands/SubmitQuoteDialog'; // Import the dialog
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Search, ShoppingBasket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function BrowseErrandsPage() {
   const [availableErrands, setAvailableErrands] = useState<ErrandRequest[]>([]);
@@ -91,11 +92,9 @@ export default function BrowseErrandsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
           <Search className="h-8 w-8" />
-          Browse Available Errands
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Find errand requests from customers and submit your quotes.
-        </p>
+          Open errands
+        <InfoTip>Find errand requests from customers and submit your quotes.</InfoTip></h1>
+        
       </div>
 
       {availableErrands.length === 0 ? (

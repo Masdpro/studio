@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback } from 'react';
 import { BranchesManager } from '@/components/vendor/BranchesManager';
 import { VendorProfileForm } from '@/components/vendor/VendorProfileForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Settings, Wallet as WalletIcon, ClipboardList, Star, Loader2, MapPin, BarChart3 } from 'lucide-react';
@@ -22,6 +22,7 @@ import type { Order, Vendor } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function VendorDashboardPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
@@ -130,10 +131,11 @@ export default function VendorDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-8 py-8">
-      <h1 id="vendor-dashboard-top" className="text-3xl font-bold text-primary mb-6 scroll-mt-20">
-        {vendor?.businessName ?? 'Your'} Dashboard
-      </h1>
+    <div className="container mx-auto space-y-5 py-2 md:space-y-8 md:py-8">
+      <div id="vendor-dashboard-top" className="scroll-mt-20">
+        <h1 className="text-2xl font-bold md:text-3xl">{vendor?.businessName ?? 'Your shop'}</h1>
+        <p className="text-sm text-muted-foreground">Your shop dashboard</p>
+      </div>
       <RestockAlert />
       {!vendor && (
         <Card className="border-dashed">
@@ -202,17 +204,14 @@ export default function VendorDashboardPage() {
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Settings className="h-6 w-6 text-primary" />
-                Manage Your Profile
-              </CardTitle>
-              <CardDescription>
-                Keep your business information up to date.
+                Shop profile
+              <InfoTip>Keep your business information up to date.
                 {vendor && (
                   <>
                     {' '}Your status on Closebuy for taking orders is: <span className="font-semibold">{vendor.status}</span>.
-                    Your physical store hours are: <span className="font-semibold">{vendor.operatingHours || 'Not set'}</span>.
+                    Your physical store hours are: <span className="whitespace-nowrap font-semibold">{vendor.operatingHours || 'Not set'}</span>.
                   </>
-                )}
-              </CardDescription>
+                )}</InfoTip></CardTitle>
             </CardHeader>
             <CardContent>
               <VendorProfileForm vendor={vendor ?? undefined} onSaved={loadDashboard} />
@@ -241,12 +240,11 @@ export default function VendorDashboardPage() {
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Star className="h-6 w-6 text-primary" />
                 Customer Reviews
-              </CardTitle>
-              <CardDescription>See what customers are saying about your service.</CardDescription>
+              <InfoTip>See what customers are saying about your service.</InfoTip></CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Review display functionality is coming soon. You will be able to see your aggregated ratings and individual comments here.
+                Customer ratings and comments will show here soon.
               </p>
             </CardContent>
           </Card>

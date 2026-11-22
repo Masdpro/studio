@@ -56,11 +56,11 @@ const FAQS = [
     a: 'Top up your Closebuy wallet by card or bank transfer through Paystack, then pay for orders and errands from your wallet in one tap. Closebuy never sees your card details.',
   },
   {
-    q: 'What happens if my order is cancelled?',
+    q: 'What if my order is cancelled?',
     a: 'The full amount, including delivery, goes straight back to your Closebuy wallet, ready for your next order.',
   },
   {
-    q: 'How are vendors and riders checked?',
+    q: 'How are vendors vetted?',
     a: 'Before anyone can sell or deliver, our team reviews their ID and, for vendors, business documents. Delivery agents also complete a live selfie check.',
   },
   {
@@ -88,8 +88,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 md:pb-24 md:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
           <div>
-            <h1 className="font-display text-[2.75rem] font-extrabold leading-[1.02] sm:text-6xl lg:text-[4.6rem]">
-              Shop trusted vendors{' '}
+            <h1 className="font-display text-[2.25rem] font-extrabold leading-[1.05] sm:text-6xl lg:text-[4.6rem]">
+              <span className="block whitespace-nowrap">Buy from vendors</span>
               <span className="relative inline-block whitespace-nowrap">
                 <span className="text-coral-gradient">close to you.</span>
                 <svg aria-hidden viewBox="0 0 300 18" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-3 w-full text-[hsl(var(--sun))] md:-bottom-3 md:h-4">
@@ -188,10 +188,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="relative border-y border-[hsl(var(--ink)/0.08)] bg-white/50 backdrop-blur">
           <ul className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-3 px-4 py-5 text-sm font-semibold sm:px-6 md:grid-cols-4">
             {[
-              { icon: ShieldCheck, t: 'Verified vendors & riders' },
-              { icon: Lock, t: 'Secure Paystack payments' },
-              { icon: Wallet, t: 'Refunds to your wallet' },
-              { icon: PackageCheck, t: 'Delivery or self-pickup' },
+              { icon: ShieldCheck, t: 'Verified sellers' },
+              { icon: Lock, t: 'Secure payments' },
+              { icon: Wallet, t: 'Wallet refunds' },
+              { icon: PackageCheck, t: 'Delivery or pickup' },
             ].map(({ icon: Icon, t }) => (
               <li key={t} className="flex items-center gap-2.5">
                 <Icon className="h-5 w-5 shrink-0 text-[hsl(var(--coral-deep))]" />
@@ -227,7 +227,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <Reveal className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-[hsl(var(--coral-deep))]">How it works</p>
-            <h2 className="font-display mt-3 text-4xl font-bold leading-tight md:text-5xl">From your phone to your door in three steps</h2>
+            <h2 className="font-display mt-3 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Order in 3 easy steps</h2>
           </Reveal>
 
           <div className="mt-14 grid gap-6 md:grid-cols-3">
@@ -302,7 +302,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           <Reveal className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div className="max-w-2xl">
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-[hsl(var(--coral-deep))]">Why Closebuy</p>
-              <h2 className="font-display mt-3 text-4xl font-bold leading-tight md:text-5xl">Built for shopping with confidence</h2>
+              <h2 className="font-display mt-3 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Shop with confidence</h2>
             </div>
             <Link href={SHOP_PATH} className="group inline-flex items-center gap-1.5 font-semibold">
               Explore the marketplace <ArrowUpRight className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -316,11 +316,11 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--ink)/0.95)] via-[hsl(var(--ink)/0.6)] to-[hsl(var(--ink)/0.15)] md:via-[hsl(var(--ink)/0.4)] md:to-transparent" />
               <div className="relative flex h-full min-h-[360px] flex-col justify-end p-7 text-white md:p-10">
                 <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur"><MapPin className="h-3.5 w-3.5" /> Local markets</span>
-                <h3 className="font-display mt-4 max-w-md text-3xl font-bold leading-tight md:text-4xl">Your neighbourhood shops and markets, in one place</h3>
+                <h3 className="font-display mt-4 max-w-md text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Local shops, one place</h3>
                 <p className="mt-3 max-w-md text-white/80">Shops and riders in your own area, so orders arrive faster and your money supports local businesses.</p>
                 <p className="mt-6 text-[10px] text-white/50">
                   Photo: Balogun Market, Lagos Island, by Yellowcrunchy,{' '}
-                  <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline">CC BY-SA 4.0</a>
+                  <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="whitespace-nowrap underline">CC BY-SA 4.0</a>
                 </p>
               </div>
             </Reveal>
@@ -335,7 +335,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             <Reveal delay={160} className="bg-coral-gradient relative overflow-hidden rounded-[2rem] p-7 text-white md:col-span-2">
               <div aria-hidden className="bg-dots-light absolute inset-0 opacity-60" />
               <Wallet className="relative h-9 w-9" />
-              <h3 className="font-display relative mt-5 text-2xl font-bold">Refunds straight to your wallet</h3>
+              <h3 className="font-display relative mt-5 text-2xl font-bold">Quick wallet refunds</h3>
               <p className="relative mt-2 text-sm leading-relaxed text-white/85">If an order is cancelled, the full amount, delivery included, goes back to your wallet.</p>
             </Reveal>
 
@@ -365,14 +365,14 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <Reveal className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-[hsl(var(--sun))]">Earn with Closebuy</p>
-            <h2 className="font-display mt-3 text-4xl font-bold leading-tight md:text-5xl">Grow your business, or earn on your own schedule</h2>
+            <h2 className="font-display mt-3 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Earn with Closebuy</h2>
           </Reveal>
 
           <div className="mt-14 grid gap-6 lg:grid-cols-2">
             <Reveal className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[hsl(var(--ink-soft))] p-8 md:p-10">
               <div aria-hidden className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[hsl(var(--coral)/0.3)] blur-3xl" />
               <span className="bg-coral-gradient relative flex h-14 w-14 items-center justify-center rounded-2xl"><Store className="h-7 w-7" /></span>
-              <h3 className="font-display relative mt-6 text-3xl font-bold">Sell on Closebuy</h3>
+              <h3 className="font-display relative mt-6 text-2xl font-bold sm:text-3xl">Sell on Closebuy</h3>
               <p className="relative mt-3 max-w-md leading-relaxed text-white/70">Open your online shop in minutes. List products with photos, prices, colours and sizes, and receive orders from customers nearby.</p>
               <ul className="relative mt-6 space-y-3">
                 {['Set up and run your shop from your phone', 'Your own shop link to share with customers', 'Manage branches, stock, orders and sales', 'Withdraw your earnings to your bank'].map((t) => (
@@ -387,7 +387,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             <Reveal delay={120} className="relative overflow-hidden rounded-[2rem] bg-[hsl(var(--sun))] p-8 text-[hsl(var(--ink))] md:p-10">
               <div aria-hidden className="absolute -bottom-20 -right-10 h-64 w-64 rounded-full bg-white/40 blur-3xl" />
               <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--ink))] text-white"><Bike className="h-7 w-7" /></span>
-              <h3 className="font-display relative mt-6 text-3xl font-bold">Deliver with Closebuy</h3>
+              <h3 className="font-display relative mt-6 text-2xl font-bold sm:text-3xl">Deliver with Closebuy</h3>
               <p className="relative mt-3 max-w-md leading-relaxed text-[hsl(var(--ink)/0.75)]">Have a bike, car or keke? Pick up orders from shops in your area and deliver them to customers when it suits you.</p>
               <ul className="relative mt-6 space-y-3">
                 {['Choose the deliveries and errands you want', 'Work in your own neighbourhood', 'Accept and update jobs from your phone', 'Withdraw your earnings to your bank'].map((t) => (
@@ -407,7 +407,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr]">
           <Reveal>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-[hsl(var(--coral-deep))]">FAQ</p>
-            <h2 className="font-display mt-3 text-4xl font-bold leading-tight md:text-5xl">Questions, answered</h2>
+            <h2 className="font-display mt-3 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Questions, answered</h2>
             <p className="mt-4 max-w-sm leading-relaxed text-[hsl(var(--ink)/0.65)]">Can’t find what you’re looking for? Our team is happy to help.</p>
             <div className="mt-8 grid max-w-sm gap-3">
               <a href={`mailto:${SITE.supportEmail}`} className="rounded-2xl border border-[hsl(var(--ink)/0.08)] bg-white px-5 py-4 transition-colors hover:border-[hsl(var(--coral))]">
@@ -441,7 +441,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           <div aria-hidden className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-[hsl(var(--sun)/0.5)] blur-3xl" />
           <div aria-hidden className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-[hsl(var(--ink)/0.25)] blur-3xl" />
           <div className="relative">
-            <h2 className="font-display mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] md:text-6xl">Ready to shop close to home?</h2>
+            <h2 className="font-display mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] md:text-6xl">Ready to shop?</h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/90">Sign up in minutes and support the shops in your neighbourhood.</p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
               <Link href={START_PATH} className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-[hsl(var(--ink))] shadow-xl transition-transform hover:-translate-y-0.5">

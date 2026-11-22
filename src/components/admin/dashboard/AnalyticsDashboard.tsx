@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { DashboardData } from '@/lib/services/analytics';
+import { InfoTip } from '@/components/ui/info-tip';
 
 // Validated categorical slots 1-4 (blue, orange, aqua, violet); dark values are stepped for the dark surface.
 const VIZ_CSS = `
@@ -199,8 +200,8 @@ export function AnalyticsDashboard() {
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Marketplace performance, people and platform activity across Closebuy.</p>
+          <h1 className="text-3xl font-bold">Admin Dashboard<InfoTip>Marketplace performance, people and platform activity across Closebuy.</InfoTip></h1>
+          
         </div>
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded-md border p-0.5" role="group" aria-label="Date range">
@@ -238,9 +239,9 @@ export function AnalyticsDashboard() {
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-          <TabsTrigger value="users">Users &amp; verification</TabsTrigger>
-          <TabsTrigger value="delivery">Delivery &amp; errands</TabsTrigger>
+          <TabsTrigger value="marketplace">Market</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="delivery">Delivery</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
         </TabsList>
 
@@ -362,16 +363,16 @@ export function AnalyticsDashboard() {
             { href: '/admin/markets', label: 'Markets', n: data.totals.markets, icon: MapPin },
             { href: '/admin/vendors', label: 'Vendors', n: data.totals.vendors, icon: Store },
             { href: '/admin/products', label: 'Products', n: data.totals.products, icon: ShoppingBag },
-            { href: '/admin/agents', label: 'Delivery agents', n: data.totals.agents, icon: Bike },
+            { href: '/admin/agents', label: 'Riders', n: data.totals.agents, icon: Bike },
             { href: '/admin/verifications', label: 'Verifications', n: data.totals.pendingApprovals, icon: ShieldCheck },
-            { href: '/admin/orders', label: 'Orders & refunds', n: undefined as number | undefined, icon: Receipt },
+            { href: '/admin/orders', label: 'Orders', n: undefined as number | undefined, icon: Receipt },
             { href: '/admin/users', label: 'Users', n: undefined as number | undefined, icon: Users },
           ].map((m) => (
             <Link key={m.href} href={m.href}>
               <Card className="hover:border-primary transition-colors">
                 <CardContent className="p-4 flex items-center gap-3">
                   <m.icon className="h-5 w-5 text-primary" aria-hidden />
-                  <div>{m.n !== undefined && <div className="font-semibold tabular-nums">{m.n}</div>}<div className="text-sm text-muted-foreground">{m.label}{m.href.endsWith('verifications') ? ' pending' : ''}</div></div>
+                  <div>{m.n !== undefined && <div className="font-semibold tabular-nums">{m.n}</div>}<div className="text-sm text-muted-foreground">{m.href.endsWith('verifications') ? 'To verify' : m.label}</div></div>
                 </CardContent>
               </Card>
             </Link>

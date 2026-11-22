@@ -9,12 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StockManager } from '@/components/vendor/StockManager';
 import { EditProductDialog } from '@/components/vendor/EditProductDialog';
 import type { Product } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackagePlus, PackageSearch, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function VendorProductManagementPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
@@ -108,8 +109,7 @@ export default function VendorProductManagementPage() {
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackagePlus className="h-6 w-6 text-primary" />
               Add products
-            </CardTitle>
-            <CardDescription>Pick from a ready-made list for your kind of business, or add one product at a time.</CardDescription>
+            <InfoTip>Pick from a ready-made list for your kind of business, or add one product at a time.</InfoTip></CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="quick">
@@ -136,9 +136,8 @@ export default function VendorProductManagementPage() {
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <PackageSearch className="h-6 w-6 text-primary" />
-              Your products &amp; stock
-            </CardTitle>
-            <CardDescription>Update stock with + and −, mark items sold out, or pause them without deleting. Select several to change them together.</CardDescription>
+              Products &amp; stock
+            <InfoTip>Update stock with + and −, mark items sold out, or pause them without deleting. Select several to change them together.</InfoTip></CardTitle>
           </CardHeader>
           <CardContent>
             <Suspense fallback={null}>

@@ -20,7 +20,7 @@ export function RestockAlert() {
   return (
     <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
       <div className="flex items-center justify-between gap-3">
-        <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-5 w-5" /> {items.length} product{items.length === 1 ? '' : 's'} need{items.length === 1 ? 's' : ''} restocking</p>
+        <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-5 w-5 shrink-0" /> {items.length} to restock</p>
         <Link href="/vendor/dashboard/products?filter=restock" className="flex shrink-0 items-center gap-1 text-sm font-semibold underline-offset-2 hover:underline">
           Restock <ArrowRight className="h-4 w-4" />
         </Link>

@@ -8,9 +8,10 @@ import { ReasonDialog } from '@/components/admin/ReasonDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Status = 'awaiting_approval' | 'awaiting_otp' | 'pending' | 'success' | 'failed' | 'reversed' | 'rejected';
 type Row = {
@@ -98,11 +99,8 @@ export default function AdminPayoutsPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div>
-              <CardTitle className="flex items-center gap-2 text-2xl"><Banknote className="h-6 w-6 text-primary" /> Payouts</CardTitle>
-              <CardDescription>
-                Approve each withdrawal, then type the OTP Paystack sends you to release it. Declined or failed ones go back to the person&apos;s wallet.
-                Service fee on sales: {feePct}%. To stop someone withdrawing, suspend them under Users.
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2 text-2xl"><Banknote className="h-6 w-6 text-primary" /> Payouts<InfoTip>Approve each withdrawal, then type the OTP Paystack sends you to release it. Declined or failed ones go back to the person&apos;s wallet.
+                Service fee on sales: {feePct}%. To stop someone withdrawing, suspend them under Users.</InfoTip></CardTitle>
             </div>
             <Button variant="outline" size="sm" onClick={load} disabled={loading} aria-label="Refresh">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

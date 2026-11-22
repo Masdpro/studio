@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Market } from '@/lib/types';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function AdminMarketsPage() {
   const [markets, setMarkets] = useState<Market[]>([]);
@@ -71,8 +72,8 @@ export default function AdminMarketsPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Markets</h1>
-            <p className="text-muted-foreground">The local markets shown on the home page.</p>
+            <h1 className="text-2xl font-bold">Markets<InfoTip>The local markets shown on the home page.</InfoTip></h1>
+            
           </div>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" /> New Market

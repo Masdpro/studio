@@ -146,7 +146,7 @@ export function ProviderRegistrationForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl">
           <CalendarCheck className="h-6 w-6 text-primary" />
-          Register your service business
+          List your services
         </CardTitle>
         <CardDescription>Get booked by customers near you. You set your services, prices and hours.</CardDescription>
       </CardHeader>

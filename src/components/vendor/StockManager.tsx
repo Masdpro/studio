@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AlertTriangle, Edit, EyeOff, Eye, Loader2, Minus, MoreVertical, PackageCheck, PackageX, Plus, Search, Trash2, X } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Edit, EyeOff, Eye, Loader2, Minus, MoreVertical, PackageCheck, PackageX, Plus, Search, Trash2, X } from 'lucide-react';
 import { SafeImage } from '@/components/ui/safe-image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -164,7 +164,8 @@ export function StockManager({
           className="flex w-full items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 transition-colors hover:bg-amber-100"
         >
           <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span><strong>{counts.restock} product{counts.restock === 1 ? '' : 's'} need{counts.restock === 1 ? 's' : ''} restocking.</strong> Tap to see them.</span>
+          <span className="flex-1 font-semibold">{counts.restock} to restock</span>
+          <ChevronRight className="h-4 w-4 shrink-0" />
         </button>
       )}
 
@@ -256,7 +257,7 @@ export function StockManager({
                           disabled={busy === p.id}
                         />
                         <Button variant="outline" size="icon" className="h-8 w-8" aria-label="One more" disabled={busy === p.id} onClick={() => adjust(p, 1)}><Plus className="h-3.5 w-3.5" /></Button>
-                        <span className="text-xs text-muted-foreground">in stock</span>
+                        <span className="whitespace-nowrap text-xs text-muted-foreground">in stock</span>
                         {busy === p.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                       </div>
                     ) : p.stock !== undefined ? (

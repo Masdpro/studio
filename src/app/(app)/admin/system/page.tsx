@@ -6,6 +6,7 @@ import { AdminGate } from '@/components/admin/AdminGate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Status = 'ok' | 'warn' | 'off' | 'fail';
 type Check = { id: string; label: string; status: Status; detail: string };
@@ -66,8 +67,8 @@ export default function SystemHealthPage() {
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold">
               <Activity className="h-6 w-6" /> System health
-            </h1>
-            <p className="text-muted-foreground">Whether the app and the services it relies on are working, and recent problems. Refreshes every minute.</p>
+            <InfoTip>Whether the app and the services it relies on are working, and recent problems. Refreshes every minute.</InfoTip></h1>
+            
           </div>
           <Button variant="outline" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Refresh
@@ -114,8 +115,7 @@ export default function SystemHealthPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Problems by area</CardTitle>
-                <CardDescription>Errors and warnings in the last 24 hours (and 7 days). Tap an area to see its problems.</CardDescription>
+                <CardTitle>Problems by area<InfoTip>Errors and warnings in the last 24 hours (and 7 days). Tap an area to see its problems.</InfoTip></CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {AREAS.map((a) => {

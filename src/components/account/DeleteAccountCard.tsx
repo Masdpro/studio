@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const DELETE_RULES = { confirmText: (v: string) => (v.trim().toUpperCase() === 'DELETE' ? null : 'Type DELETE to confirm.'), password: (v: string) => (v ? null : 'Enter your password.') };
 
@@ -55,8 +56,7 @@ export function DeleteAccountCard({ onDeleted }: { onDeleted: () => void }) {
   return (
     <Card className="border-destructive/30">
       <CardHeader>
-        <CardTitle className="text-base">Delete account</CardTitle>
-        <CardDescription>Permanently remove your Closebuy account and your personal details.</CardDescription>
+        <CardTitle className="text-base">Delete account<InfoTip>Permanently remove your Closebuy account and your personal details.</InfoTip></CardTitle>
       </CardHeader>
       <CardContent>
         <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={start}>

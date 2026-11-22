@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { Check, Copy, Link2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const LINK_RULES = { value: rules.optionalLinkName };
 
@@ -54,10 +55,7 @@ export function StoreLinkCard({ slug, onSaved }: { slug?: string; onSaved: () =>
         <CardTitle className="flex items-center gap-2 text-2xl">
           <Link2 className="h-6 w-6 text-primary" />
           Your store link
-        </CardTitle>
-        <CardDescription>
-          No website? Share this link instead. Customers who open it see only your products.
-        </CardDescription>
+        <InfoTip>No website? Share this link instead. Customers who open it see only your products.</InfoTip></CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {url && (

@@ -6,17 +6,17 @@ import { useTradingStatus } from '@/hooks/use-trading-status';
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Order, DeliveryAgent } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Star, Loader2 } from 'lucide-react';
+import { Package, Wallet, UserCircle, MapPin, Route as RouteIcon, DollarSign, ClipboardList, Bike, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VendorWalletWidget } from '@/components/wallet/VendorWalletWidget'; // Re-using for now, consider a dedicated AgentWalletWidget
 import { OrderListItem } from '@/components/orders/OrderListItem';
 import { DeliveryCodeDialog } from '@/components/orders/DeliveryCode';
-import { BarcodeScannerDialog, type ScanPurpose } from '@/components/delivery/BarcodeScannerDialog';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export default function DeliveryAgentDashboardPage() {
   const { user, role, roles, loading: authLoading } = useAuth();
@@ -26,9 +26,6 @@ export default function DeliveryAgentDashboardPage() {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [currentScanOrderId, setCurrentScanOrderId] = useState<string | null>(null);
-  const [currentScanPurpose, setCurrentScanPurpose] = useState<ScanPurpose | null>(null);
 
   const { toast } = useToast();
 
@@ -84,19 +81,13 @@ export default function DeliveryAgentDashboardPage() {
 
   const [codeOrderId, setCodeOrderId] = useState<string | null>(null);
 
-  const openScanner = (orderId: string, purpose: ScanPurpose) => {
-    setCurrentScanOrderId(orderId);
-    setCurrentScanPurpose(purpose);
-    setIsScannerOpen(true);
-  };
-
-  const handleScanSuccess = async (orderId: string, purpose: ScanPurpose) => {
+  const handleScanSuccess = async (orderId: string, purpose: 'pickup' | 'delivery') => {
     const newStatus = purpose === 'pickup' ? 'PickedUpByAgent' : 'Delivered';
     const ok = await updateOrder(orderId, newStatus);
     if (ok) {
       setAllOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
       if (purpose === 'pickup') {
-        toast({ title: 'Pickup Confirmed', description: `Order ${orderId} scanned at vendor.` });
+        toast({ title: 'Collected', description: 'The customer now has their delivery code. Ask for it when you hand over the order.' });
       } else {
         toast({ title: 'Delivery Confirmed', description: `Order ${orderId} delivered to customer.` });
       }
@@ -182,13 +173,16 @@ export default function DeliveryAgentDashboardPage() {
 
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-        <Bike className="h-8 w-8" />
-        Delivery Agent Dashboard ({agent.name})
-      </h1>
+    <div className="container mx-auto space-y-5 py-2 md:space-y-8 md:py-8">
+      <div>
+        <h1 className="flex items-center gap-2 text-2xl font-bold md:text-3xl">
+          <Bike className="h-6 w-6 text-primary md:h-8 md:w-8" />
+          Hi, {agent.name.split(' ')[0]}
+        <InfoTip>Your deliveries and earnings.</InfoTip></h1>
+        
+      </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid gap-5 md:grid-cols-2 md:gap-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
@@ -202,27 +196,12 @@ export default function DeliveryAgentDashboardPage() {
             <p><strong>Phone:</strong> {agent.phone}</p>
             <p><strong>Address:</strong> {agentFullAddress}</p>
             <p><strong>Vehicle:</strong> {agent.vehicleDetails || 'Not specified'}</p>
-            <Button variant="outline" size="sm" className="mt-2">Edit Profile (Soon)</Button>
           </CardContent>
         </Card>
 
         <VendorWalletWidget />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Star className="h-6 w-6 text-primary" />
-            Customer Reviews
-          </CardTitle>
-          <CardDescription>See feedback from customers on your deliveries.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Review display functionality is coming soon. Your ratings and comments will appear here.
-          </p>
-        </CardContent>
-      </Card>
 
 
       {/* Active Deliveries Section */}
@@ -231,10 +210,7 @@ export default function DeliveryAgentDashboardPage() {
           <CardTitle className="flex items-center gap-2 text-2xl">
             <RouteIcon className="h-6 w-6 text-primary" />
             My Active Deliveries
-          </CardTitle>
-          <CardDescription>
-            Manage your ongoing deliveries. Scan packages at pickup, and enter the customer's code to complete each delivery.
-          </CardDescription>
+          <InfoTip>Manage your ongoing deliveries. Confirm when you've collected each order, and enter the customer's code to complete the delivery.</InfoTip></CardTitle>
         </CardHeader>
         <CardContent>
           {myActiveDeliveries.length === 0 ? (
@@ -246,7 +222,7 @@ export default function DeliveryAgentDashboardPage() {
                   key={order.id}
                   order={order}
                   userRole="delivery_agent"
-                  onScanForPickup={() => openScanner(order.id, 'pickup')}
+                  onScanForPickup={() => handleScanSuccess(order.id, 'pickup')}
                   onScanForDelivery={() => setCodeOrderId(order.id)}
                 />
               ))}
@@ -263,10 +239,7 @@ export default function DeliveryAgentDashboardPage() {
           <CardTitle className="flex items-center gap-2 text-2xl">
             <Package className="h-6 w-6 text-primary" />
             Available Deliveries
-          </CardTitle>
-          <CardDescription>
-            Browse and accept deliveries available in your area. Only orders marked for agent pickup are shown.
-          </CardDescription>
+          <InfoTip>Browse and accept deliveries available in your area. Only orders marked for agent pickup are shown.</InfoTip></CardTitle>
         </CardHeader>
         <CardContent>
           {availableDeliveries.length === 0 ? (
@@ -317,15 +290,6 @@ export default function DeliveryAgentDashboardPage() {
             toast({ title: 'Delivery confirmed', description: 'Your delivery fee is now in your wallet.' });
             window.dispatchEvent(new Event('wallet:updated'));
           }}
-        />
-      )}
-      {currentScanOrderId && currentScanPurpose && (
-        <BarcodeScannerDialog
-          open={isScannerOpen}
-          onOpenChange={setIsScannerOpen}
-          orderId={currentScanOrderId}
-          scanPurpose={currentScanPurpose}
-          onScanSuccess={handleScanSuccess}
         />
       )}
     </div>

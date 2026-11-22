@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/form
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
+import { InfoTip } from '@/components/ui/info-tip';
 
 type Checked = 'name' | 'streetAddress' | 'city' | 'locationTag' | 'phone';
 const BRANCH_RULES = { name: rules.businessName, streetAddress: rules.streetAddress, city: rules.place, locationTag: rules.optional(rules.place), phone: rules.optional(rules.phone) };
@@ -96,10 +97,7 @@ export function BranchesManager({ vendorName, mainAddress }: { vendorName?: stri
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle className="text-2xl flex items-center gap-2"><MapPin className="h-6 w-6 text-primary" />Branches</CardTitle>
-          <CardDescription>
-            Your products are shared across all branches. Customers see every branch on your store page and choose where to collect from at checkout.
-          </CardDescription>
+          <CardTitle className="text-2xl flex items-center gap-2"><MapPin className="h-6 w-6 text-primary" />Branches<InfoTip>Your products are shared across all branches. Customers see every branch on your store page and choose where to collect from at checkout.</InfoTip></CardTitle>
         </div>
         <Button onClick={() => open('new')}><Plus className="h-4 w-4 mr-1" />Add branch</Button>
       </CardHeader>
