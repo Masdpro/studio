@@ -27,6 +27,7 @@ import { getVendorById } from '@/lib/services/vendors';
 import { createOrder } from '@/lib/services/orders';
 import type { ChatMessage, CartItem } from '@/lib/types';
 import { ChatMessageSchema } from '@/lib/types';
+import { quoteDelivery } from '@/lib/services/delivery-quote';
 
 const SupportChatInputSchema = z.array(ChatMessageSchema);
 
@@ -110,7 +111,7 @@ async function runPlaceOrder(input: {
   for (const [vendorId, vendorItems] of itemsByVendor) {
     const vendor = await getVendorById(vendorId);
     const itemsTotal = vendorItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const deliveryFee = deliveryPreference === 'delivery' ? 1500 : 0;
+    const deliveryFee = deliveryPreference === 'delivery' ? (await quoteDelivery(deliveryAddress ?? '', [{ vendorId }])).quotes[0].fee : 0;
     const orderId = await createOrder({
       customerId: session.user.id,
       vendorId,
@@ -137,7 +138,7 @@ Use the following information about the app's features to answer user questions.
 
 **For Customers:**
 - **Product Discovery:** Browse local items (Jollof, Yam, Ankara) on the homepage, filter by City (Lagos, Abuja, Enugu) or specific Market hubs.
-- **Shopping Cart:** Add items, select "Delivery" (₦1,500 standard fee) or "Self-Pickup".
+- **Shopping Cart:** Add items, select "Delivery" (from ₦1,000, rising with distance from the shop, up to ₦2,500) or "Self-Pickup".
 - **Order Tracking:** Monitor status from "Pending" to "Delivered".
 - **Errand Requests:** Create a custom shopping list for items in open markets (e.g., "Get me 5kg of rice from Mile 12"). Specify items and a delivery address.
 - **Viewing & Accepting Quotes:** For errands, agents will submit quotes in Naira (₦) including item cost and delivery fee.

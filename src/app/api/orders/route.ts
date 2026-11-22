@@ -1,5 +1,6 @@
 import { userHasRole, getBranchForUser, ownBusinessId, getDisplayName } from '@/lib/roles';
 import { NextResponse } from 'next/server';
+import { quoteDelivery } from '@/lib/services/delivery-quote';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import {
@@ -174,7 +175,10 @@ export async function POST(request: Request) {
         throw new Error('That pickup branch is not available.');
       }
       const itemsTotal = vendorItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      const deliveryFee = deliveryPreference === 'delivery' ? 1500 : 0;
+      // Priced by distance from this shop (or the chosen branch) to the customer's door, capped at ₦1,000.
+      const deliveryFee = deliveryPreference === 'delivery'
+        ? (await quoteDelivery(deliveryAddress, [{ vendorId, branchId: branch?.id }])).quotes[0].fee
+        : 0;
       return {
         vendorId,
         vendorItems,

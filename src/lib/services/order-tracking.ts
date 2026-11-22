@@ -4,7 +4,11 @@ import { getBranchById } from '@/lib/services/branches';
 import { getDeliveryAgentById } from '@/lib/services/deliveryAgents';
 import { getDisplayName } from '@/lib/roles';
 
-export type LatLng = { lat: number; lng: number };
+import { distanceKm, type LatLng } from '@/lib/delivery-fee';
+import { geocodeAddress } from '@/lib/services/geocode';
+
+export type { LatLng };
+export { distanceKm };
 
 /** Everything the live tracking screen shows, in one response. */
 export type OrderTracking = {
@@ -43,43 +47,12 @@ export function whatsappNumber(phone: string | null | undefined): string | null 
   return digits.length >= 10 ? digits : null;
 }
 
-/** Straight-line distance in km. */
-export function distanceKm(a: LatLng, b: LatLng): number {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-
 /**
  * Rough riding time: roads are ~1.4× the straight line, an average Lagos okada/bike speed of ~18 km/h,
  * plus a couple of minutes to park and hand over.
  */
 export function rideMinutes(from: LatLng, to: LatLng): number {
   return Math.max(2, Math.round((distanceKm(from, to) * 1.4 * 60) / 18 + 2));
-}
-
-// Addresses rarely change, so remember each lookup for the life of the server.
-const geocodeCache = new Map<string, LatLng | null>();
-
-async function geocode(address: string): Promise<LatLng | null> {
-  const key = address.trim().toLowerCase();
-  if (!key) return null;
-  if (geocodeCache.has(key)) return geocodeCache.get(key)!;
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ng&q=${encodeURIComponent(address)}`,
-      { headers: { 'User-Agent': 'Closebuy-Demo-App (contact: no-reply@closebuy.ng)' }, signal: AbortSignal.timeout(6000) },
-    );
-    const match = res.ok ? ((await res.json()) as { lat: string; lon: string }[])[0] : undefined;
-    const pos = match ? { lat: parseFloat(match.lat), lng: parseFloat(match.lon) } : null;
-    geocodeCache.set(key, pos);
-    return pos;
-  } catch {
-    return null; // try again next time
-  }
 }
 
 const at = (lat?: number | null, lng?: number | null): LatLng | null => (lat != null && lng != null ? { lat, lng } : null);
@@ -104,7 +77,7 @@ export async function getOrderTracking(order: Order): Promise<OrderTracking> {
       }
     : null;
 
-  const destination = order.deliveryPreference === 'delivery' ? await geocode(order.deliveryAddress) : null;
+  const destination = order.deliveryPreference === 'delivery' ? await geocodeAddress(order.deliveryAddress) : null;
 
   // ETA: from the rider's live position once they have the order; before that, shop → door.
   let etaMinutes: number | null = null;

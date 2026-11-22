@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CreditCard, MapPin, ShieldCheck, Store, Truck, Wallet as WalletIcon } from 'lucide-react-native';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Button, Card, Chip, Img, Row, Screen, Segmented, Txt } from '@/components/ui';
@@ -11,7 +11,9 @@ import { useCatalog, useGet } from '@/lib/query';
 import { useColors } from '@/lib/side';
 import { font, naira } from '@/lib/theme';
 
-const DELIVERY_FEE = 1500; // per shop, same as the server
+/** Delivery is priced by distance from each shop to the address, between these (same as the server). */
+const FEE_MIN = 1000;
+const FEE_MAX = 2500;
 
 export default function Checkout() {
   const cart = useCart();
@@ -32,7 +34,27 @@ export default function Checkout() {
 
   const vendorIds = useMemo(() => [...new Set(cart.items.map((i) => i.vendorId ?? ''))], [cart.items]);
   const shops = vendorIds.length;
-  const fee = mode === 'delivery' ? DELIVERY_FEE * shops : 0;
+  // Ask the server what delivery costs to this address (it charges exactly this amount on the order).
+  const quoteKey = mode === 'delivery' && address.trim().length >= 5 ? JSON.stringify([address.trim().toLowerCase(), vendorIds, branchFor]) : '';
+  const [quote, setQuote] = useState<{ key: string; fee: number; km: number | null; located: boolean } | null>(null);
+  useEffect(() => {
+    if (!quoteKey) return;
+    let off = false;
+    const t = setTimeout(() => {
+      api<{ located: boolean; quotes: { fee: number; km: number | null }[] }>('/api/delivery-quote', {
+        body: { address: address.trim(), shops: vendorIds.map((vendorId) => ({ vendorId, branchId: branchFor[vendorId] ?? 'main' })) },
+      })
+        .then((d) => {
+          if (off) return;
+          const kms = d.quotes.map((q) => q.km).filter((k): k is number => k != null);
+          setQuote({ key: quoteKey, fee: d.quotes.reduce((n, q) => n + q.fee, 0), km: kms.length ? Math.max(...kms) : null, located: d.located });
+        })
+        .catch(() => {});
+    }, 600);
+    return () => { off = true; clearTimeout(t); };
+  }, [quoteKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const feeReady = mode !== 'delivery' || (!!quote && quote.key === quoteKey);
+  const fee = mode === 'delivery' && feeReady && quote ? quote.fee : 0;
   const total = cart.subtotal + fee;
   const balance = wallet.data?.wallet.balance;
   const short = method === 'wallet' && balance != null && balance < total;
@@ -108,9 +130,12 @@ export default function Checkout() {
             <Txt side="shop" size={13} muted>{naira(cart.subtotal)}</Txt>
           </Row>
           <Row style={{ justifyContent: 'space-between' }}>
-            <Txt side="shop" size={13} muted>{mode === 'delivery' ? `Delivery${shops > 1 ? ` (${shops} shops)` : ''}` : 'Pickup'}</Txt>
-            <Txt side="shop" size={13} muted>{fee ? naira(fee) : 'Free'}</Txt>
+            <Txt side="shop" size={13} muted>{mode === 'delivery' ? `Delivery${shops > 1 ? ` (${shops} shops)` : ''}${feeReady && quote?.km != null ? ` · ${quote.km} km` : ''}` : 'Pickup'}</Txt>
+            <Txt side="shop" size={13} muted>{mode !== 'delivery' ? 'Free' : !quoteKey ? `${naira(FEE_MIN)}–${naira(FEE_MAX)}` : feeReady ? naira(fee) : 'Working out…'}</Txt>
           </Row>
+          {mode === 'delivery' && feeReady && quote && !quote.located ? (
+            <Txt side="shop" size={11} muted style={{ marginBottom: 4 }}>We couldn’t find that address on the map, so delivery is the {naira(FEE_MAX)} maximum. Add the area or a landmark for an exact price.</Txt>
+          ) : null}
           <Row style={{ justifyContent: 'space-between', marginBottom: 6 }}>
             <Txt side="shop" size={17} weight="800">Total</Txt>
             <Txt side="shop" size={17} weight="800">{naira(total)}</Txt>
@@ -124,7 +149,7 @@ export default function Checkout() {
               icon={method === 'online' ? <CreditCard size={18} color={c.onPrimary} /> : <ShieldCheck size={18} color={c.onPrimary} />}
               onPress={method === 'online' ? payOnline : place}
               loading={busy}
-              disabled={!cart.items.length || (mode === 'delivery' && address.trim().length < 5)}
+              disabled={!cart.items.length || (mode === 'delivery' && (address.trim().length < 5 || !feeReady))}
             />
           )}
         </View>
