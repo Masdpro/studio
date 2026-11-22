@@ -295,6 +295,8 @@ export function ShoppingCartView() {
               onCheckedChange={(checked) => {
                 const delivery = Boolean(checked);
                 setIsDeliverySelected(delivery);
+                // The box now asks for something else (an address or a name): drop the old message.
+                checks.reset();
                 const saved = getSavedAddress();
                 // The saved address is for delivery; the pickup field wants a name instead.
                 if (saved) setDeliveryAddress((cur) => (delivery ? cur || saved.address : cur === saved.address ? '' : cur));
