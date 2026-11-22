@@ -12,12 +12,14 @@ interface ImageUploadFieldProps {
   onChange: (url: string) => void;
   /** Shown when there's no image yet. */
   emptyLabel?: string;
+  /** Help text shown beside the photo; replaces the side icon buttons (tap the photo to upload). */
+  hint?: string;
   /** Where the file is posted (admins and vendors have separate, permission-checked endpoints). */
   endpoint?: string;
 }
 
 /** Pick an image from the device; it uploads straight away and `onChange` receives its URL ('' when removed). */
-export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet', endpoint = '/api/admin/upload' }: ImageUploadFieldProps) {
+export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet', endpoint = '/api/admin/upload', hint }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -65,7 +67,10 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="Preview" className="h-full w-full object-cover" />
         ) : (
-          <span className="px-2 text-center text-xs text-muted-foreground">{emptyLabel}</span>
+          <span className="flex flex-col items-center gap-1 px-2 text-center text-xs font-medium text-muted-foreground">
+            {hint && <ImagePlus className="h-5 w-5" />}
+            {emptyLabel}
+          </span>
         )}
         {isUploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/70">
@@ -84,6 +89,16 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
           if (file) handleFile(file);
         }}
       />
+      {hint ? (
+        <div className="flex min-w-0 flex-col gap-2 pt-1">
+          <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>
+          {value && (
+            <button type="button" disabled={isUploading} onClick={() => onChange('')} className="self-start text-xs font-medium text-destructive hover:underline">
+              Remove photo
+            </button>
+          )}
+        </div>
+      ) : (
       <div className="flex flex-col gap-1.5">
         <IconAction label={uploadLabel} hint="JPG, PNG, GIF or WebP, up to 5 MB" disabled={isUploading} onClick={() => inputRef.current?.click()}>
           <ImagePlus className="h-4 w-4" />
@@ -94,6 +109,7 @@ export function ImageUploadField({ value, onChange, emptyLabel = 'No image yet',
           </IconAction>
         )}
       </div>
+      )}
     </div>
   );
 }

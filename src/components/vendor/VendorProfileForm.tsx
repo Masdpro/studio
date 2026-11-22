@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,6 +26,7 @@ import { Loader2 } from 'lucide-react';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
 import { CityInput, CountrySelect, OperatingHoursInput } from '@/components/forms/PlaceFields';
 import { DEFAULT_COUNTRY } from '@/lib/places';
+import { InfoTip } from '@/components/ui/info-tip';
 
 const vendorStatusOptions = ['Open', 'Closed', 'Opening Soon', 'Temporarily Unavailable'] as const;
 
@@ -121,9 +121,8 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
             <FormItem>
               <FormLabel>Storefront photo</FormLabel>
               <FormControl>
-                <ImageUploadField value={field.value ?? ''} onChange={field.onChange} endpoint="/api/vendor/upload" emptyLabel="No photo yet" />
+                <ImageUploadField value={field.value ?? ''} onChange={field.onChange} endpoint="/api/vendor/upload" emptyLabel="Upload" hint="A photo of your shop front. Customers see it at the top of your store page." />
               </FormControl>
-              <FormDescription>A photo of your shop front. Customers see it at the top of your store page.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -211,13 +210,10 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
           name="operatingHours"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Physical Store Operating Hours</FormLabel>
+              <FormLabel className="flex items-center">Opening hours<InfoTip>Your shop's general opening hours, shown to customers. Whether you take orders on Closebuy is set by Store status below.</InfoTip></FormLabel>
               <FormControl>
                 <OperatingHoursInput value={field.value ?? ''} onChange={field.onChange} />
               </FormControl>
-               <FormDescription>
-                    Let customers know your general physical store hours. Your status below determines if you are taking orders on Closebuy.
-                  </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -227,7 +223,7 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Store Status on Closebuy</FormLabel>
+              <FormLabel className="flex items-center">Store status<InfoTip>Controls whether your store shows as open and can take orders on Closebuy.</InfoTip></FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -240,9 +236,6 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>
-                Controls if your store appears open and can take orders on Closebuy.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -252,7 +245,7 @@ export function VendorProfileForm({ vendor, onSaved }: VendorProfileFormProps) {
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Business Bio (Optional)</FormLabel>
+              <FormLabel>Business bio (optional)</FormLabel>
               <FormControl>
                 <Textarea placeholder="Tell us a little about your business" {...field} />
               </FormControl>

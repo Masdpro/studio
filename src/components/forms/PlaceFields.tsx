@@ -149,6 +149,20 @@ export function CountrySelect({ value, onValueChange, id }: { value: string; onV
 const selectClass =
   'h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 
+/** Older free-text hours like "8 AM - 9 PM, Daily": read them into the editor so it starts from what is saved. */
+function legacyRows(text: string): HoursRow[] | null {
+  const m = text.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\s*[-–]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+  if (!m) return null;
+  const t = (h: string, min: string | undefined, ap: string) => {
+    let hh = Number(h) % 12;
+    if (ap.toUpperCase() === 'PM') hh += 12;
+    return `${String(hh).padStart(2, '0')}:${min === '30' ? '30' : '00'}`;
+  };
+  const weekdays = /mon\s*[-–]\s*fri|weekdays/i.test(text);
+  const days = (weekdays ? DAYS.slice(0, 5) : [...DAYS]) as Day[];
+  return [{ days, open: t(m[1], m[2], m[3]), close: t(m[4], m[5], m[6]), allDay: false }];
+}
+
 export function OperatingHoursInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [rows, setRows] = useState<HoursRow[] | null>(() => parseHours(value));
   const lastEmitted = useRef(value);
@@ -168,38 +182,14 @@ export function OperatingHoursInput({ value, onChange }: { value: string; onChan
     onChange(text);
   }
 
-  const used = new Set((rows ?? []).flatMap((r) => r.days));
-  const legacyText = !rows && value.trim() ? value : null;
+  // No saved hours yet (or old free text): start the editor from a sensible default.
+  const shown = rows ?? legacyRows(value) ?? HOURS_PRESETS[0].rows.map((r) => ({ ...r, days: [...r.days] }));
+  const used = new Set(shown.flatMap((r) => r.days));
 
   return (
     <div className="space-y-3 rounded-md border p-3">
-      <div className="flex flex-wrap gap-2">
-        {HOURS_PRESETS.map((p) => {
-          const text = formatHours(p.rows);
-          const selected = value === text;
-          return (
-            <button
-              key={p.label}
-              type="button"
-              onClick={() => update(p.rows.map((r) => ({ ...r, days: [...r.days] })))}
-              className={cn(
-                'rounded-full border px-3 py-1 text-xs transition-colors',
-                selected ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent',
-              )}
-            >
-              {p.label}
-            </button>
-          );
-        })}
-      </div>
 
-      {legacyText && (
-        <p className="text-sm text-muted-foreground">
-          Current hours: <span className="text-foreground">{legacyText}</span>. Pick a preset above to change them.
-        </p>
-      )}
-
-      {rows?.map((row, ri) => (
+      {shown.map((row, ri) => (
         <div key={ri} className="space-y-2 rounded-md bg-muted/40 p-2">
           <div className="flex flex-wrap items-center gap-1">
             {DAYS.map((d) => {
@@ -213,7 +203,7 @@ export function OperatingHoursInput({ value, onChange }: { value: string; onChan
                   aria-pressed={on}
                   onClick={() => {
                     const days = on ? row.days.filter((x) => x !== d) : [...row.days, d];
-                    update(rows.map((r, i) => (i === ri ? { ...r, days: DAYS.filter((x) => days.includes(x)) as Day[] } : r)));
+                    update(shown.map((r, i) => (i === ri ? { ...r, days: DAYS.filter((x) => days.includes(x)) as Day[] } : r)));
                   }}
                   className={cn(
                     'h-8 w-11 rounded-md border text-xs font-medium transition-colors',
@@ -225,12 +215,12 @@ export function OperatingHoursInput({ value, onChange }: { value: string; onChan
                 </button>
               );
             })}
-            {rows.length > 1 && (
+            {shown.length > 1 && (
               <button
                 type="button"
                 aria-label="Remove these hours"
                 className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-accent"
-                onClick={() => update(rows.filter((_, i) => i !== ri))}
+                onClick={() => update(shown.filter((_, i) => i !== ri))}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -241,8 +231,7 @@ export function OperatingHoursInput({ value, onChange }: { value: string; onChan
               aria-label="Opens at"
               className={selectClass}
               value={row.open}
-              disabled={row.allDay}
-              onChange={(e) => update(rows.map((r, i) => (i === ri ? { ...r, open: e.target.value } : r)))}
+              onChange={(e) => update(shown.map((r, i) => (i === ri ? { ...r, open: e.target.value, allDay: false } : r)))}
             >
               {TIME_OPTIONS.map((t) => (
                 <option key={t} value={t}>
@@ -255,8 +244,7 @@ export function OperatingHoursInput({ value, onChange }: { value: string; onChan
               aria-label="Closes at"
               className={selectClass}
               value={row.close}
-              disabled={row.allDay}
-              onChange={(e) => update(rows.map((r, i) => (i === ri ? { ...r, close: e.target.value } : r)))}
+              onChange={(e) => update(shown.map((r, i) => (i === ri ? { ...r, close: e.target.value, allDay: false } : r)))}
             >
               {TIME_OPTIONS.map((t) => (
                 <option key={t} value={t}>
@@ -264,34 +252,20 @@ export function OperatingHoursInput({ value, onChange }: { value: string; onChan
                 </option>
               ))}
             </select>
-            <label className="ml-1 flex items-center gap-1.5 text-xs">
-              <input
-                type="checkbox"
-                checked={row.allDay}
-                onChange={(e) => update(rows.map((r, i) => (i === ri ? { ...r, allDay: e.target.checked } : r)))}
-              />
-              24 hours
-            </label>
           </div>
         </div>
       ))}
 
-      {rows && used.size < 7 && (
+      {used.size < 7 && (
         <button
           type="button"
           className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          onClick={() => update([...rows, { days: [], open: '09:00', close: '17:00', allDay: false }])}
+          onClick={() => update([...shown, { days: [], open: '09:00', close: '17:00', allDay: false }])}
         >
           <Plus className="h-3.5 w-3.5" /> Add different hours for other days
         </button>
       )}
 
-      {value && rows && (
-        <p className="text-xs text-muted-foreground">
-          Customers will see: <span className="font-medium text-foreground">{value}</span>
-          {used.size < 7 && ' (closed on the other days)'}
-        </p>
-      )}
     </div>
   );
 }

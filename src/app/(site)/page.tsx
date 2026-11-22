@@ -119,10 +119,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               </button>
             </form>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-[hsl(var(--ink)/0.55)]">Popular:</span>
-              {POPULAR.map((p) => (
-                <Link key={p} href={shopSearch(p)} className="rounded-full border border-[hsl(var(--ink)/0.1)] bg-white/60 px-3 py-1 font-medium transition-colors hover:border-[hsl(var(--coral))] hover:text-[hsl(var(--coral-deep))]">
+            <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-hidden text-sm sm:flex-wrap">
+              <span className="shrink-0 text-[hsl(var(--ink)/0.55)]">Popular:</span>
+              {POPULAR.map((p, i) => (
+                <Link key={p} href={shopSearch(p)} className={`${i >= 3 ? 'hidden sm:inline-block' : ''} shrink-0 whitespace-nowrap rounded-full border border-[hsl(var(--ink)/0.1)] bg-white/60 px-3 py-1 font-medium transition-colors hover:border-[hsl(var(--coral))] hover:text-[hsl(var(--coral-deep))]`}>
                   {p}
                 </Link>
               ))}
@@ -133,7 +133,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                 Browse the marketplace
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link href="/auth/register/vendor" className="group inline-flex items-center gap-1.5 font-semibold underline-offset-4 hover:underline">
+              <Link href="/auth/register/vendor" className="group hidden items-center gap-1.5 font-semibold sm:inline-flex underline-offset-4 hover:underline">
                 <Store className="h-5 w-5 text-[hsl(var(--coral-deep))]" /> Sell on Closebuy
               </Link>
             </div>
