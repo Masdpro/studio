@@ -25,6 +25,9 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'untracked', label: 'Not tracked' },
 ];
 
+/** A row action button: shares the row equally with its neighbours on phones. */
+const ACTION = 'h-9 min-w-0 flex-1 px-2 sm:flex-none sm:px-3';
+
 /**
  * The vendor's products with stock at a glance: quick +/- and type-in counts, one-tap sold out /
  * pause, filters for what needs attention, and actions on several products at once.
@@ -211,7 +214,7 @@ export function StockManager({
             const simple = isSimple(p);
             const draft = drafts[p.id];
             return (
-              <li key={p.id} className={cn('flex gap-3 rounded-lg border bg-card p-3 shadow-sm', selected.has(p.id) && 'border-primary ring-1 ring-primary', p.paused && 'opacity-75')}>
+              <li key={p.id} className={cn('flex flex-wrap gap-3 rounded-lg border bg-card p-3 shadow-sm', selected.has(p.id) && 'border-primary ring-1 ring-primary', p.paused && 'opacity-75')}>
                 <Checkbox className="mt-1" checked={selected.has(p.id)} onCheckedChange={() => toggle(p.id)} aria-label={`Select ${p.name}`} />
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                   <SafeImage src={p.imageUrl || 'https://placehold.co/64x64.png'} alt={p.name} fill style={{ objectFit: 'cover' }} sizes="64px" />
@@ -260,23 +263,32 @@ export function StockManager({
                         <span className="whitespace-nowrap text-xs text-muted-foreground">in stock</span>
                         {busy === p.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                       </div>
-                    ) : p.stock !== undefined ? (
-                      <Button variant="outline" size="sm" className="h-8" onClick={() => setStockFor({ product: p, startTracking: true })}>
-                        {p.stock} in stock{splitLabel(p) ? ` · ${splitLabel(p)}` : ''}
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Actions sit side by side under the product, sharing the card's width on phones. */}
+                {(!simple || (p.stock === 0 && !p.paused) || p.paused) && (
+                  <div className="flex w-full gap-2 sm:pl-[104px]">
+                    {simple ? null : p.stock !== undefined ? (
+                      <Button variant="outline" size="sm" className={ACTION} onClick={() => setStockFor({ product: p, startTracking: true })}>
+                        <span className="truncate">{p.stock} in stock{splitLabel(p) ? ` · ${splitLabel(p)}` : ''}</span>
                       </Button>
                     ) : (
-                      <Button variant="outline" size="sm" className="h-8" onClick={() => setStockFor({ product: p, startTracking: true })}>
-                        <PackageCheck className="mr-1 h-4 w-4" /> Track stock
+                      <Button variant="outline" size="sm" className={ACTION} onClick={() => setStockFor({ product: p, startTracking: true })}>
+                        <PackageCheck className="mr-1 h-4 w-4 shrink-0" /> <span className="truncate">Track stock</span>
                       </Button>
                     )}
                     {p.stock === 0 && !p.paused && (
-                      <Button size="sm" className="h-8" onClick={() => setStockFor({ product: p, startTracking: true })}>Restock</Button>
+                      <Button size="sm" className={ACTION} onClick={() => setStockFor({ product: p, startTracking: true })}>Restock</Button>
                     )}
                     {p.paused && (
-                      <Button size="sm" variant="outline" className="h-8" disabled={busy === p.id} onClick={() => act([p.id], 'resume')}><Eye className="mr-1 h-4 w-4" /> Show again</Button>
+                      <Button size="sm" variant="outline" className={ACTION} disabled={busy === p.id} onClick={() => act([p.id], 'resume')}>
+                        <Eye className="mr-1 h-4 w-4 shrink-0" /> <span className="truncate">Show again</span>
+                      </Button>
                     )}
                   </div>
-                </div>
+                )}
               </li>
             );
           })}

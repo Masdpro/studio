@@ -477,3 +477,10 @@ export const bookings = sqliteTable(
   },
   (t) => [index('bookings_provider_time_idx').on(t.providerId, t.startsAt), index('bookings_customer_idx').on(t.customerId), index('bookings_status_idx').on(t.status)],
 );
+
+/** Each signed-in customer's cart, so it is the same on the website and the phone app. */
+export const carts = sqliteTable('carts', {
+  userId: text('user_id').primaryKey(),
+  items: text('items').notNull().default('[]'), // JSON list of cart lines
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});

@@ -2,15 +2,37 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { useSession } from 'next-auth/react';
 import type { CartItem, Product } from '@/lib/types';
 import { cartLineKey } from '@/lib/cart-line';
+import { mergeCarts } from '@/lib/cart-sync';
 
 const STORAGE_KEY = 'closebuy-cart';
+/** Whose cart is in this browser: a user id, or '' for a signed-out (guest) cart. */
+const OWNER_KEY = 'closebuy-cart-owner';
+const PUSH_DELAY_MS = 500;
+
+const readOwner = () => {
+  try {
+    return window.localStorage.getItem(OWNER_KEY) ?? '';
+  } catch {
+    return '';
+  }
+};
+const writeOwner = (id: string) => {
+  try {
+    window.localStorage.setItem(OWNER_KEY, id);
+  } catch {
+    /* storage blocked */
+  }
+};
 
 type CartContextValue = {
   items: CartItem[];
@@ -50,6 +72,121 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // ignore (e.g. private browsing storage limits)
     }
   }, [items, hydrated]);
+
+  // ── Signed in: the cart lives on the account, so the website and the app show the same one. ──
+  const { data: session, status } = useSession();
+  const userId = status === 'authenticated' ? session?.user?.id ?? null : null;
+  const [synced, setSynced] = useState(false); // the account's cart has been loaded for this user
+  const fromServer = useRef(false); // the latest `items` came from the server: don't send it back
+  const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pull = useCallback(async (): Promise<CartItem[] | null> => {
+    try {
+      const res = await fetch('/api/cart', { cache: 'no-store' });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { items?: CartItem[] };
+      return Array.isArray(data.items) ? data.items : [];
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const pending = useRef<CartItem[] | null>(null); // a change not yet sent
+  const push = useCallback(async (next: CartItem[]) => {
+    pending.current = null;
+    try {
+      // keepalive lets the save finish even if the page is closing.
+      await fetch('/api/cart', { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: next }) });
+    } catch {
+      // offline: the next change or visit will save it
+    }
+  }, []);
+
+  // On sign-in (or a page load while signed in), load the account's cart. Anything picked as a
+  // guest on this device is added to it; a different person's leftover cart is dropped.
+  useEffect(() => {
+    if (!hydrated || status === 'loading') return;
+    if (!userId) {
+      setSynced(false);
+      if (readOwner()) {
+        // Signed out: don't leave the last account's cart showing.
+        writeOwner('');
+        fromServer.current = true;
+        setItems([]);
+      }
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const saved = await pull();
+      if (cancelled || saved === null) return;
+      const owner = readOwner();
+      let local: CartItem[] = [];
+      try {
+        local = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]');
+      } catch {
+        local = [];
+      }
+      const guestItems = owner === '' ? local : [];
+      const next = guestItems.length ? mergeCarts(saved, guestItems) : saved;
+      writeOwner(userId);
+      fromServer.current = !guestItems.length;
+      setItems(next);
+      setSynced(true);
+      if (guestItems.length) push(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, status, userId, pull, push]);
+
+  // Save each change to the account (a moment later, so quick +/- taps send one update).
+  useEffect(() => {
+    if (!userId || !synced) return;
+    if (fromServer.current) {
+      fromServer.current = false;
+      return;
+    }
+    pending.current = items;
+    if (pushTimer.current) clearTimeout(pushTimer.current);
+    pushTimer.current = setTimeout(() => {
+      pushTimer.current = null;
+      push(items);
+    }, PUSH_DELAY_MS);
+  }, [items, userId, synced, push]);
+
+  // Leaving or reloading the page straight after a change still saves it.
+  useEffect(() => {
+    const flush = () => {
+      if (!pending.current) return;
+      if (pushTimer.current) clearTimeout(pushTimer.current);
+      pushTimer.current = null;
+      push(pending.current);
+    };
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, [push]);
+
+  // Coming back to the tab picks up changes made on the phone (or another browser).
+  useEffect(() => {
+    if (!userId || !synced) return;
+    const refresh = async () => {
+      if (document.visibilityState !== 'visible' || pending.current) return;
+      const saved = await pull();
+      if (saved === null) return;
+      setItems((cur) => {
+        if (JSON.stringify(cur) === JSON.stringify(saved)) return cur;
+        fromServer.current = true;
+        return saved;
+      });
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [userId, synced, pull]);
 
   const addItem = (product: Product, quantity = 1, options: { color?: string; size?: string } = {}) => {
     const key = cartLineKey({ productId: product.id, ...options });
