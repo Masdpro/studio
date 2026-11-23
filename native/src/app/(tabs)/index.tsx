@@ -10,6 +10,7 @@ import { BOOKING_STATUS, when } from '@/lib/format';
 import { useCatalog, useGet } from '@/lib/query';
 import { initials, SERVICE_CATEGORIES } from '@/lib/service-categories';
 import { useSession } from '@/lib/session';
+import { useAutoLocation } from '@/lib/my-location';
 import { useSide } from '@/lib/side';
 import { glassShadow, radius, TAB_BAR_SPACE } from '@/lib/theme';
 import type { Product } from '@/lib/types';
@@ -281,5 +282,6 @@ function BookHome() {
 
 export default function Home() {
   const { side, c } = useSide();
+  useAutoLocation(); // ask once, then keep the delivery address set to where the customer is
   return <View style={{ flex: 1, backgroundColor: c.bg }}>{side === 'shop' ? <ShopHome /> : <BookHome />}</View>;
 }

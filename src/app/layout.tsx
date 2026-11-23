@@ -8,6 +8,7 @@ import { CartProvider } from '@/context/CartContext';
 import { PageViewTracker } from '@/components/analytics/PageViewTracker';
 import { ServiceWorkerRegister } from '@/components/analytics/ServiceWorkerRegister';
 import { ErrorTracking } from '@/components/monitoring/ErrorTracking';
+import { DeviceLocation } from '@/components/layout/DeviceLocation';
 
 // Removed geistSans and geistMono initializations
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             <PageViewTracker />
             <ServiceWorkerRegister />
             <ErrorTracking />
+            <DeviceLocation />
             {children}
             <Toaster />
           </CartProvider>

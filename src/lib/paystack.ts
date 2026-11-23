@@ -64,8 +64,12 @@ export async function verifyPaystackTransaction(reference: string): Promise<{
     throw new Error(data.message ?? 'Failed to verify payment.');
   }
   const paystackStatus = data.data.status as string;
-  const status = paystackStatus === 'success' ? 'success' : TERMINAL_FAILURE_STATUSES.has(paystackStatus) ? 'failed' : 'pending';
-  return { status, amountNaira: data.data.amount / 100 };
+  let status: 'success' | 'failed' | 'pending' = paystackStatus === 'success' ? 'success' : TERMINAL_FAILURE_STATUSES.has(paystackStatus) ? 'failed' : 'pending';
+  // Amounts are only ever compared in naira: a payment in any other currency (e.g. 5,000 cents
+  // of USD would otherwise read as ₦5,000 kobo-for-kobo) is never treated as paid.
+  const currency = String(data.data.currency ?? 'NGN').toUpperCase();
+  if (currency !== 'NGN') status = 'failed';
+  return { status, amountNaira: Number(data.data.amount) / 100 };
 }
 
 // ---------------------------------------------------------------------------

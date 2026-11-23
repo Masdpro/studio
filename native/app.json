@@ -58,7 +58,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "While you are delivering an order, Closebuy shares your position with that customer so they can see you coming."
+          "locationWhenInUsePermission": "Closebuy uses your location to show shops near you and fill in your delivery address. Riders share their position with the customer while delivering."
         }
       ],
       "./plugins/with-release-signing"

@@ -5,6 +5,7 @@ import { CreditCard, MapPin, ShieldCheck, Store, Truck, Wallet as WalletIcon } f
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Button, Card, Chip, Img, Row, Screen, Segmented, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
+import { getSavedAddress } from '@/lib/my-location';
 import { PaystackSheet, confirmPayment, type SheetResult } from '@/components/PaystackSheet';
 import { useCart } from '@/lib/cart';
 import { useCatalog, useGet } from '@/lib/query';
@@ -27,6 +28,24 @@ export default function Checkout() {
   const saved = useGet<{ addresses: string[] }>(['addresses'], '/api/account/addresses');
   const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
   const [address, setAddress] = useState('');
+  // Start from the customer's location (or the address they chose) unless they've typed one here.
+  useEffect(() => {
+    getSavedAddress().then((a) => { if (a) setAddress((cur) => cur || a.address); });
+  }, []);
+  // As the customer types, look up specific addresses (house number, street, area).
+  const [typed, setTyped] = useState(false);
+  const [found, setFound] = useState<{ address: string }[]>([]);
+  useEffect(() => {
+    const q = address.trim();
+    if (!typed || q.length < 3) { setFound([]); return; }
+    let off = false;
+    const t = setTimeout(() => {
+      api<{ suggestions: { address: string }[] }>(`/api/geocode/search?q=${encodeURIComponent(q)}`)
+        .then((d) => { if (!off) setFound(d.suggestions ?? []); })
+        .catch(() => {});
+    }, 350);
+    return () => { off = true; clearTimeout(t); };
+  }, [address, typed]);
   const [branchFor, setBranchFor] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -179,16 +198,26 @@ export default function Checkout() {
             <TextInput
               accessibilityLabel="Delivery address"
               value={address}
-              onChangeText={setAddress}
+              onChangeText={(v) => { setAddress(v); setTyped(true); }}
               placeholder="House number, street, area, city"
               placeholderTextColor={c.muted}
               multiline
               style={{ flex: 1, minHeight: 44, fontSize: 15, ...font('600'), color: c.text, paddingTop: 10, textAlignVertical: 'top' }}
             />
           </Card>
+          {typed && found.length ? (
+            <Card side="shop" style={{ marginTop: 8, paddingVertical: 4 }}>
+              {found.map((f) => (
+                <Pressable key={f.address} accessibilityRole="button" onPress={() => { setAddress(f.address); setTyped(false); setFound([]); }} style={{ flexDirection: 'row', gap: 8, paddingVertical: 10, alignItems: 'flex-start' }}>
+                  <MapPin size={15} color={c.primary} style={{ marginTop: 2 }} />
+                  <Txt side="shop" size={14} style={{ flex: 1 }}>{f.address}</Txt>
+                </Pressable>
+              ))}
+            </Card>
+          ) : null}
           {saved.data?.addresses.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-              {saved.data.addresses.map((a) => <Chip side="shop" key={a} label={a.length > 32 ? `${a.slice(0, 32)}…` : a} active={address === a} onPress={() => setAddress(a)} />)}
+              {saved.data.addresses.map((a) => <Chip side="shop" key={a} label={a.length > 32 ? `${a.slice(0, 32)}…` : a} active={address === a} onPress={() => { setAddress(a); setTyped(false); }} />)}
             </ScrollView>
           ) : null}
         </View>

@@ -80,6 +80,9 @@ export async function POST(request: Request) {
   if (items.length > 100) {
     return NextResponse.json({ error: 'Too many items in one order.' }, { status: 400 });
   }
+  if (deliveryPreference !== 'delivery' && deliveryPreference !== 'pickup') {
+    return NextResponse.json({ error: 'Choose delivery or pickup.' }, { status: 400 });
+  }
   if (typeof deliveryAddress !== 'string' || !deliveryAddress.trim()) {
     return NextResponse.json({ error: 'A delivery/pickup address is required.' }, { status: 400 });
   }

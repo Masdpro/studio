@@ -43,3 +43,24 @@ describe('wallet funding payment: rules added with the state machine', () => {
     expect((await getOrCreateWallet(user)).balance).toBe(1500);
   });
 });
+
+describe('online payment for an order (checkout "Pay online")', () => {
+  it('is not reported as a wallet top-up', async () => {
+    const { getNotificationsForUser } = await import('@/lib/services/notifications');
+    const { getWalletHistory } = await import('@/lib/services/wallets');
+    const user = makeUser();
+    const ref = await createPendingWalletFunding(user, 4200, true);
+    expect(ref.startsWith('order_')).toBe(true);
+    await completeWalletFunding(ref);
+    const notes = await getNotificationsForUser(user);
+    expect(notes.some((n) => /added to your wallet/i.test(n.message))).toBe(false);
+    const { entries } = getWalletHistory(user);
+    expect(entries[0].description).toMatch(/Paid online for your order/);
+  });
+  it('a top-up still says it was added to the wallet', async () => {
+    const { getNotificationsForUser } = await import('@/lib/services/notifications');
+    const user = makeUser();
+    await completeWalletFunding(await createPendingWalletFunding(user, 1000));
+    expect((await getNotificationsForUser(user)).some((n) => /added to your wallet/i.test(n.message))).toBe(true);
+  });
+});

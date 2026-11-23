@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Top up between ₦100 and ₦1,000,000.' }, { status: 400 });
   }
 
-  const reference = await createPendingWalletFunding(session.user.id, amount);
+  const reference = await createPendingWalletFunding(session.user.id, amount, purpose === 'order');
 
   try {
     const back = purpose === 'order' ? '/checkout/paid' : '/shop';

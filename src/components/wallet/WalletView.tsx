@@ -148,7 +148,7 @@ export function WalletView() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-sm font-medium">{TYPE_LABEL[e.type] ?? e.type}</p>
+                      <p className="text-sm font-medium">{e.type === 'funding' && e.id.startsWith('funding:order_') ? 'Paid online' : TYPE_LABEL[e.type] ?? e.type}</p>
                       <p className={cn('whitespace-nowrap text-sm font-semibold', e.amount >= 0 ? 'text-green-700' : 'text-foreground')}>
                         {e.amount >= 0 ? '+' : '−'}
                         {naira(Math.abs(e.amount))}

@@ -95,8 +95,16 @@ export function getWalletHistory(userId: string, opts: { before?: number; limit?
   return { entries: rows.slice(0, limit), hasMore: rows.length > limit };
 }
 
-export async function createPendingWalletFunding(userId: string, amount: number): Promise<string> {
-  const reference = `wallet_${randomUUID()}`;
+/** Online payments made at checkout for an order carry this reference prefix (top-ups use `wallet_`). */
+export const ORDER_PAYMENT_PREFIX = 'order_';
+export const isOrderPayment = (reference: string) => reference.startsWith(ORDER_PAYMENT_PREFIX);
+
+/**
+ * Starts a Paystack payment. `forOrder`: checkout's "Pay online". That money passes through the wallet
+ * only so it's never lost if the order can't be placed; it is paid straight out again for the order.
+ */
+export async function createPendingWalletFunding(userId: string, amount: number, forOrder = false): Promise<string> {
+  const reference = `${forOrder ? ORDER_PAYMENT_PREFIX : 'wallet_'}${randomUUID()}`;
   db.insert(paymentTransactionsTable)
     .values({ id: reference, userId, purpose: 'wallet_funding', amount, status: 'pending', createdAt: new Date() })
     .run();
@@ -132,7 +140,7 @@ export async function completeWalletFunding(reference: string): Promise<{ alread
       userId: transaction.userId,
       type: 'funding',
       amount: transaction.amount,
-      description: 'Wallet top-up (Paystack)',
+      description: isOrderPayment(reference) ? 'Paid online for your order (Paystack)' : 'Wallet top-up (Paystack)',
     });
     return applied?.balance ?? null;
   });
@@ -140,6 +148,9 @@ export async function completeWalletFunding(reference: string): Promise<{ alread
     const wallet = await getOrCreateWallet(transaction.userId);
     return { alreadyProcessed: true, newBalance: wallet.balance };
   }
+
+  // An online payment for an order isn't a top-up: the order's own "order placed" message covers it.
+  if (isOrderPayment(reference)) return { alreadyProcessed: false, newBalance };
 
   await createNotification({
     userId: transaction.userId,

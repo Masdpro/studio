@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Clock, LocateFixed, MapPin, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SavedAddress } from '@/lib/delivery-address';
+import { useAddressSearch } from '@/hooks/use-address-search';
 
 /**
  * One field that is both the location dropdown and an address input: pick an area, use
@@ -46,6 +47,7 @@ export function LocationCombobox({
   }, []);
 
   const label = activeAddress ?? (selected);
+  const search = useAddressSearch(typing ? text : '');
   const q = text.trim().toLowerCase();
   const match = (s: string) => !q || s.toLowerCase().includes(q);
   const shownHistory = useMemo(() => history.filter((h) => match(h.address)), [history, q]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -74,7 +76,7 @@ export function LocationCombobox({
           role="combobox"
           aria-expanded={open}
           aria-label="City, area or address"
-          className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-foreground"
+          className="min-w-0 flex-1 bg-transparent px-2 text-base outline-none placeholder:text-foreground md:text-sm"
           value={typing ? text : ''}
           placeholder={resolving ? 'Working…' : label}
           onFocus={() => setOpen(true)}
@@ -92,9 +94,19 @@ export function LocationCombobox({
 
       {open && (
         <div className="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-md border bg-popover py-1 text-popover-foreground shadow-md">
+          {q && (search.loading || search.results.length > 0) && (
+            <>
+              <p className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground">{search.loading && !search.results.length ? 'Searching addresses…' : 'Addresses'}</p>
+              {search.results.map((r) => (
+                <button key={r.address} type="button" className={row} onClick={() => pickAddress({ address: r.address, latitude: r.latitude, longitude: r.longitude })}>
+                  <MapPin className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0">{r.address}</span>
+                </button>
+              ))}
+            </>
+          )}
           {q && !exact && (
             <button type="button" className={row} onClick={submit}>
-              <MapPin className="h-4 w-4 text-primary" /><span>Use address &ldquo;{text.trim()}&rdquo;</span>
+              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" /><span className="min-w-0">Use &ldquo;{text.trim()}&rdquo; as typed</span>
             </button>
           )}
           {match('All Locations') && <button type="button" className={cn(row, selected === allValue && 'font-semibold')} onClick={() => pickArea(allValue)}>All Locations</button>}

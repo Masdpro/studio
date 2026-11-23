@@ -17,7 +17,12 @@ import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { getBranchChoice } from '@/lib/branch-choice';
-import { getSavedAddress, getAddressHistory, rememberAddress } from '@/lib/delivery-address';
+import { getSavedAddress, getDeviceAddress, getAddressHistory, rememberAddress } from '@/lib/delivery-address';
+import { useAddressSearch } from '@/hooks/use-address-search';
+
+/** Where checkout starts: an address chosen on the home page, else the device's location. */
+const usable = (a: string | undefined) => (a && !a.startsWith('Current location (') ? a : '');
+const startingAddress = () => usable(getSavedAddress()?.address) || usable(getDeviceAddress()?.address);
 import { FieldError } from '@/components/forms/FieldError';
 import { useFieldChecks } from '@/hooks/use-field-checks';
 import { rules } from '@/lib/field-rules';
@@ -54,10 +59,18 @@ export function ShoppingCartView() {
   const [branchInfo, setBranchInfo] = useState<Record<string, BranchInfo>>({});
   const [branchChoice, setBranchChoice] = useState<Record<string, string>>({});
   useEffect(() => { setBranchChoice(getBranchChoice()); }, []);
-  // An address entered on the home page is used for delivery unless the customer has already typed one.
+  // The home page's location (the customer's device location, or one they chose) is used for delivery
+  // unless they've already typed an address here. Bare coordinates aren't a usable street address.
+  // An address the customer picked on the home page wins; otherwise where their device says they are.
   useEffect(() => {
-    const saved = getSavedAddress();
-    if (saved) setDeliveryAddress((cur) => cur || saved.address);
+    const fill = () => {
+      const a = startingAddress();
+      if (a) setDeliveryAddress((cur) => cur || a);
+    };
+    fill();
+    // The location can arrive a moment after the page opens (the browser asks first).
+    window.addEventListener('device-address', fill);
+    return () => window.removeEventListener('device-address', fill);
   }, []);
   // Addresses used on earlier orders (plus ones remembered in this browser) to pick from at checkout.
   const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
@@ -82,6 +95,9 @@ export function ShoppingCartView() {
     return () => { off = true; };
   }, [user]);
   const [addrOpen, setAddrOpen] = useState(false);
+  // Look up specific addresses (house number, street, area) only for what the customer types.
+  const [addrTyped, setAddrTyped] = useState(false);
+  const addressSearch = useAddressSearch(isDeliverySelected && addrTyped ? deliveryAddress : '', getDeviceAddress());
   // Typing narrows the list; an empty box or an exact pick shows every recent address.
   const suggestions = recentAddresses.filter((a) => {
     const q = deliveryAddress.trim().toLowerCase();
@@ -330,7 +346,7 @@ export function ShoppingCartView() {
                 // typed for the old choice and bring back what belongs to the new one.
                 otherEntry.current[isDeliverySelected ? 'delivery' : 'pickup'] = deliveryAddress;
                 const kept = otherEntry.current[delivery ? 'delivery' : 'pickup'];
-                setDeliveryAddress(kept || (delivery ? getSavedAddress()?.address ?? '' : ''));
+                setDeliveryAddress(kept || (delivery ? startingAddress() : ''));
                 setIsDeliverySelected(delivery);
                 // The box now asks for something else: drop the old message.
                 checks.reset();
@@ -344,7 +360,7 @@ export function ShoppingCartView() {
             <div className="relative">
               <Input
                 id="delivery-address"
-                {...checks.field('deliveryAddress', deliveryAddress, (v: string) => setDeliveryAddress(v))}
+                {...checks.field('deliveryAddress', deliveryAddress, (v: string) => { setDeliveryAddress(v); setAddrTyped(true); })}
                 onFocus={() => setAddrOpen(true)}
                 onBlur={() => {
                   setAddrOpen(false);
@@ -355,9 +371,26 @@ export function ShoppingCartView() {
                 className="mt-1"
               />
               <FieldError message={checks.error('deliveryAddress')} />
-              {isDeliverySelected && addrOpen && suggestions.length > 0 && (
-                <ul role="listbox" className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
-                  <li className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Recent addresses</li>
+              {isDeliverySelected && addrOpen && (suggestions.length > 0 || addressSearch.results.length > 0 || addressSearch.loading) && (
+                <ul role="listbox" className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                  {addrTyped && (addressSearch.loading || addressSearch.results.length > 0) && (
+                    <>
+                      <li className="px-2 py-1 text-[11px] font-medium text-muted-foreground">{addressSearch.loading && !addressSearch.results.length ? 'Searching addresses…' : 'Addresses'}</li>
+                      {addressSearch.results.map((r) => (
+                        <li key={r.address} role="option" aria-selected={false}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); setDeliveryAddress(r.address); checks.changed('deliveryAddress', r.address); setAddrTyped(false); setAddrOpen(false); }}
+                            className="flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground"
+                          >
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                            <span className="break-words">{r.address}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </>
+                  )}
+                  {suggestions.length > 0 && <li className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Recent addresses</li>}
                   {suggestions.map((a) => (
                     <li key={a} role="option" aria-selected={deliveryAddress.trim().toLowerCase() === a.toLowerCase()}>
                       <button
