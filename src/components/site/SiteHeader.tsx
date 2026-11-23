@@ -10,7 +10,6 @@ import { START_PATH } from '@/lib/site';
 
 const NAV = [
   { href: '/#how-it-works', label: 'How it works' },
-  { href: '/services', label: 'Book a service' },
   { href: '/#why', label: 'Why Closebuy' },
   { href: '/#earn', label: 'Earn with us' },
   { href: '/#faq', label: 'FAQ' },
