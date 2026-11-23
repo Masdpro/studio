@@ -24,7 +24,7 @@ import { rules } from '@/lib/field-rules';
 import { useWalletBalance } from '@/hooks/use-wallet-balance';
 import { savePendingOrder, clearPendingOrder, ONLINE_PAYMENT_MAX } from '@/lib/pending-order';
 import { payInPopup } from '@/lib/paystack-popup';
-import { DELIVERY_FEE_MAX, DELIVERY_FEE_MIN } from '@/lib/delivery-fee';
+import { DELIVERY_FEE_MAX, DELIVERY_FEE_MIN, DISTANCE_PRICING, FLAT_DELIVERY_FEE } from '@/lib/delivery-fee';
 
 
 type BranchInfo = { name: string; main: string; branches: { id: string; name: string; address: string; status?: string }[] };
@@ -122,7 +122,7 @@ export function ShoppingCartView() {
   // Delivery is priced by distance from each shop to the address (each shop is its own order), capped at
   // ₦2,500 a shop. The server works it out the same way, so what's shown is exactly what's charged.
   const shopCount = new Set(cartItems.map((i) => i.vendorId ?? 'unknown-vendor')).size;
-  const quoteKey = isDeliverySelected && deliveryAddress.trim().length >= 5
+  const quoteKey = DISTANCE_PRICING && isDeliverySelected && deliveryAddress.trim().length >= 5
     ? JSON.stringify([deliveryAddress.trim().toLowerCase(), vendorKey, effectiveChoice])
     : '';
   const [quote, setQuote] = useState<{ key: string; fee: number; km: number | null; located: boolean } | null>(null);
@@ -148,8 +148,8 @@ export function ShoppingCartView() {
     }, 600);
     return () => { off = true; clearTimeout(timer); };
   }, [quoteKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const feeReady = !isDeliverySelected || (!!quote && quote.key === quoteKey);
-  const deliveryFee = isDeliverySelected ? (feeReady && quote ? quote.fee : 0) : 0;
+  const feeReady = !isDeliverySelected || !DISTANCE_PRICING || (!!quote && quote.key === quoteKey);
+  const deliveryFee = !isDeliverySelected ? 0 : !DISTANCE_PRICING ? FLAT_DELIVERY_FEE * shopCount : feeReady && quote ? quote.fee : 0;
   const total = subtotal + deliveryFee;
   // A changed cart or delivery choice means a different total — drop the stale warning.
   useEffect(() => { setFundsShort(null); }, [total]);
@@ -386,7 +386,7 @@ export function ShoppingCartView() {
                 {feeReady && quote?.km != null ? ` · ${quote.km} km` : ''}
               </span>
               <span>
-                {!quoteKey ? `₦${DELIVERY_FEE_MIN.toLocaleString()}–₦${DELIVERY_FEE_MAX.toLocaleString()}` : !feeReady || quoting ? <Loader2 className="inline h-3 w-3 animate-spin" /> : `₦${deliveryFee.toLocaleString()}`}
+                {!DISTANCE_PRICING ? `₦${deliveryFee.toLocaleString()}` : !quoteKey ? `₦${DELIVERY_FEE_MIN.toLocaleString()}–₦${DELIVERY_FEE_MAX.toLocaleString()}` : !feeReady || quoting ? <Loader2 className="inline h-3 w-3 animate-spin" /> : `₦${deliveryFee.toLocaleString()}`}
               </span>
             </div>
           )}
@@ -396,7 +396,7 @@ export function ShoppingCartView() {
           <Separator />
           <div className="flex justify-between font-bold text-base mt-0.5">
             <span>Total</span>
-            <span>₦{total.toLocaleString()}{isDeliverySelected && (!quoteKey || !feeReady) && <span className="text-xs font-normal text-muted-foreground"> + delivery</span>}</span>
+            <span>₦{total.toLocaleString()}{isDeliverySelected && DISTANCE_PRICING && (!quoteKey || !feeReady) && <span className="text-xs font-normal text-muted-foreground"> + delivery</span>}</span>
           </div>
           <fieldset className="mt-1.5">
             <legend className="mb-1 text-xs text-muted-foreground">How would you like to pay?</legend>
@@ -459,7 +459,7 @@ export function ShoppingCartView() {
             disabled={isPlacingOrder || ownItems.length > 0 || (isDeliverySelected && !!quoteKey && (!feeReady || quoting))}
           >
             {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isDeliverySelected && (!quoteKey || !feeReady)
+            {isDeliverySelected && DISTANCE_PRICING && (!quoteKey || !feeReady)
               ? (quoteKey ? 'Working out delivery…' : 'Enter your address to continue')
               : payMethod === 'online' ? `Pay ₦${total.toLocaleString()} online` : `Pay ₦${total.toLocaleString()} from wallet`}
           </Button>

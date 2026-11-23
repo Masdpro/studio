@@ -33,55 +33,52 @@ export function CartItem({ item, onQuantityChange, onRemove }: CartItemProps) {
     }
   };
 
+  // One compact row, like a shopping app: photo on the left, details and controls beside it.
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border-b">
-      <div className="relative w-20 h-20 rounded-md overflow-hidden sm:shrink-0">
+    <div className="flex gap-3 border-b px-3 py-3 sm:gap-4 sm:p-4">
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted sm:h-24 sm:w-24">
         <SafeImage
-          src={item.imageUrl || "https://placehold.co/80x80.png"}
-          alt={item.name} 
+          src={item.imageUrl || "https://placehold.co/96x96.png"}
+          alt={item.name}
           fill={true}
           style={{ objectFit: 'cover' }}
           data-ai-hint={item.aiHint || "product item"}
-          sizes="80px"
+          sizes="96px"
         />
       </div>
 
-      <div className="flex-grow flex flex-col gap-1 sm:gap-2">
-        <h3 className="font-semibold text-base break-words">{item.name}</h3>
-        {(item.color || item.size) && (
-          <p className="text-xs text-muted-foreground">{[item.color && `Color: ${item.color}`, item.size && `Size: ${item.size}`].filter(Boolean).join(' · ')}</p>
-        )}
-
-        <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto_auto] sm:items-center sm:gap-x-4 gap-y-2">
-          <div className="sm:col-start-1 text-left">
-            <p className="text-primary font-medium text-md">₦{item.price.toLocaleString()}</p>
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{item.name}</h3>
+            {(item.color || item.size) && (
+              <p className="truncate text-xs text-muted-foreground">{[item.color, item.size].filter(Boolean).join(' · ')}</p>
+            )}
+            <p className="text-xs text-muted-foreground">₦{item.price.toLocaleString()} each</p>
           </div>
+          <Button variant="ghost" size="icon" aria-label={`Remove ${item.name}`} className="-mr-1 -mt-1 h-8 w-8 shrink-0 text-destructive hover:text-destructive/80" onClick={() => onRemove(lineKey)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
 
-          <div className="flex items-center gap-2 sm:col-start-2 sm:justify-self-center justify-start w-full sm:w-auto">
-            <Button variant="ghost" size="icon" onClick={decrementQuantity} disabled={item.quantity <= 0} className="h-8 w-8">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center rounded-full border bg-background">
+            <Button variant="ghost" size="icon" aria-label="One less" onClick={decrementQuantity} disabled={item.quantity <= 0} className="h-8 w-8 rounded-full">
               <MinusCircle className="h-4 w-4" />
             </Button>
             <Input
               type="number"
+              aria-label="Quantity"
               value={item.quantity}
               onChange={handleQuantityChange}
-              className="w-12 h-8 text-center text-sm"
+              className="h-8 w-9 border-0 bg-transparent p-0 text-center text-sm shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               min="0"
             />
-            <Button variant="ghost" size="icon" onClick={incrementQuantity} className="h-8 w-8">
+            <Button variant="ghost" size="icon" aria-label="One more" onClick={incrementQuantity} className="h-8 w-8 rounded-full">
               <PlusCircle className="h-4 w-4" />
             </Button>
           </div>
-
-          <div className="sm:col-start-3 sm:justify-self-end text-left sm:text-right w-full sm:w-auto">
-            <p className="font-semibold text-md">₦{(item.price * item.quantity).toLocaleString()}</p>
-          </div>
-          
-          <div className="sm:col-start-4 sm:justify-self-end flex justify-end sm:justify-self-end w-full sm:w-auto">
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-8 w-8" onClick={() => onRemove(lineKey)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <p className="whitespace-nowrap text-base font-bold text-primary">₦{(item.price * item.quantity).toLocaleString()}</p>
         </div>
       </div>
     </div>

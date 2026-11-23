@@ -3,6 +3,13 @@
  * further kilometre, rounded up to the nearest ₦50, never more than ₦2,500.
  * Shared by the server (what is charged) and the cart (what is shown), so they always agree.
  */
+/**
+ * For now every delivery is a flat ₦1,000 per shop (distance pricing confused shoppers).
+ * Set to true to switch the distance-based pricing below back on.
+ */
+export const DISTANCE_PRICING = false;
+export const FLAT_DELIVERY_FEE = 1000;
+
 export const DELIVERY_FEE_MIN = 1000;
 export const DELIVERY_FEE_MAX = 2500;
 const INCLUDED_KM = 2;

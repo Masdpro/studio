@@ -13,6 +13,9 @@ import { font, naira } from '@/lib/theme';
 
 /** Delivery is priced by distance from each shop to the address, between these (same as the server). */
 const FEE_MIN = 1000;
+/** For now delivery is a flat ₦1,000 per shop (same switch as the server's DISTANCE_PRICING). */
+const DISTANCE_PRICING = false;
+const FLAT_FEE = 1000;
 const FEE_MAX = 2500;
 
 export default function Checkout() {
@@ -35,7 +38,7 @@ export default function Checkout() {
   const vendorIds = useMemo(() => [...new Set(cart.items.map((i) => i.vendorId ?? ''))], [cart.items]);
   const shops = vendorIds.length;
   // Ask the server what delivery costs to this address (it charges exactly this amount on the order).
-  const quoteKey = mode === 'delivery' && address.trim().length >= 5 ? JSON.stringify([address.trim().toLowerCase(), vendorIds, branchFor]) : '';
+  const quoteKey = DISTANCE_PRICING && mode === 'delivery' && address.trim().length >= 5 ? JSON.stringify([address.trim().toLowerCase(), vendorIds, branchFor]) : '';
   const [quote, setQuote] = useState<{ key: string; fee: number; km: number | null; located: boolean } | null>(null);
   useEffect(() => {
     if (!quoteKey) return;
@@ -53,8 +56,8 @@ export default function Checkout() {
     }, 600);
     return () => { off = true; clearTimeout(t); };
   }, [quoteKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const feeReady = mode !== 'delivery' || (!!quote && quote.key === quoteKey);
-  const fee = mode === 'delivery' && feeReady && quote ? quote.fee : 0;
+  const feeReady = mode !== 'delivery' || !DISTANCE_PRICING || (!!quote && quote.key === quoteKey);
+  const fee = mode !== 'delivery' ? 0 : !DISTANCE_PRICING ? FLAT_FEE * shops : feeReady && quote ? quote.fee : 0;
   const total = cart.subtotal + fee;
   const balance = wallet.data?.wallet.balance;
   const short = method === 'wallet' && balance != null && balance < total;
@@ -131,7 +134,7 @@ export default function Checkout() {
           </Row>
           <Row style={{ justifyContent: 'space-between' }}>
             <Txt side="shop" size={13} muted>{mode === 'delivery' ? `Delivery${shops > 1 ? ` (${shops} shops)` : ''}${feeReady && quote?.km != null ? ` · ${quote.km} km` : ''}` : 'Pickup'}</Txt>
-            <Txt side="shop" size={13} muted>{mode !== 'delivery' ? 'Free' : !quoteKey ? `${naira(FEE_MIN)}–${naira(FEE_MAX)}` : feeReady ? naira(fee) : 'Working out…'}</Txt>
+            <Txt side="shop" size={13} muted>{mode !== 'delivery' ? 'Free' : !DISTANCE_PRICING ? naira(fee) : !quoteKey ? `${naira(FEE_MIN)}–${naira(FEE_MAX)}` : feeReady ? naira(fee) : 'Working out…'}</Txt>
           </Row>
           {mode === 'delivery' && feeReady && quote && !quote.located ? (
             <Txt side="shop" size={11} muted style={{ marginBottom: 4 }}>We couldn’t find that address on the map, so delivery is the {naira(FEE_MAX)} maximum. Add the area or a landmark for an exact price.</Txt>

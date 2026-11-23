@@ -23,3 +23,11 @@ describe('delivery fee by distance', () => {
     expect(roadKm(a, b)).toBeGreaterThan(1.5);
   });
 });
+
+describe('delivery quote (flat for now)', () => {
+  it('charges ₦1,000 per shop, whatever the address', async () => {
+    const { quoteDelivery } = await import('@/lib/services/delivery-quote');
+    const q = await quoteDelivery('Anywhere, Lagos', [{ vendorId: 'a' }, { vendorId: 'b' }]);
+    expect(q.quotes.map((x) => x.fee)).toEqual([1000, 1000]);
+  });
+});

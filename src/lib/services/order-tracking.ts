@@ -6,6 +6,7 @@ import { getDisplayName } from '@/lib/roles';
 
 import { distanceKm, type LatLng } from '@/lib/delivery-fee';
 import { geocodeAddress } from '@/lib/services/geocode';
+import { shopPosition } from '@/lib/services/delivery-quote';
 
 export type { LatLng };
 export { distanceKm };
@@ -63,7 +64,7 @@ export async function getOrderTracking(order: Order): Promise<OrderTracking> {
 
   const vendor = await getVendorById(order.vendorId);
   const branch = order.branchId ? await getBranchById(order.branchId) : undefined;
-  const shopPos = at(branch?.latitude, branch?.longitude) ?? at(vendor?.latitude, vendor?.longitude);
+  const shopPos = at(branch?.latitude, branch?.longitude) ?? at(vendor?.latitude, vendor?.longitude) ?? (await shopPosition(order.vendorId, order.branchId ?? undefined));
   const shop = vendor ? { name: vendor.businessName, position: shopPos } : null;
 
   const agent = order.deliveryAgentId ? await getDeliveryAgentById(order.deliveryAgentId) : undefined;

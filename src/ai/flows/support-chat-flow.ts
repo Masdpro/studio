@@ -138,7 +138,7 @@ Use the following information about the app's features to answer user questions.
 
 **For Customers:**
 - **Product Discovery:** Browse local items (Jollof, Yam, Ankara) on the homepage, filter by City (Lagos, Abuja, Enugu) or specific Market hubs.
-- **Shopping Cart:** Add items, select "Delivery" (from ₦1,000, rising with distance from the shop, up to ₦2,500) or "Self-Pickup".
+- **Shopping Cart:** Add items, select "Delivery" (₦1,000 per shop) or "Self-Pickup".
 - **Order Tracking:** Monitor status from "Pending" to "Delivered".
 - **Errand Requests:** Create a custom shopping list for items in open markets (e.g., "Get me 5kg of rice from Mile 12"). Specify items and a delivery address.
 - **Viewing & Accepting Quotes:** For errands, agents will submit quotes in Naira (₦) including item cost and delivery fee.
