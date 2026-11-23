@@ -3,6 +3,7 @@ import { notifications as notificationsTable } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { AppNotification } from '@/lib/types';
+import { emailNotification } from '@/lib/services/notification-email';
 
 export async function createNotification(data: {
   userId: string;
@@ -23,6 +24,8 @@ export async function createNotification(data: {
       read: false,
     })
     .run();
+  // Also by email (in the background) until push notifications are live.
+  void emailNotification(data.userId, data.message, data.link);
 }
 
 export async function getNotificationsForUser(userId: string): Promise<AppNotification[]> {

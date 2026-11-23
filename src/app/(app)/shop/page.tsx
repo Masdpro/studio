@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import HomePageClient from '../HomePageClient';
 import { getProducts } from '@/lib/services/products';
+import { mixByVendor } from '@/lib/product-mix';
 import { getVendors } from '@/lib/services/vendors';
 import { getMarkets } from '@/lib/services/markets';
 import { getAllBranches } from '@/lib/services/branches';
@@ -21,7 +22,7 @@ export default async function HomePage() {
 
   return (
     <Suspense>
-      <HomePageClient initialProducts={products} initialVendors={vendors} initialMarkets={markets} initialBranches={branches} />
+      <HomePageClient initialProducts={mixByVendor(products)} initialVendors={vendors} initialMarkets={markets} initialBranches={branches} />
     </Suspense>
   );
 }

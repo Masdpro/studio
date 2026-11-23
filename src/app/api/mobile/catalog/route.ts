@@ -1,3 +1,4 @@
+import { mixByVendor } from '@/lib/product-mix';
 import { NextResponse } from 'next/server';
 import { getProducts, getProductsByVendor, suspendedVendorIds } from '@/lib/services/products';
 import { getVendorById, getVendors } from '@/lib/services/vendors';
@@ -37,7 +38,8 @@ export async function GET(request: Request) {
     const registered = registeredVendorIds();
     // Contact emails aren't needed to browse; keep them off the wire.
     Object.assign(body, {
-      products,
+      // Shops take turns, so every vendor's products get seen (rotates hourly).
+      products: mixByVendor(products),
       vendors: vendors.map(({ contactEmail: _e, ...v }) => ({ ...v, registered: registered.has(v.id) })),
       markets,
       branches: branches.map(({ accountEmail: _a, ...b }) => b),
