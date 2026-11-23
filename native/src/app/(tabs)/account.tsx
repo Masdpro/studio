@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Bell, Bike, Briefcase, ChevronRight, FileText, LogOut, Package, PlusCircle, Shield, ShieldCheck, Store, Trash2, UserCog } from 'lucide-react-native';
+import { Bell, Bike, Briefcase, ChevronRight, Compass, FileText, LogOut, Package, PlusCircle, Shield, ShieldCheck, Store, Trash2, UserCog } from 'lucide-react-native';
 import { Alert, Platform, View } from 'react-native';
+import { replayTour } from '@/components/QuickTour';
 import { SignInPrompt } from '@/components/SignInPrompt';
 import { Card, Divider, H1, ListItem, Screen, Txt } from '@/components/ui';
 import { API_URL } from '@/lib/api';
@@ -44,6 +45,7 @@ export default function Account() {
       <Card style={{ marginTop: 14 }}>
         <ListItem icon={icon(Bell)} title="Notifications" onPress={() => router.push('/notifications')} right={chev} />
         <ListItem icon={icon(Package)} title="Errands" detail="Ask a rider to buy anything for you" onPress={() => router.push('/errands')} right={chev} />
+        <ListItem icon={icon(Compass)} title="App tour" detail="A quick look at how shopping and booking work" onPress={() => { router.navigate('/'); replayTour(); }} right={chev} />
         <ListItem icon={icon(UserCog)} title="Profile and password" onPress={() => router.push('/profile')} right={chev} />
         {!has('admin') ? <ListItem icon={icon(PlusCircle)} title="Add a business" detail="Sell, offer a service or deliver" onPress={() => router.push('/register')} right={chev} /> : null}
       </Card>

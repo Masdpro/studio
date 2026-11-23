@@ -1,5 +1,6 @@
 import { router, Stack } from 'expo-router';
 import { CalendarCheck, ChevronRight, Clock, Scissors, Store, Wallet } from 'lucide-react-native';
+import { QuickTour, TourButton, useQuickTour } from '@/components/QuickTour';
 import { ApprovalBanner, Stat } from '@/components/Stat';
 import { Card, ErrorNote, ListItem, Loading, Row, Screen, Txt } from '@/components/ui';
 import { useRoleApproval } from '@/lib/business';
@@ -12,6 +13,7 @@ type Summary = { provider: { businessName: string; slug: string }; services: num
 
 export default function ProHome() {
   const c = useColors('book');
+  const tour = useQuickTour('provider');
   const approval = useRoleApproval('provider');
   const q = useGet<{ summary: Summary }>(['pro-summary'], '/api/provider/summary', { refetchInterval: 30000 });
   const s = q.data?.summary;
@@ -19,7 +21,8 @@ export default function ProHome() {
   const icon = (I: typeof Clock) => <I color={c.text} size={20} />;
   return (
     <Screen side="book" edges={[]} refreshing={q.isRefetching} onRefresh={q.refetch}>
-      <Stack.Screen options={{ title: s?.provider.businessName ?? 'My business', headerStyle: { backgroundColor: c.bg }, headerTintColor: c.text }} />
+      <Stack.Screen options={{ title: s?.provider.businessName ?? 'My business', headerStyle: { backgroundColor: c.bg }, headerTintColor: c.text, headerRight: () => <TourButton kind="provider" /> }} />
+      <QuickTour kind="provider" visible={tour.open} onClose={tour.close} />
       {q.isLoading ? <Loading side="book" /> : null}
       <ErrorNote error={q.error} onRetry={q.refetch} />
       <ApprovalBanner side="book" status={approval?.approvalStatus} note={approval?.approvalNote} onPress={() => router.push('/verification')} />

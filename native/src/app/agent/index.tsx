@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import { MapPin, Navigation } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { QuickTour, TourButton, useQuickTour } from '@/components/QuickTour';
 import { ApprovalBanner } from '@/components/Stat';
 import { Button, Card, Chip, Empty, ErrorNote, Field, Loading, Pill, Row, Screen, Sheet, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -23,6 +24,7 @@ const CODE_RULES = { code: rules.digits(4, 'the delivery code') };
 const maps = (address: string) => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(address)}`);
 
 export default function AgentHome() {
+  const tour = useQuickTour('agent');
   const c = useColors('shop');
   const { user } = useSession();
   const approval = useRoleApproval('delivery_agent');
@@ -57,7 +59,8 @@ export default function AgentHome() {
 
   return (
     <Screen side="shop" edges={[]} refreshing={q.isRefetching} onRefresh={q.refetch}>
-      <Stack.Screen options={{ title: 'Deliveries' }} />
+      <Stack.Screen options={{ title: 'Deliveries', headerRight: () => <TourButton kind="agent" /> }} />
+      <QuickTour kind="agent" visible={tour.open} onClose={tour.close} />
       <ApprovalBanner side="shop" status={approval?.approvalStatus} note={approval?.approvalNote} onPress={() => router.push('/verification')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 12 }}>
         <Chip side="shop" label={`My jobs${mine.length ? ` (${mine.length})` : ''}`} active={tab === 'mine'} onPress={() => setTab('mine')} />

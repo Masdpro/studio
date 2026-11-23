@@ -4,6 +4,16 @@ import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
+  CalendarCheck,
+  Camera,
+  ChefHat,
+  Clock,
+  Dumbbell,
+  GraduationCap,
+  Home,
+  Scissors,
+  Shirt,
+  Smartphone,
   ArrowUpRight,
   BadgeCheck,
   Bike,
@@ -20,12 +30,20 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Reveal } from '@/components/site/Reveal';
 import { SITE, SHOP_PATH, START_PATH } from '@/lib/site';
+import { SERVICE_CATEGORIES } from '@/lib/service-categories';
 
 export const metadata: Metadata = {
   title: 'Closebuy | Shop from trusted vendors close to you',
   description:
     'Closebuy connects you with verified vendors and markets near you in Nigeria. Order food, groceries, fashion and more, pay securely, and get it delivered by local riders or pick it up yourself.',
 };
+
+/** Where "Book a service" goes: the services side of the app, open to everyone. */
+const SERVICES_PATH = '/services';
+const SERVICE_ICON: Record<string, typeof Scissors> = {
+  beauty: Scissors, repairs: Smartphone, home: Home, tailoring: Shirt, events: ChefHat, fitness: Dumbbell, lessons: GraduationCap, photo: Camera,
+};
+const BOOKABLE = SERVICE_CATEGORIES.filter((c) => c.id in SERVICE_ICON);
 
 const shopSearch = (q: string) => `${SHOP_PATH}?q=${encodeURIComponent(q)}`;
 
@@ -132,6 +150,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <Link href={SHOP_PATH} className="group inline-flex items-center gap-2 rounded-full bg-[hsl(var(--ink))] px-6 py-3.5 font-semibold text-white shadow-xl shadow-[hsl(var(--ink)/0.25)] transition-transform hover:-translate-y-0.5">
                 Browse the marketplace
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link href={SERVICES_PATH} className="group inline-flex items-center gap-2 rounded-full border-2 border-[hsl(var(--ink))] px-6 py-3 font-semibold transition-colors hover:bg-[hsl(var(--ink))] hover:text-white">
+                <CalendarCheck className="h-4 w-4" /> Book a service
               </Link>
               <Link href="/auth/register/vendor" className="group hidden items-center gap-1.5 font-semibold sm:inline-flex underline-offset-4 hover:underline">
                 <Store className="h-5 w-5 text-[hsl(var(--coral-deep))]" /> Sell on Closebuy
@@ -292,6 +313,68 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <h3 className="font-display mt-1 text-2xl font-bold">Delivered, or pick it up</h3>
               <p className="mt-2 leading-relaxed text-[hsl(var(--ink)/0.65)]">A local delivery agent brings it to your door, or you collect it from the shop yourself.</p>
             </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── Book a service ───────── */}
+      <section id="services" className="scroll-mt-20 pb-20 md:pb-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <Reveal className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div className="max-w-2xl">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[hsl(var(--coral-deep))]">Book a service</p>
+              <h2 className="font-display mt-3 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Trusted pros near you, on your schedule</h2>
+              <p className="mt-4 text-lg text-[hsl(var(--ink)/0.7)]">
+                Hair, repairs, cleaning, tailoring, lessons and more. See real prices and free times, book in a few taps, and pay securely through Closebuy.
+              </p>
+            </div>
+            <Link href={SERVICES_PATH} className="group inline-flex shrink-0 items-center gap-1.5 font-semibold">
+              See all services <ArrowUpRight className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </Link>
+          </Reveal>
+
+          <ul className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {BOOKABLE.map((c) => {
+              const Icon = SERVICE_ICON[c.id];
+              return (
+                <li key={c.id}>
+                  <Link
+                    href={`${SERVICES_PATH}?category=${c.id}`}
+                    className="group flex h-full flex-col gap-3 rounded-3xl border border-[hsl(var(--ink)/0.08)] bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-[hsl(var(--coral))] hover:shadow-lg sm:p-5"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[hsl(var(--coral)/0.12)] text-[hsl(var(--coral-deep))]">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className="block font-bold leading-snug">{c.label}</span>
+                      <span className="mt-1 block text-sm text-[hsl(var(--ink)/0.6)]">{c.blurb}</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-8 grid gap-3 rounded-3xl bg-[hsl(var(--ink))] p-5 text-white sm:grid-cols-3 sm:p-6">
+            {[
+              { icon: Search, t: 'Find a pro', d: 'Compare services, prices and past work.' },
+              { icon: Clock, t: 'Pick a free time', d: 'Only times the pro is actually free.' },
+              { icon: ShieldCheck, t: 'Pay safely', d: 'Free to cancel or move up to 24 hours before.' },
+            ].map(({ icon: Icon, t, d }) => (
+              <div key={t} className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10"><Icon className="h-4 w-4" /></span>
+                <span>
+                  <span className="block font-semibold">{t}</span>
+                  <span className="block text-sm text-white/65">{d}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link href={SERVICES_PATH} className="bg-coral-gradient group inline-flex items-center gap-2 rounded-full px-6 py-3.5 font-semibold text-white shadow-lg shadow-[hsl(var(--coral)/0.35)] transition-transform hover:-translate-y-0.5">
+              Book a service <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link href="/auth/register/provider" className="font-semibold underline-offset-4 hover:underline">Offer your services on Closebuy</Link>
           </div>
         </div>
       </section>

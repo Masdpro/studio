@@ -1,6 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { ChevronRight, ClipboardList, Package, Store, Wallet } from 'lucide-react-native';
 import { View } from 'react-native';
+import { QuickTour, TourButton, useQuickTour } from '@/components/QuickTour';
 import { ApprovalBanner, Stat } from '@/components/Stat';
 import { Card, ListItem, Row, Screen } from '@/components/ui';
 import { useRoleApproval } from '@/lib/business';
@@ -11,6 +12,7 @@ import type { Order } from '@/lib/types';
 
 export default function VendorHome() {
   const c = useColors('shop');
+  const tour = useQuickTour('vendor');
   const approval = useRoleApproval('vendor');
   const stats = useGet<{ total: { orders: number; revenue: number; completed: number; cancelled: number } }>(['vendor-analytics'], '/api/vendor/analytics');
   const orders = useGet<{ orders: Order[] }>(['vendor-orders', 'vendor'], '/api/orders?as=vendor', { refetchInterval: 30000 });
@@ -21,7 +23,8 @@ export default function VendorHome() {
   const chev = <ChevronRight color={c.muted} size={18} />;
   return (
     <Screen side="shop" edges={[]} refreshing={orders.isRefetching} onRefresh={() => { orders.refetch(); stats.refetch(); products.refetch(); }}>
-      <Stack.Screen options={{ title: 'My store' }} />
+      <Stack.Screen options={{ title: 'My store', headerRight: () => <TourButton kind="vendor" /> }} />
+      <QuickTour kind="vendor" visible={tour.open} onClose={tour.close} />
       <ApprovalBanner side="shop" status={approval?.approvalStatus} note={approval?.approvalNote} onPress={() => router.push('/verification')} />
       <Row style={{ flexWrap: 'wrap', marginTop: 12 }} gap={10}>
         <Stat side="shop" label="New orders" value={waiting} tone={waiting ? 'warn' : undefined} />

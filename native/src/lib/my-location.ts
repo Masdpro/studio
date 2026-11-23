@@ -29,9 +29,9 @@ let locatedThisLaunch = false;
  * On landing, asks once to use the phone's location, then keeps the delivery address set to where the
  * customer is (refreshed once per app launch), unless they've chosen an address themselves.
  */
-export function useAutoLocation() {
+export function useAutoLocation(enabled = true) {
   useEffect(() => {
-    if (locatedThisLaunch) return;
+    if (!enabled || locatedThisLaunch) return;
     locatedThisLaunch = true;
     (async () => {
       const saved = await getSavedAddress();
@@ -52,5 +52,5 @@ export function useAutoLocation() {
       if ((await getSavedAddress())?.source === 'manual') return; // they chose one meanwhile
       await saveAddress({ address: r.address, latitude, longitude, source: 'auto' });
     })().catch(() => {});
-  }, []);
+  }, [enabled]);
 }

@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CalendarCheck, CalendarClock, ChevronDown, Clock, Images, MapPin, Search, Sparkles, Users, UserRound } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchWithFilters, FilterField, ChipChoice } from '@/components/home/SearchWithFilters';
 import { FitChips } from '@/components/home/FitChips';
@@ -15,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { DealsScroller } from '@/components/home/DealsScroller';
 import { cn } from '@/lib/utils';
 import { durationLabel, naira } from '@/lib/booking-time';
-import { SERVICE_CATEGORIES, categoryLabel } from '@/lib/service-categories';
+import { SERVICE_CATEGORIES, categoryLabel, isServiceCategory } from '@/lib/service-categories';
 import { categoryIcon, coverStyle, ProviderCard, type PublicProvider, type PublicService } from './parts';
 import { BookDialog } from './BookDialog';
 import { PortfolioViewer } from './PortfolioViewer';
@@ -30,14 +29,19 @@ const key = (l: Listing) => l.s.id;
  * services colours. Each card is a service you can book, the way a shop card is an item you can buy.
  */
 export function ServicesHome({ providers: all }: { providers: PublicProvider[] }) {
-  const view = parseServicesView(useSearchParams().get('view'));
+  const params = useSearchParams();
+  const view = parseServicesView(params.get('view'));
   const router = useRouter();
   // Services / Professionals is chosen in the filter pop-up and kept in the URL (?view=pros).
   const setView = (v: ServicesView) => router.replace(v === 'pros' ? '/services?view=pros' : '/services', { scroll: false });
   const [area, setArea] = useState(ALL);
   const [provider, setProvider] = useState(ALL);
-  const [category, setCategory] = useState(ALL);
-  const [search, setSearch] = useState('');
+  // Links from the website can open a kind of service (?category=beauty) or a search (?q=braids).
+  const [category, setCategory] = useState(() => {
+    const id = params.get('category');
+    return id && isServiceCategory(id) ? categoryLabel(id) : ALL;
+  });
+  const [search, setSearch] = useState(() => params.get('q')?.slice(0, 80) ?? '');
   const [todayOpen, setTodayOpen] = useState(true);
   const [booking, setBooking] = useState<Listing | null>(null);
   const [viewing, setViewing] = useState<Listing | null>(null);
@@ -169,10 +173,7 @@ export function ServicesHome({ providers: all }: { providers: PublicProvider[] }
                       <ChevronDown className={cn('h-5 w-5 text-muted-foreground transition-transform', !todayOpen && '-rotate-90')} aria-hidden />
                     </button>
                   </h2>
-                  <div className="flex items-center gap-2">
-                    {!todayOpen && <span className="text-xs text-muted-foreground">{today.length} open</span>}
-                    <Badge variant="outline" className="whitespace-nowrap border-primary text-primary">Book now</Badge>
-                  </div>
+                  {!todayOpen && <span className="text-xs text-muted-foreground">{today.length} open</span>}
                 </div>
                 {todayOpen && (
                   <DealsScroller>

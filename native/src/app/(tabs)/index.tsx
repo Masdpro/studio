@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { percentOff, ProductCard, ProviderCard, StoreCard, useGridWidth } from '@/components/cards';
+import { QuickTour, useQuickTour } from '@/components/QuickTour';
 import { SideSwitch } from '@/components/SideSwitch';
 import { Chip, Empty, ErrorNote, IconButton, Img, Loading, Row, SearchBar, Section, Txt } from '@/components/ui';
 import { BOOKING_STATUS, when } from '@/lib/format';
@@ -282,6 +283,13 @@ function BookHome() {
 
 export default function Home() {
   const { side, c } = useSide();
-  useAutoLocation(); // ask once, then keep the delivery address set to where the customer is
-  return <View style={{ flex: 1, backgroundColor: c.bg }}>{side === 'shop' ? <ShopHome /> : <BookHome />}</View>;
+  const tour = useQuickTour();
+  // Ask for location once, after the first-time tour is closed, then keep the delivery address set to where the customer is.
+  useAutoLocation(tour.ready && !tour.open);
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      {side === 'shop' ? <ShopHome /> : <BookHome />}
+      <QuickTour visible={tour.open} onClose={tour.close} />
+    </View>
+  );
 }
